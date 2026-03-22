@@ -13,7 +13,7 @@ export async function renderSubjects(container, uid, profile) {
   container.innerHTML = `
     <div class="page-header">
       <h1 class="page-title">Subjects</h1>
-      <button class="btn btn-primary btn-sm ripple" id="btn-add-subject">+ Add</button>
+      <button class="btn btn-primary btn-sm ripple" id="btn-add-subject" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="plus" style="width:16px;height:16px"></i> Add</button>
     </div>
     <div id="subjects-loading" class="animate-pulse text-muted text-sm">Loading…</div>
     <div id="subjects-list" class="hidden"></div>
@@ -43,7 +43,7 @@ async function loadSubjects(container, uid, profile) {
     if (subjects.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">📖</div>
+          <div class="empty-icon"><i data-lucide="book"></i></div>
           <div class="empty-title">No subjects yet</div>
           <div class="empty-desc">Tap "+ Add" to create your first subject.</div>
         </div>`;
@@ -64,8 +64,8 @@ async function loadSubjects(container, uid, profile) {
         <div class="flex justify-between items-center mb-sm">
           <div class="subject-name">${escHtml(sub.name)}</div>
           <div class="flex gap-sm">
-            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
-            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
+            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px" title="Edit"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
+            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
           </div>
         </div>
         <div class="subject-stats">${topics.length} topic${topics.length !== 1 ? "s" : ""} · ${done}/${tasks.length} tasks done</div>
@@ -112,9 +112,9 @@ async function loadSubjects(container, uid, profile) {
       list.classList.remove("hidden");
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon"><i data-lucide="alert-triangle"></i></div>
           <div class="empty-title">Something went wrong</div>
-          <div class="empty-desc">Please check your connection and try again.</div>
+          <div class="empty-desc">Error: ${err.message || 'Please check your connection.'}</div>
         </div>`;
     }
   }

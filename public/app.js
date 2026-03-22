@@ -97,6 +97,11 @@ export async function navigate(page, params = {}) {
 
   // Bind ripples to newly rendered content
   initRipples();
+
+  // Initialize Lucide icons for new content
+  if (window.lucide) {
+    window.lucide.createIcons();
+  }
 }
 
 // ── Auth flows ────────────────────────────────────────────────────────────────

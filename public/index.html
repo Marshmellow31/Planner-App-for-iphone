@@ -29,6 +29,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://www.gstatic.com" />
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
@@ -40,7 +43,7 @@
   <!-- ── LANDING PAGE ────────────────────────────── -->
   <div id="page-landing" class="landing hidden">
     <div class="landing-hero">
-      <div class="landing-logo">📚</div>
+      <div class="landing-logo"><i data-lucide="book-open" style="width:48px;height:48px;color:var(--accent)"></i></div>
       <h1 class="landing-title">StudyFlow</h1>
       <p class="landing-subtitle">Your personal academic planner — subjects, topics, tasks &amp; reminders, all in one place.</p>
       <div class="landing-cta">
@@ -51,22 +54,22 @@
 
     <div class="features-grid" style="padding:0 var(--space-md) var(--space-md)">
       <div class="feature-card">
-        <div class="feature-icon">🎯</div>
+        <div class="feature-icon"><i data-lucide="target"></i></div>
         <div class="feature-title">Task Manager</div>
         <div class="feature-desc">Set priorities, due dates and reminders</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📊</div>
+        <div class="feature-icon"><i data-lucide="bar-chart-3"></i></div>
         <div class="feature-title">Progress Charts</div>
         <div class="feature-desc">Weekly analytics at a glance</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">🔔</div>
+        <div class="feature-icon"><i data-lucide="bell"></i></div>
         <div class="feature-title">Smart Reminders</div>
         <div class="feature-desc">Push notifications via Firebase</div>
       </div>
       <div class="feature-card">
-        <div class="feature-icon">📱</div>
+        <div class="feature-icon"><i data-lucide="smartphone"></i></div>
         <div class="feature-title">PWA on iPhone</div>
         <div class="feature-desc">Add to Home Screen for offline use</div>
       </div>
@@ -86,7 +89,7 @@
     <!-- Login -->
     <div id="auth-login" class="auth-page">
       <div class="auth-card">
-        <div class="auth-logo">📚</div>
+        <div class="auth-logo"><i data-lucide="book-open" style="width:40px;height:40px;color:var(--accent)"></i></div>
         <h2 class="auth-title">Welcome back</h2>
         <p class="auth-subtitle">Sign in to your StudyFlow account</p>
         <form id="form-login" novalidate>
@@ -118,7 +121,7 @@
     <!-- Signup -->
     <div id="auth-signup" class="auth-page hidden">
       <div class="auth-card">
-        <div class="auth-logo">📚</div>
+        <div class="auth-logo"><i data-lucide="user-plus" style="width:40px;height:40px;color:var(--accent)"></i></div>
         <h2 class="auth-title">Create account</h2>
         <p class="auth-subtitle">Start your StudyFlow journey</p>
         <form id="form-signup" novalidate>
@@ -151,7 +154,7 @@
     <!-- Forgot Password -->
     <div id="auth-forgot" class="auth-page hidden">
       <div class="auth-card">
-        <div class="auth-logo">🔑</div>
+        <div class="auth-logo"><i data-lucide="key-round" style="width:40px;height:40px;color:var(--accent)"></i></div>
         <h2 class="auth-title">Reset Password</h2>
         <p class="auth-subtitle">We'll send a reset link to your email</p>
         <form id="form-forgot" novalidate>
@@ -180,38 +183,40 @@
     <!-- Bottom Navigation -->
     <nav class="bottom-nav" id="bottom-nav">
       <button class="nav-item active" data-page="dashboard">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
         <span>Home</span>
       </button>
       <button class="nav-item" data-page="subjects">
-        <span class="nav-icon">📖</span>
+        <span class="nav-icon"><i data-lucide="book"></i></span>
         <span>Subjects</span>
       </button>
       <button class="nav-item" data-page="tasks">
-        <span class="nav-icon">✅</span>
+        <span class="nav-icon"><i data-lucide="check-circle-2"></i></span>
         <span>Tasks</span>
       </button>
       <button class="nav-item" data-page="analytics">
-        <span class="nav-icon">📊</span>
+        <span class="nav-icon"><i data-lucide="bar-chart"></i></span>
         <span>Analytics</span>
       </button>
       <button class="nav-item" data-page="settings">
-        <span class="nav-icon">⚙️</span>
+        <span class="nav-icon"><i data-lucide="settings"></i></span>
         <span>Settings</span>
       </button>
     </nav>
 
     <!-- FAB (Quick Add Task) -->
-    <button class="fab" id="fab-add-task" aria-label="Add Task" title="Add Task">＋</button>
+    <button class="fab ripple" id="fab-add-task" aria-label="Add Task" title="Add Task"><i data-lucide="plus"></i></button>
 
     <!-- Install Prompt Banner -->
     <div class="install-prompt hidden" id="install-prompt">
-      <span style="font-size:28px">📲</span>
+      <span style="font-size:24px;color:var(--accent)"><i data-lucide="smartphone"></i></span>
       <div class="install-prompt-text">
         <div class="install-prompt-title">Add to Home Screen</div>
-        <div class="install-prompt-desc">Tap Share → "Add to Home Screen" in Safari</div>
+        <div class="install-prompt-desc">Tap Share <i data-lucide="share" style="width:14px;height:14px;display:inline"></i> 
+          <i data-lucide="arrow-right" style="width:14px;height:14px;display:inline"></i> 
+          "Add to Home Screen" in Safari</div>
       </div>
-      <button class="install-prompt-close" id="install-prompt-close">✕</button>
+      <button class="install-prompt-close" id="install-prompt-close"><i data-lucide="x" style="width:18px;height:18px"></i></button>
     </div>
 
   </div><!-- /#page-app -->

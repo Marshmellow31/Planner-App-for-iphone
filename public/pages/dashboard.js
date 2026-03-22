@@ -12,7 +12,7 @@ export async function renderDashboard(container, uid, profile) {
     <div class="page-header">
       <div>
         <div class="text-muted text-sm">${getGreeting()}</div>
-        <h1 class="page-title" style="font-size:var(--font-size-2xl)">${profile?.displayName || "Student"} 👋</h1>
+        <h1 class="page-title" style="font-size:var(--font-size-2xl)">${profile?.displayName || "Student"}</h1>
       </div>
     </div>
     <div id="dash-loading" class="animate-pulse text-muted text-sm mb-md">Loading your day…</div>
@@ -41,7 +41,7 @@ export async function renderDashboard(container, uid, profile) {
     <div class="quick-add-container mb-md">
       <div class="quick-add-input-wrapper">
         <input type="text" id="quick-add-input" class="form-input" placeholder="Quick add task (Press Enter)..." style="border-radius:24px;padding-right:48px;" />
-        <button id="quick-add-btn" class="quick-add-submit" aria-label="Add task">→</button>
+        <button id="quick-add-btn" class="quick-add-submit" aria-label="Add task"><i data-lucide="arrow-right" style="width:20px;height:20px"></i></button>
       </div>
     </div>
 
@@ -56,7 +56,7 @@ export async function renderDashboard(container, uid, profile) {
       </div>
       <div class="stat-card stagger-item" style="animation-delay:80ms">
         <div class="stat-number">${analyticsData.streak}</div>
-        <div class="stat-label">Day streak 🔥</div>
+        <div class="stat-label">Day streak <i data-lucide="flame" style="width:14px;height:14px;display:inline-block;vertical-align:middle;color:#ff9f43"></i></div>
       </div>
       <div class="stat-card stagger-item" style="animation-delay:120ms">
         <div class="stat-number" style="${analyticsData.overdue > 0 ? 'color:var(--error)' : ''}">${analyticsData.overdue}</div>
@@ -132,7 +132,7 @@ export async function renderDashboard(container, uid, profile) {
   if (analyticsData.todayTasks.length === 0) {
     todayList.innerHTML = `
       <div class="empty-state stagger-item" style="padding:var(--space-xl);animation-delay:200ms">
-        <div class="empty-icon">✨</div>
+        <div class="empty-icon"><i data-lucide="sparkles"></i></div>
         <div class="empty-title">All clear today!</div>
         <div class="empty-desc">No tasks due today. Add one above.</div>
       </div>`;
@@ -190,17 +190,17 @@ export function buildTaskCard(task, uid, onUpdate) {
   card.className = `task-card priority-${priority}${isDone ? " completed" : ""}`;
   card.innerHTML = `
     <button class="task-check${isDone ? " done" : ""}" title="${isDone ? "Reopen" : "Mark complete"}">
-      ${isDone ? "✓" : ""}
+      ${isDone ? '<i data-lucide="check" style="width:14px;height:14px"></i>' : ""}
     </button>
     <div class="task-body">
       <div class="task-title">${escHtml(task.title)}</div>
       <div class="task-meta">
         <span class="badge badge-${priority}">${priority}</span>
-        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}">📅 ${formatDate(due)}</span>` : ""}
+        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : ""}
       </div>
     </div>
     <div class="task-actions">
-      <button class="btn-icon" style="font-size:14px;width:34px;height:34px" title="Delete">🗑</button>
+      <button class="btn-icon ripple" style="width:34px;height:34px" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
     </div>
   `;
 

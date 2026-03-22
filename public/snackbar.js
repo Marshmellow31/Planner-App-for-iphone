@@ -40,6 +40,7 @@ export function showSnackbar(message, type = 'info', duration = 3000) {
   });
 
   document.body.appendChild(snackbar);
+  if (window.lucide) window.lucide.createIcons();
   activeSnackbar = snackbar;
 
   // Trigger entrance animation
@@ -69,7 +70,9 @@ export function showConfirmDialog(title, message, confirmText = 'Confirm', dange
     backdrop.className = 'modal-backdrop centered';
     backdrop.innerHTML = `
       <div class="modal-box confirm-dialog" style="max-width:360px">
-        <div class="confirm-dialog-icon">${danger ? '⚠️' : '❓'}</div>
+        <div class="confirm-dialog-icon" style="color:${danger ? 'var(--error)' : 'var(--accent)'}">
+          <i data-lucide="${danger ? 'alert-triangle' : 'help-circle'}" style="width:48px;height:48px"></i>
+        </div>
         <h3 class="confirm-dialog-title">${title}</h3>
         <p class="confirm-dialog-message">${message}</p>
         <div class="modal-actions">
@@ -90,5 +93,6 @@ export function showConfirmDialog(title, message, confirmText = 'Confirm', dange
     backdrop.addEventListener('click', (e) => { if (e.target === backdrop) close(false); });
 
     document.body.appendChild(backdrop);
+    if (window.lucide) window.lucide.createIcons();
   });
 }

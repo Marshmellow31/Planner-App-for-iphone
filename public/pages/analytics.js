@@ -26,7 +26,7 @@ export async function renderAnalytics(container, uid, profile) {
   // ── Streak banner ─────────────────────────────────────────
   content.innerHTML = `
     <div class="streak-banner mb-md">
-      <div class="streak-icon">🔥</div>
+      <div class="streak-icon"><i data-lucide="flame" style="width:24px;height:24px;color:#ff9f43"></i></div>
       <div>
         <div class="streak-count">${stats.streak} day${stats.streak !== 1 ? "s" : ""}</div>
         <div class="text-muted text-sm">Study streak</div>

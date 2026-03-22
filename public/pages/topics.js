@@ -16,13 +16,13 @@ export async function renderTopics(container, uid, subjectId, subjectName) {
   container.innerHTML = `
     <div class="page-header">
       <div class="flex items-center gap-sm">
-        <button class="btn-icon ripple" id="btn-back-subjects" style="font-size:20px;background:none;border:none;color:var(--text-primary)">←</button>
+        <button class="btn-icon ripple" id="btn-back-subjects" style="background:none;border:none;color:var(--text-primary)"><i data-lucide="arrow-left"></i></button>
         <div>
           <div class="text-muted text-sm">Subject</div>
           <h2 class="page-title" style="font-size:var(--font-size-xl)">${escHtml(subjectName || "Topics")}</h2>
         </div>
       </div>
-      <button class="btn btn-primary btn-sm ripple" id="btn-add-topic">+ Topic</button>
+      <button class="btn btn-primary btn-sm ripple" id="btn-add-topic" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="plus" style="width:16px;height:16px"></i> Topic</button>
     </div>
     <div id="topics-loading" class="animate-pulse text-muted text-sm">Loading…</div>
     <div id="topics-list" class="hidden"></div>
@@ -52,7 +52,7 @@ async function loadTopics(container, uid, subjectId, subjectName) {
     if (topics.length === 0) {
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">🗂</div>
+          <div class="empty-icon"><i data-lucide="folder"></i></div>
           <div class="empty-title">No topics yet</div>
           <div class="empty-desc">Tap "+ Topic" to create topics under this subject.</div>
         </div>`;
@@ -71,12 +71,14 @@ async function loadTopics(container, uid, subjectId, subjectName) {
       card.innerHTML = `
         <div class="flex justify-between items-center mb-sm">
           <div class="flex items-center gap-sm">
-            <span style="font-size:20px">${isDone ? "✅" : "📄"}</span>
+            <span style="color:var(--accent)">
+              <i data-lucide="${isDone ? "check-circle" : "file-text"}" style="width:20px;height:20px"></i>
+            </span>
             <div class="font-bold">${escHtml(topic.name)}</div>
           </div>
           <div class="flex gap-sm">
-            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
-            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
+            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px" title="Edit"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
+            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
           </div>
         </div>
         <div class="text-muted text-sm mb-sm">${done}/${tasks.length} tasks completed</div>
@@ -116,7 +118,7 @@ async function loadTopics(container, uid, subjectId, subjectName) {
       list.classList.remove("hidden");
       list.innerHTML = `
         <div class="empty-state">
-          <div class="empty-icon">⚠️</div>
+          <div class="empty-icon"><i data-lucide="alert-triangle"></i></div>
           <div class="empty-title">Something went wrong</div>
           <div class="empty-desc">Please try again.</div>
         </div>`;

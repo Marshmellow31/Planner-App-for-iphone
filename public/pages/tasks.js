@@ -20,9 +20,9 @@ export async function renderTasks(container, uid, profile) {
       <button class="filter-chip ripple" data-filter="pending">Pending</button>
       <button class="filter-chip ripple" data-filter="completed">Completed</button>
       <button class="filter-chip ripple" data-filter="overdue">Overdue</button>
-      <button class="filter-chip ripple" data-filter="high">🔴 High</button>
-      <button class="filter-chip ripple" data-filter="medium">🟡 Medium</button>
-      <button class="filter-chip ripple" data-filter="low">🟢 Low</button>
+      <button class="filter-chip ripple" data-filter="high"><span class="priority-dot" style="background:var(--error)"></span> High</button>
+      <button class="filter-chip ripple" data-filter="medium"><span class="priority-dot" style="background:var(--warning)"></span> Medium</button>
+      <button class="filter-chip ripple" data-filter="low"><span class="priority-dot" style="background:var(--success)"></span> Low</button>
     </div>
     <!-- Sort -->
     <div class="flex justify-between items-center mb-md">
@@ -89,7 +89,7 @@ export async function renderTasks(container, uid, profile) {
     list.innerHTML = "";
 
     if (tasks.length === 0) {
-      list.innerHTML = `<div class="empty-state"><div class="empty-icon">🎉</div><div class="empty-title">Nothing here</div><div class="empty-desc">No tasks match this filter.</div></div>`;
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon"><i data-lucide="party-popper"></i></div><div class="empty-title">Nothing here</div><div class="empty-desc">No tasks match this filter.</div></div>`;
       return;
     }
 
@@ -131,20 +131,20 @@ function buildFullTaskCard(task, uid, onUpdate) {
   card.style.marginBottom = "10px";
   card.innerHTML = `
     <button class="task-check${isDone ? " done" : ""}" title="${isDone ? "Reopen" : "Complete"}">
-      ${isDone ? "✓" : ""}
+      ${isDone ? '<i data-lucide="check" style="width:14px;height:14px"></i>' : ""}
     </button>
     <div class="task-body">
       <div class="task-title">${escHtml(task.title)}</div>
       ${task.description ? `<div class="text-muted text-sm" style="margin:2px 0 4px">${escHtml(task.description)}</div>` : ""}
       <div class="task-meta">
         <span class="badge badge-${priority}">${priority}</span>
-        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}">📅 ${formatDate(due)}</span>` : ""}
-        ${task.reminderTime ? `<span>🔔 Reminder set</span>` : ""}
+        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : ""}
+        ${task.reminderTime ? `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="bell" style="width:12px;height:12px"></i> Reminder set</span>` : ""}
       </div>
     </div>
     <div class="task-actions">
-      <button class="btn-icon btn-edit ripple" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
-      <button class="btn-icon btn-del ripple" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
+      <button class="btn-icon btn-edit ripple" style="width:34px;height:34px" title="Edit"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+      <button class="btn-icon btn-del ripple" style="width:34px;height:34px" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
     </div>
   `;
 
