@@ -47,12 +47,14 @@ export async function createSubject(uid, { name, color, order = 0 }) {
 export async function getSubjects(uid) {
   const q = query(
     collection(db, "subjects"),
-    where("userId", "==", uid),
-    orderBy("order", "asc"),
-    orderBy("createdAt", "asc")
+    where("userId", "==", uid)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => {
+    if (a.order !== b.order) return (a.order || 0) - (b.order || 0);
+    return (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0);
+  });
 }
 
 export async function updateSubject(id, data) {
@@ -78,15 +80,15 @@ export async function createTopic(uid, { subjectId, name, order = 0 }) {
 }
 
 export async function getTopics(uid, subjectId = null) {
-  const constraints = [
-    where("userId", "==", uid),
-    orderBy("order", "asc"),
-    orderBy("createdAt", "asc"),
-  ];
-  if (subjectId) constraints.splice(1, 0, where("subjectId", "==", subjectId));
+  const constraints = [where("userId", "==", uid)];
+  if (subjectId) constraints.push(where("subjectId", "==", subjectId));
   const q = query(collection(db, "topics"), ...constraints);
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => {
+    if (a.order !== b.order) return (a.order || 0) - (b.order || 0);
+    return (a.createdAt?.toMillis() || 0) - (b.createdAt?.toMillis() || 0);
+  });
 }
 
 export async function updateTopic(id, data) {
@@ -138,9 +140,10 @@ export async function getTasks(uid, filters = {}) {
     constraints.push(where("isCompleted", "==", filters.isCompleted));
   if (filters.priority) constraints.push(where("priority", "==", filters.priority));
 
-  const q = query(collection(db, "tasks"), ...constraints, orderBy("createdAt", "desc"));
+  const q = query(collection(db, "tasks"), ...constraints);
   const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  return data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 }
 
 export async function updateTask(id, data) {
