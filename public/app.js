@@ -11,6 +11,7 @@ import { renderTasks } from "./pages/tasks.js";
 import { renderAnalytics } from "./pages/analytics.js";
 import { renderSettings } from "./pages/settings.js";
 import { showInAppNotification, onForegroundMessage } from "./notifications.js";
+import { showSnackbar } from "./snackbar.js";
 
 // ── Global State ──────────────────────────────────────────────────────────────
 export const state = {
@@ -37,6 +38,30 @@ export function applyTheme(theme = "dark") {
   document.documentElement.setAttribute("data-theme", theme);
 }
 
+// ── Ripple Effect logic ───────────────────────────────────────────────────────
+function initRipples() {
+  document.querySelectorAll(".ripple").forEach(btn => {
+    // avoid multiple listeners
+    if (btn.dataset.rippleInit) return;
+    btn.dataset.rippleInit = "true";
+
+    btn.addEventListener("click", function(e) {
+      const rect = this.getBoundingClientRect();
+      const radius = Math.max(rect.width, rect.height);
+      const circle = document.createElement("span");
+      
+      const diameter = radius * 2;
+      circle.style.width = circle.style.height = `${diameter}px`;
+      circle.style.left = `${e.clientX - rect.left - radius}px`;
+      circle.style.top = `${e.clientY - rect.top - radius}px`;
+      circle.classList.add("ripple-pulse");
+      
+      this.appendChild(circle);
+      setTimeout(() => circle.remove(), 600);
+    });
+  });
+}
+
 // ── Navigate between app pages ────────────────────────────────────────────────
 export async function navigate(page, params = {}) {
   state.currentPage = page;
@@ -55,6 +80,12 @@ export async function navigate(page, params = {}) {
   const uid = state.user?.uid;
   const profile = state.profile;
 
+  // Add subtle page transition
+  content.classList.remove("fadeSlideUp");
+  // force reflow
+  void content.offsetWidth;
+  content.classList.add("fadeSlideUp");
+
   switch (page) {
     case "dashboard":  await renderDashboard(content, uid, profile); break;
     case "subjects":   await renderSubjects(content, uid, profile); break;
@@ -63,6 +94,9 @@ export async function navigate(page, params = {}) {
     case "analytics":  await renderAnalytics(content, uid, profile); break;
     case "settings":   await renderSettings(content, uid, profile, state); break;
   }
+
+  // Bind ripples to newly rendered content
+  initRipples();
 }
 
 // ── Auth flows ────────────────────────────────────────────────────────────────

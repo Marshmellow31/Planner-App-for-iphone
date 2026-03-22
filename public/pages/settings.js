@@ -149,13 +149,21 @@ export async function renderSettings(container, uid, profile, state) {
     if (!profile?.email) return;
     try {
       await resetPassword(profile.email);
-      alert("Password reset email sent! Check your inbox.");
-    } catch (_) { alert("Failed to send reset email."); }
+      showSnackbar("Password reset email sent! Check your inbox.", "success", 5000);
+    } catch (_) { 
+      showSnackbar("Failed to send reset email.", "error"); 
+    }
   });
 
   // ── Logout ────────────────────────────────────────────────────
   document.getElementById("btn-logout")?.addEventListener("click", async () => {
-    if (!confirm("Sign out of StudyFlow?")) return;
+    const confirmed = await showConfirmDialog(
+      "Sign Out",
+      "Are you sure you want to sign out of StudyFlow?",
+      "Sign Out",
+      true
+    );
+    if (!confirmed) return;
     await logOut();
   });
 }

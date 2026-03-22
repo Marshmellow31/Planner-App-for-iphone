@@ -97,23 +97,5 @@ export function onAuthStateChanged(callback) {
   return _onAuthStateChanged(auth, callback);
 }
 
-// ── Get or create user profile from Firestore ─────────────────────────────────
-export async function getUserProfile(uid) {
-  const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-  if (snap.exists()) return snap.data();
-  return null;
-}
-
-// ── Update user profile ───────────────────────────────────────────────────────
-export async function updateUserProfile(uid, updates) {
-  const ref = doc(db, "users", uid);
-  const { updateDoc, serverTimestamp: st } = await import(
-    "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"
-  );
-  await updateDoc(ref, { ...updates, updatedAt: serverTimestamp() });
-  // Also update Firebase Auth display name if changed
-  if (updates.displayName && auth.currentUser) {
-    await updateProfile(auth.currentUser, { displayName: updates.displayName });
-  }
-}
+// Note: getUserProfile and updateUserProfile are in db.js
+// Do not duplicate them here.

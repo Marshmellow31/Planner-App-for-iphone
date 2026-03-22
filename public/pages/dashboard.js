@@ -19,12 +19,15 @@ export async function renderDashboard(container, uid, profile) {
     <div id="dash-content" class="hidden"></div>
   `;
 
-  const [subjects, stats] = await Promise.all([
-    getSubjects(uid),
-    computeAnalytics(uid, profile?.weekStartDay || "monday", []),
-  ]);
-
-  const analyticsData = await computeAnalytics(uid, profile?.weekStartDay || "monday", subjects);
+  let subjects = [], analyticsData = null;
+  try {
+    subjects = await getSubjects(uid);
+    analyticsData = await computeAnalytics(uid, profile?.weekStartDay || "monday", subjects);
+  } catch (err) {
+    showSnackbar("Failed to load dashboard data", "error");
+    console.error("Dashboard load error:", err);
+    return;
+  }
 
   const el = document.getElementById("dash-loading");
   if (el) el.remove();
@@ -34,27 +37,35 @@ export async function renderDashboard(container, uid, profile) {
 
   // ── Stat cards ──────────────────────────────────────────────
   content.innerHTML = `
+    <!-- Quick Add Task -->
+    <div class="quick-add-container mb-md">
+      <div class="quick-add-input-wrapper">
+        <input type="text" id="quick-add-input" class="form-input" placeholder="Quick add task (Press Enter)..." style="border-radius:24px;padding-right:48px;" />
+        <button id="quick-add-btn" class="quick-add-submit" aria-label="Add task">→</button>
+      </div>
+    </div>
+
     <div class="stats-row mb-md">
-      <div class="stat-card">
+      <div class="stat-card stagger-item" style="animation-delay:0ms">
         <div class="stat-number">${analyticsData.completed}</div>
         <div class="stat-label">Done this week</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card stagger-item" style="animation-delay:40ms">
         <div class="stat-number">${analyticsData.completionRate}%</div>
         <div class="stat-label">Completion rate</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card stagger-item" style="animation-delay:80ms">
         <div class="stat-number">${analyticsData.streak}</div>
         <div class="stat-label">Day streak 🔥</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card stagger-item" style="animation-delay:120ms">
         <div class="stat-number" style="${analyticsData.overdue > 0 ? 'color:var(--error)' : ''}">${analyticsData.overdue}</div>
         <div class="stat-label">Overdue</div>
       </div>
     </div>
 
     <!-- Weekly chart -->
-    <div class="chart-container mb-md">
+    <div class="chart-container mb-md stagger-item" style="animation-delay:160ms">
       <div class="chart-title">This Week's Progress</div>
       <canvas id="dash-chart" height="140"></canvas>
     </div>
@@ -62,7 +73,7 @@ export async function renderDashboard(container, uid, profile) {
     <!-- Today's tasks -->
     <div class="section-header mb-sm">
       <div class="section-title">Today's Tasks</div>
-      <button class="btn btn-sm btn-ghost" id="btn-see-all-tasks">See all</button>
+      <button class="btn btn-sm btn-ghost ripple" id="btn-see-all-tasks">See all</button>
     </div>
     <div id="today-tasks-list"></div>
 
@@ -70,7 +81,7 @@ export async function renderDashboard(container, uid, profile) {
     ${subjects.length > 0 ? `
     <div class="section-header mb-sm" style="margin-top:var(--space-md)">
       <div class="section-title">Subjects</div>
-      <button class="btn btn-sm btn-ghost" id="btn-see-subjects">Manage</button>
+      <button class="btn btn-sm btn-ghost ripple" id="btn-see-subjects">Manage</button>
     </div>
     <div class="subjects-grid" id="subject-summary-grid"></div>
     ` : ""}
@@ -80,18 +91,57 @@ export async function renderDashboard(container, uid, profile) {
   document.getElementById("btn-see-all-tasks")?.addEventListener("click", () => navigate("tasks"));
   document.getElementById("btn-see-subjects")?.addEventListener("click", () => navigate("subjects"));
 
+  // ── Quick Add Task ───────────────────────────────────────────
+  const quickAddInput = document.getElementById("quick-add-input");
+  const quickAddBtn = document.getElementById("quick-add-btn");
+
+  const submitQuickAdd = async () => {
+    const title = quickAddInput.value.trim();
+    if (!title) return;
+    quickAddInput.disabled = true;
+    quickAddBtn.disabled = true;
+    
+    // Default to today if saving from dashboard quick-add
+    const today = new Date();
+    today.setHours(12, 0, 0, 0); // Noon today
+
+    try {
+      const { createTask } = await import("../db.js");
+      await createTask(uid, {
+        title,
+        priority: "medium",
+        dueDate: today.toISOString(),
+      });
+      showSnackbar("Task added to Today", "success");
+      renderDashboard(container, uid, profile); // Reload dashboard
+    } catch (err) {
+      showSnackbar("Failed to add task", "error");
+      quickAddInput.disabled = false;
+      quickAddBtn.disabled = false;
+      quickAddInput.focus();
+    }
+  };
+
+  quickAddInput?.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") submitQuickAdd();
+  });
+  quickAddBtn?.addEventListener("click", submitQuickAdd);
+
   // ── Render today tasks ───────────────────────────────────────
   const todayList = document.getElementById("today-tasks-list");
   if (analyticsData.todayTasks.length === 0) {
     todayList.innerHTML = `
-      <div class="empty-state" style="padding:var(--space-xl)">
+      <div class="empty-state stagger-item" style="padding:var(--space-xl);animation-delay:200ms">
         <div class="empty-icon">✨</div>
         <div class="empty-title">All clear today!</div>
-        <div class="empty-desc">No tasks due today. Add one with the + button.</div>
+        <div class="empty-desc">No tasks due today. Add one above.</div>
       </div>`;
   } else {
-    analyticsData.todayTasks.forEach((task) => {
-      todayList.appendChild(buildTaskCard(task, uid, () => renderDashboard(container, uid, profile)));
+    analyticsData.todayTasks.forEach((task, index) => {
+      const card = buildTaskCard(task, uid, () => renderDashboard(container, uid, profile));
+      card.classList.add("stagger-item");
+      card.style.animationDelay = `${200 + (index * 40)}ms`;
+      todayList.appendChild(card);
     });
   }
 
@@ -101,11 +151,12 @@ export async function renderDashboard(container, uid, profile) {
     const subjectMap = {};
     analyticsData.subjectBreakdown.forEach((s) => { subjectMap[s.id] = s; });
 
-    subjects.slice(0, 4).forEach((sub) => {
+    subjects.slice(0, 4).forEach((sub, index) => {
       const data = subjectMap[sub.id] || { total: 0, completed: 0, rate: 0 };
       const card = document.createElement("div");
-      card.className = "subject-card";
+      card.className = "subject-card stagger-item";
       card.style.setProperty("--subject-color", sub.color);
+      card.style.animationDelay = `${250 + (index * 40)}ms`;
       card.innerHTML = `
         <div class="subject-name">${escHtml(sub.name)}</div>
         <div class="subject-stats">${data.completed}/${data.total} tasks</div>

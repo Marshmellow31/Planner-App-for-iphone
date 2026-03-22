@@ -4,6 +4,7 @@
 
 import { getTasks, createTask, updateTask, deleteTask, completeTask, reopenTask, getSubjects, getTopics } from "../db.js";
 import { escHtml, formatDate } from "./dashboard.js";
+import { showSnackbar, showConfirmDialog } from "../snackbar.js";
 
 const PRIORITIES = ["high", "medium", "low"];
 
@@ -14,14 +15,14 @@ export async function renderTasks(container, uid, profile) {
     </div>
     <!-- Filter chips -->
     <div class="filter-bar" id="task-filters">
-      <button class="filter-chip active" data-filter="all">All</button>
-      <button class="filter-chip" data-filter="today">Today</button>
-      <button class="filter-chip" data-filter="pending">Pending</button>
-      <button class="filter-chip" data-filter="completed">Completed</button>
-      <button class="filter-chip" data-filter="overdue">Overdue</button>
-      <button class="filter-chip" data-filter="high">🔴 High</button>
-      <button class="filter-chip" data-filter="medium">🟡 Medium</button>
-      <button class="filter-chip" data-filter="low">🟢 Low</button>
+      <button class="filter-chip active ripple" data-filter="all">All</button>
+      <button class="filter-chip ripple" data-filter="today">Today</button>
+      <button class="filter-chip ripple" data-filter="pending">Pending</button>
+      <button class="filter-chip ripple" data-filter="completed">Completed</button>
+      <button class="filter-chip ripple" data-filter="overdue">Overdue</button>
+      <button class="filter-chip ripple" data-filter="high">🔴 High</button>
+      <button class="filter-chip ripple" data-filter="medium">🟡 Medium</button>
+      <button class="filter-chip ripple" data-filter="low">🟢 Low</button>
     </div>
     <!-- Sort -->
     <div class="flex justify-between items-center mb-md">
@@ -41,8 +42,13 @@ export async function renderTasks(container, uid, profile) {
   let allTasks     = [];
 
   const reload = async () => {
-    allTasks = await getTasks(uid);
-    renderFiltered();
+    try {
+      allTasks = await getTasks(uid);
+      renderFiltered();
+    } catch (err) {
+      showSnackbar("Failed to load tasks", "error");
+      console.error("Load tasks error:", err);
+    }
   };
 
   const renderFiltered = () => {
@@ -87,8 +93,11 @@ export async function renderTasks(container, uid, profile) {
       return;
     }
 
-    tasks.forEach((task) => {
-      list.appendChild(buildFullTaskCard(task, uid, reload));
+    tasks.forEach((task, i) => {
+      const card = buildFullTaskCard(task, uid, reload);
+      card.classList.add("stagger-item");
+      card.style.animationDelay = `${i * 40}ms`;
+      list.appendChild(card);
     });
   };
 
@@ -134,16 +143,28 @@ function buildFullTaskCard(task, uid, onUpdate) {
       </div>
     </div>
     <div class="task-actions">
-      <button class="btn-icon btn-edit" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
-      <button class="btn-icon btn-del" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
+      <button class="btn-icon btn-edit ripple" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
+      <button class="btn-icon btn-del ripple" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
     </div>
   `;
 
   card.querySelector(".task-check").addEventListener("click", async (e) => {
     e.stopPropagation();
-    if (isDone) await reopenTask(task.id);
-    else await completeTask(task.id);
-    onUpdate();
+    try {
+      if (isDone) {
+        await reopenTask(task.id);
+        showSnackbar("Task reopened", "info");
+      } else {
+        // Add completion animation
+        card.classList.add("task-completing");
+        await completeTask(task.id);
+        showSnackbar("Task completed! 🎉", "success");
+      }
+      setTimeout(() => onUpdate(), isDone ? 0 : 400);
+    } catch (err) {
+      showSnackbar("Failed to update task", "error");
+      console.error("Task check error:", err);
+    }
   });
 
   card.querySelector(".btn-edit").addEventListener("click", (e) => {
@@ -153,9 +174,21 @@ function buildFullTaskCard(task, uid, onUpdate) {
 
   card.querySelector(".btn-del").addEventListener("click", async (e) => {
     e.stopPropagation();
-    if (!confirm(`Delete "${task.title}"?`)) return;
-    await deleteTask(task.id);
-    onUpdate();
+    const confirmed = await showConfirmDialog(
+      "Delete Task",
+      `Delete "${task.title}"?`,
+      "Delete",
+      true
+    );
+    if (!confirmed) return;
+    try {
+      await deleteTask(task.id);
+      showSnackbar("Task deleted", "success");
+      onUpdate();
+    } catch (err) {
+      showSnackbar("Failed to delete task", "error");
+      console.error("Delete task error:", err);
+    }
   });
 
   return card;
@@ -221,8 +254,11 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
       </div>
       <div id="task-modal-err" class="form-error hidden"></div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="task-cancel">Cancel</button>
-        <button class="btn btn-primary" id="task-save">${isEdit ? "Save" : "Create Task"}</button>
+        <button class="btn btn-secondary ripple" id="task-cancel">Cancel</button>
+        <button class="btn btn-primary ripple" id="task-save">
+          <span id="task-save-text">${isEdit ? "Save" : "Create Task"}</span>
+          <span id="task-save-spinner" class="btn-spinner hidden"></span>
+        </button>
       </div>
     </div>
   `;
@@ -245,12 +281,22 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
 
   backdrop.querySelector("#task-save").addEventListener("click", async () => {
     const title = backdrop.querySelector("#task-title").value.trim();
+    const errEl = backdrop.querySelector("#task-modal-err");
+    const saveBtn = backdrop.querySelector("#task-save");
+    const saveText = backdrop.querySelector("#task-save-text");
+    const saveSpinner = backdrop.querySelector("#task-save-spinner");
+
     if (!title) {
-      const err = backdrop.querySelector("#task-modal-err");
-      err.textContent = "Task title is required.";
-      err.classList.remove("hidden");
+      errEl.textContent = "Task title is required.";
+      errEl.classList.remove("hidden");
       return;
     }
+
+    errEl.classList.add("hidden");
+    saveBtn.disabled = true;
+    saveText.textContent = isEdit ? "Saving…" : "Creating…";
+    saveSpinner.classList.remove("hidden");
+
     const data = {
       title,
       description: backdrop.querySelector("#task-desc").value.trim(),
@@ -260,15 +306,24 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
       dueDate:    backdrop.querySelector("#task-due").value      || null,
       reminderTime: backdrop.querySelector("#task-reminder").value || null,
     };
+
     try {
-      if (isEdit) await updateTask(existing.id, data);
-      else await createTask(uid, data);
+      if (isEdit) {
+        await updateTask(existing.id, data);
+        showSnackbar("Task updated!", "success");
+      } else {
+        await createTask(uid, data);
+        showSnackbar("Task created!", "success");
+      }
       backdrop.remove();
       onSave();
     } catch (e) {
-      const err = backdrop.querySelector("#task-modal-err");
-      err.textContent = "Failed to save task. Try again.";
-      err.classList.remove("hidden");
+      saveBtn.disabled = false;
+      saveText.textContent = isEdit ? "Save" : "Create Task";
+      saveSpinner.classList.add("hidden");
+      errEl.textContent = "Failed to save task. Try again.";
+      errEl.classList.remove("hidden");
+      showSnackbar("Failed to save task", "error");
     }
   });
 

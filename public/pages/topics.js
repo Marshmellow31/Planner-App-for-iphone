@@ -5,6 +5,7 @@
 import { getTopics, createTopic, updateTopic, deleteTopic, getTasks } from "../db.js";
 import { navigate } from "../app.js";
 import { escHtml } from "./dashboard.js";
+import { showSnackbar, showConfirmDialog } from "../snackbar.js";
 
 export async function renderTopics(container, uid, subjectId, subjectName) {
   if (!subjectId) {
@@ -15,13 +16,13 @@ export async function renderTopics(container, uid, subjectId, subjectName) {
   container.innerHTML = `
     <div class="page-header">
       <div class="flex items-center gap-sm">
-        <button class="btn-icon" id="btn-back-subjects" style="font-size:20px;background:none;border:none;color:var(--text-primary)">←</button>
+        <button class="btn-icon ripple" id="btn-back-subjects" style="font-size:20px;background:none;border:none;color:var(--text-primary)">←</button>
         <div>
           <div class="text-muted text-sm">Subject</div>
           <h2 class="page-title" style="font-size:var(--font-size-xl)">${escHtml(subjectName || "Topics")}</h2>
         </div>
       </div>
-      <button class="btn btn-primary btn-sm" id="btn-add-topic">+ Topic</button>
+      <button class="btn btn-primary btn-sm ripple" id="btn-add-topic">+ Topic</button>
     </div>
     <div id="topics-loading" class="animate-pulse text-muted text-sm">Loading…</div>
     <div id="topics-list" class="hidden"></div>
@@ -36,62 +37,91 @@ export async function renderTopics(container, uid, subjectId, subjectName) {
 }
 
 async function loadTopics(container, uid, subjectId, subjectName) {
-  const [topics, allTasks] = await Promise.all([
-    getTopics(uid, subjectId),
-    getTasks(uid, { subjectId }),
-  ]);
+  try {
+    const [topics, allTasks] = await Promise.all([
+      getTopics(uid, subjectId),
+      getTasks(uid, { subjectId }),
+    ]);
 
-  document.getElementById("topics-loading")?.remove();
-  const list = document.getElementById("topics-list");
-  if (!list) return;
-  list.classList.remove("hidden");
-  list.innerHTML = "";
+    document.getElementById("topics-loading")?.remove();
+    const list = document.getElementById("topics-list");
+    if (!list) return;
+    list.classList.remove("hidden");
+    list.innerHTML = "";
 
-  if (topics.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">🗂</div>
-        <div class="empty-title">No topics yet</div>
-        <div class="empty-desc">Tap "+ Topic" to create topics under this subject.</div>
-      </div>`;
-    return;
-  }
+    if (topics.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🗂</div>
+          <div class="empty-title">No topics yet</div>
+          <div class="empty-desc">Tap "+ Topic" to create topics under this subject.</div>
+        </div>`;
+      return;
+    }
 
-  topics.forEach((topic) => {
-    const tasks    = allTasks.filter((t) => t.topicId === topic.id);
-    const done     = tasks.filter((t) => t.isCompleted).length;
-    const rate     = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
-    const isDone   = tasks.length > 0 && done === tasks.length;
+    topics.forEach((topic, i) => {
+      const tasks    = allTasks.filter((t) => t.topicId === topic.id);
+      const done     = tasks.filter((t) => t.isCompleted).length;
+      const rate     = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
+      const isDone   = tasks.length > 0 && done === tasks.length;
 
-    const card = document.createElement("div");
-    card.className = "card mb-sm";
-    card.innerHTML = `
-      <div class="flex justify-between items-center mb-sm">
-        <div class="flex items-center gap-sm">
-          <span style="font-size:20px">${isDone ? "✅" : "📄"}</span>
-          <div class="font-bold">${escHtml(topic.name)}</div>
+      const card = document.createElement("div");
+      card.className = "card mb-sm stagger-item";
+      card.style.animationDelay = `${i * 40}ms`;
+      card.innerHTML = `
+        <div class="flex justify-between items-center mb-sm">
+          <div class="flex items-center gap-sm">
+            <span style="font-size:20px">${isDone ? "✅" : "📄"}</span>
+            <div class="font-bold">${escHtml(topic.name)}</div>
+          </div>
+          <div class="flex gap-sm">
+            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
+            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
+          </div>
         </div>
-        <div class="flex gap-sm">
-          <button class="btn-icon btn-edit" style="width:34px;height:34px;font-size:14px" title="Edit">✏️</button>
-          <button class="btn-icon btn-delete" style="width:34px;height:34px;font-size:14px" title="Delete">🗑</button>
-        </div>
-      </div>
-      <div class="text-muted text-sm mb-sm">${done}/${tasks.length} tasks completed</div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${rate}%"></div></div>
-    `;
+        <div class="text-muted text-sm mb-sm">${done}/${tasks.length} tasks completed</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${rate}%"></div></div>
+      `;
 
-    card.querySelector(".btn-edit").addEventListener("click", () =>
-      openTopicModal(uid, subjectId, topic, () => loadTopics(container, uid, subjectId, subjectName))
-    );
+      card.querySelector(".btn-edit").addEventListener("click", () =>
+        openTopicModal(uid, subjectId, topic, () => loadTopics(container, uid, subjectId, subjectName))
+      );
 
-    card.querySelector(".btn-delete").addEventListener("click", async () => {
-      if (!confirm(`Delete topic "${topic.name}"?`)) return;
-      await deleteTopic(topic.id);
-      loadTopics(container, uid, subjectId, subjectName);
+      card.querySelector(".btn-delete").addEventListener("click", async () => {
+        const confirmed = await showConfirmDialog(
+          "Delete Topic",
+          `Delete topic "${topic.name}"?`,
+          "Delete",
+          true
+        );
+        if (!confirmed) return;
+        try {
+          await deleteTopic(topic.id);
+          showSnackbar("Topic deleted", "success");
+          loadTopics(container, uid, subjectId, subjectName);
+        } catch (err) {
+          showSnackbar("Failed to delete topic", "error");
+          console.error("Delete topic error:", err);
+        }
+      });
+
+      list.appendChild(card);
     });
-
-    list.appendChild(card);
-  });
+  } catch (err) {
+    showSnackbar("Failed to load topics", "error");
+    console.error("Load topics error:", err);
+    document.getElementById("topics-loading")?.remove();
+    const list = document.getElementById("topics-list");
+    if (list) {
+      list.classList.remove("hidden");
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <div class="empty-title">Something went wrong</div>
+          <div class="empty-desc">Please try again.</div>
+        </div>`;
+    }
+  }
 }
 
 // ── Topic Modal ───────────────────────────────────────────────
@@ -108,9 +138,13 @@ function openTopicModal(uid, subjectId, existing, onSave) {
         <label class="form-label">Topic Name</label>
         <input class="form-input" id="topic-name-input" value="${escHtml(existing?.name || "")}" placeholder="e.g. Chapter 3 - Trigonometry" />
       </div>
+      <div id="topic-modal-err" class="form-error hidden"></div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="topic-cancel">Cancel</button>
-        <button class="btn btn-primary" id="topic-save">${isEdit ? "Save" : "Create"}</button>
+        <button class="btn btn-secondary ripple" id="topic-cancel">Cancel</button>
+        <button class="btn btn-primary ripple" id="topic-save">
+          <span id="topic-save-text">${isEdit ? "Save" : "Create"}</span>
+          <span id="topic-save-spinner" class="btn-spinner hidden"></span>
+        </button>
       </div>
     </div>
   `;
@@ -120,11 +154,41 @@ function openTopicModal(uid, subjectId, existing, onSave) {
 
   backdrop.querySelector("#topic-save").addEventListener("click", async () => {
     const name = backdrop.querySelector("#topic-name-input").value.trim();
-    if (!name) return;
-    if (isEdit) await updateTopic(existing.id, { name });
-    else await createTopic(uid, { subjectId, name });
-    backdrop.remove();
-    onSave();
+    const errEl = backdrop.querySelector("#topic-modal-err");
+    const saveBtn = backdrop.querySelector("#topic-save");
+    const saveText = backdrop.querySelector("#topic-save-text");
+    const saveSpinner = backdrop.querySelector("#topic-save-spinner");
+
+    if (!name) {
+      errEl.textContent = "Topic name is required.";
+      errEl.classList.remove("hidden");
+      return;
+    }
+
+    errEl.classList.add("hidden");
+    saveBtn.disabled = true;
+    saveText.textContent = isEdit ? "Saving…" : "Creating…";
+    saveSpinner.classList.remove("hidden");
+
+    try {
+      if (isEdit) {
+        await updateTopic(existing.id, { name });
+        showSnackbar("Topic updated", "success");
+      } else {
+        await createTopic(uid, { subjectId, name });
+        showSnackbar("Topic created", "success");
+      }
+      backdrop.remove();
+      onSave();
+    } catch (err) {
+      saveBtn.disabled = false;
+      saveText.textContent = isEdit ? "Save" : "Create";
+      saveSpinner.classList.add("hidden");
+      errEl.textContent = "Failed to save topic. Try again.";
+      errEl.classList.remove("hidden");
+      showSnackbar("Failed to save topic", "error");
+      console.error("Save topic error:", err);
+    }
   });
 
   document.body.appendChild(backdrop);
