@@ -2,7 +2,7 @@
 // service-worker.js  — StudyFlow PWA Service Worker
 // ============================================================
 
-const CACHE_NAME = "studyflow-v2";
+const CACHE_NAME = "studyflow-v3";
 const SHELL_ASSETS = [
   "/",
   "/index.html",
