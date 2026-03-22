@@ -185,6 +185,11 @@ function initAuthForms() {
   $("link-to-login")?.addEventListener("click",  (e) => { e.preventDefault(); show("auth-login"); });
   $("link-forgot-pw")?.addEventListener("click", (e) => { e.preventDefault(); show("auth-forgot"); });
   $("link-back-to-login")?.addEventListener("click", (e) => { e.preventDefault(); show("auth-login"); });
+
+  // ── Close auth ───────────────────────────────────────────
+  document.querySelectorAll(".auth-close-btn").forEach((btn) => {
+    btn.addEventListener("click", () => showLanding());
+  });
 }
 
 function initLanding() {
