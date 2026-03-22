@@ -1,0 +1,13 @@
+{
+  "name": "student-planner-pwa",
+  "version": "1.0.0",
+  "description": "Production-ready student planner PWA with Firebase and Vercel",
+  "private": true,
+  "scripts": {
+    "dev": "npx serve public -l 3000",
+    "deploy": "vercel --prod",
+    "deploy:rules": "firebase deploy --only firestore:rules",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:all": "firebase deploy --only firestore:rules,functions && vercel --prod"
+  }
+}

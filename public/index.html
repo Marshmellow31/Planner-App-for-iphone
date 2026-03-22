@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="StudyFlow — your personal student planner. Manage subjects, topics, tasks, and track your weekly progress." />
+  <title>StudyFlow — Student Planner</title>
+
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6c63ff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- iOS Safari PWA Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="StudyFlow" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="/icons/icon-512.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/styles.css" />
+
+  <!-- Preconnect for speed -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" />
+</head>
+<body>
+
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<!--  APP ROOT                                    -->
+<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+<div id="app-root">
+
+  <!-- ── LANDING PAGE ────────────────────────────── -->
+  <div id="page-landing" class="landing hidden">
+    <div class="landing-hero">
+      <div class="landing-logo">📚</div>
+      <h1 class="landing-title">StudyFlow</h1>
+      <p class="landing-subtitle">Your personal academic planner — subjects, topics, tasks &amp; reminders, all in one place.</p>
+      <div class="landing-cta">
+        <button class="btn btn-primary btn-full" id="btn-get-started">Get Started Free</button>
+        <button class="btn btn-secondary btn-full" id="btn-landing-login">I already have an account</button>
+      </div>
+    </div>
+
+    <div class="features-grid" style="padding:0 var(--space-md) var(--space-md)">
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <div class="feature-title">Task Manager</div>
+        <div class="feature-desc">Set priorities, due dates and reminders</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Progress Charts</div>
+        <div class="feature-desc">Weekly analytics at a glance</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <div class="feature-title">Smart Reminders</div>
+        <div class="feature-desc">Push notifications via Firebase</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <div class="feature-title">PWA on iPhone</div>
+        <div class="feature-desc">Add to Home Screen for offline use</div>
+      </div>
+    </div>
+
+    <div class="install-banner" style="margin:0 var(--space-md) var(--space-xl)">
+      <div class="install-banner-title">📲 Add to iPhone Home Screen</div>
+      <div class="install-step"><span>1.</span><span>Open this page in <strong>Safari</strong></span></div>
+      <div class="install-step"><span>2.</span><span>Tap the <strong>Share</strong> icon (↑)</span></div>
+      <div class="install-step"><span>3.</span><span>Tap <strong>"Add to Home Screen"</strong></span></div>
+      <div class="install-step"><span>4.</span><span>Tap <strong>Add</strong> — that's it! 🎉</span></div>
+    </div>
+  </div>
+
+  <!-- ── AUTH PAGE ──────────────────────────────── -->
+  <div id="page-auth" class="hidden">
+    <!-- Login -->
+    <div id="auth-login" class="auth-page">
+      <div class="auth-card">
+        <div class="auth-logo">📚</div>
+        <h2 class="auth-title">Welcome back</h2>
+        <p class="auth-subtitle">Sign in to your StudyFlow account</p>
+        <form id="form-login" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email</label>
+            <input class="form-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <div id="login-error" class="form-error hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-login">Sign In</button>
+        </form>
+        <div class="auth-switch">
+          <a href="#" id="link-forgot-pw">Forgot password?</a>
+        </div>
+        <div class="auth-switch" style="margin-top:8px">
+          Don't have an account? <a href="#" id="link-to-signup">Sign up</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Signup -->
+    <div id="auth-signup" class="auth-page hidden">
+      <div class="auth-card">
+        <div class="auth-logo">📚</div>
+        <h2 class="auth-title">Create account</h2>
+        <p class="auth-subtitle">Start your StudyFlow journey</p>
+        <form id="form-signup" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="signup-name">Display Name</label>
+            <input class="form-input" type="text" id="signup-name" placeholder="Your name" autocomplete="name" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email</label>
+            <input class="form-input" type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="signup-password">Password</label>
+            <input class="form-input" type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" required />
+          </div>
+          <div id="signup-error" class="form-error hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-signup">Create Account</button>
+        </form>
+        <div class="auth-switch">
+          Already have an account? <a href="#" id="link-to-login">Sign in</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forgot Password -->
+    <div id="auth-forgot" class="auth-page hidden">
+      <div class="auth-card">
+        <div class="auth-logo">🔑</div>
+        <h2 class="auth-title">Reset Password</h2>
+        <p class="auth-subtitle">We'll send a reset link to your email</p>
+        <form id="form-forgot" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="forgot-email">Email</label>
+            <input class="form-input" type="email" id="forgot-email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div id="forgot-msg" class="form-error hidden"></div>
+          <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+        </form>
+        <div class="auth-switch" style="margin-top:12px">
+          <a href="#" id="link-back-to-login">← Back to login</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN APP ────────────────────────────────── -->
+  <div id="page-app" class="hidden">
+
+    <!-- Page Content -->
+    <div class="app-container">
+      <div id="main-content" class="page-content"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <button class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" data-page="subjects">
+        <span class="nav-icon">📖</span>
+        <span>Subjects</span>
+      </button>
+      <button class="nav-item" data-page="tasks">
+        <span class="nav-icon">✅</span>
+        <span>Tasks</span>
+      </button>
+      <button class="nav-item" data-page="analytics">
+        <span class="nav-icon">📊</span>
+        <span>Analytics</span>
+      </button>
+      <button class="nav-item" data-page="settings">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </button>
+    </nav>
+
+    <!-- FAB (Quick Add Task) -->
+    <button class="fab" id="fab-add-task" aria-label="Add Task" title="Add Task">＋</button>
+
+    <!-- Install Prompt Banner -->
+    <div class="install-prompt hidden" id="install-prompt">
+      <span style="font-size:28px">📲</span>
+      <div class="install-prompt-text">
+        <div class="install-prompt-title">Add to Home Screen</div>
+        <div class="install-prompt-desc">Tap Share → "Add to Home Screen" in Safari</div>
+      </div>
+      <button class="install-prompt-close" id="install-prompt-close">✕</button>
+    </div>
+
+  </div><!-- /#page-app -->
+
+</div><!-- /#app-root -->
+
+<!-- ── MODALS (rendered by JS) ─────────────────── -->
+<div id="modal-container"></div>
+
+<!-- ── SCRIPTS ─────────────────────────────────── -->
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- App Entry Point (ES module) -->
+<script type="module" src="/app.js"></script>
+
+<!-- Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+        .then(reg => {
+          console.log('[SW] Registered:', reg.scope);
+          // Listen for snooze/open messages from SW
+          navigator.serviceWorker.addEventListener('message', async (event) => {
+            if (event.data?.type === 'SNOOZE_TASK') {
+              const { snoozeTask } = await import('/db.js');
+              await snoozeTask(event.data.taskId, 15);
+            }
+          });
+        })
+        .catch(err => console.warn('[SW] Registration failed:', err));
+    });
+  }
+</script>
+
+</body>
+</html>
