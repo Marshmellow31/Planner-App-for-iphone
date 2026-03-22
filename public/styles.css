@@ -326,6 +326,9 @@ h4 { font-size: var(--font-size-lg); font-weight: 600; }
   right: var(--space-md);
   width: 58px;
   height: 58px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: var(--border-radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -336,6 +339,36 @@ h4 { font-size: var(--font-size-lg); font-weight: 600; }
 }
 .fab:active { transform: scale(0.92); }
 .fab:hover { box-shadow: 0 8px 32px rgba(108, 99, 255, 0.5); }
+
+/* ── Quick Add Task ────────────────────────────────────────── */
+.quick-add-container { width: 100%; }
+.quick-add-input-wrapper { position: relative; width: 100%; }
+.quick-add-submit {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 36px;
+  height: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: var(--border-radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.quick-add-submit:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.quick-add-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 /* ── Forms ─────────────────────────────────────────────────── */
 .form-group {
