@@ -10,6 +10,8 @@ import { renderTopics } from "./pages/topics.js";
 import { renderTasks } from "./pages/tasks.js";
 import { renderAnalytics } from "./pages/analytics.js";
 import { renderSettings } from "./pages/settings.js";
+import { renderDiary } from "./pages/diary.js";
+import { renderCalendar } from "./pages/calendar.js";
 import { showInAppNotification, onForegroundMessage } from "./notifications.js";
 import { showSnackbar } from "./snackbar.js";
 
@@ -93,6 +95,8 @@ export async function navigate(page, params = {}) {
     case "tasks":      await renderTasks(content, uid, profile); break;
     case "analytics":  await renderAnalytics(content, uid, profile); break;
     case "settings":   await renderSettings(content, uid, profile, state); break;
+    case "diary":      await renderDiary(content, uid); break;
+    case "calendar":   await renderCalendar(content, uid); break;
   }
 
   // Bind ripples to newly rendered content

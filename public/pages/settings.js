@@ -82,6 +82,23 @@ export async function renderSettings(container, uid, profile, state) {
       </div>` : ""}
     </div>
 
+    <!-- BTech Journey -->
+    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">🎓 BTech Journey</div>
+    <div class="settings-list mb-md">
+      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <span class="settings-item-label" style="font-size:13px">Program Name</span>
+        <input class="form-input" id="input-btech-name" style="font-size:13px" placeholder="e.g. B.Tech CSE" value="${escHtml(p.btechName||'')}" />
+      </div>
+      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <span class="settings-item-label" style="font-size:13px">Start Date</span>
+        <input class="form-input" type="date" id="input-btech-start" style="font-size:13px" value="${p.btechStart||''}" />
+      </div>
+      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
+        <span class="settings-item-label" style="font-size:13px">End Date (Graduation)</span>
+        <input class="form-input" type="date" id="input-btech-end" style="font-size:13px" value="${p.btechEnd||''}" />
+      </div>
+    </div>
+
     <!-- Account -->
     <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">Account</div>
     <div class="settings-list mb-md">
@@ -130,8 +147,11 @@ export async function renderSettings(container, uid, profile, state) {
   document.getElementById("btn-save-settings")?.addEventListener("click", async () => {
     const weekStartDay = document.getElementById("sel-week-start")?.value || "monday";
     const studyGoals   = document.getElementById("input-goals")?.value?.trim() || "";
-    await updateUserProfile(uid, { weekStartDay, studyGoals });
-    state.profile = { ...state.profile, weekStartDay, studyGoals };
+    const btechName    = document.getElementById("input-btech-name")?.value?.trim() || "";
+    const btechStart   = document.getElementById("input-btech-start")?.value || "";
+    const btechEnd     = document.getElementById("input-btech-end")?.value || "";
+    await updateUserProfile(uid, { weekStartDay, studyGoals, btechName, btechStart, btechEnd });
+    state.profile = { ...state.profile, weekStartDay, studyGoals, btechName, btechStart, btechEnd };
     const msg = document.getElementById("settings-msg");
     if (msg) {
       msg.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="check" style="width:16px;height:16px"></i> Settings saved!</span>`;

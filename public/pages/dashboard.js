@@ -25,6 +25,9 @@ export async function renderDashboard(container, uid, profile) {
     </div>
     <div id="dash-loading" class="animate-pulse text-muted text-sm mb-md">Loading your day…</div>
     <div id="dash-content" class="hidden">
+      <!-- BTech Banner -->
+      <div id="dash-btech-banner"></div>
+
       <!-- Quick Add Task -->
       <div class="quick-add-container mb-md">
         <div class="quick-add-input-wrapper">
@@ -96,6 +99,9 @@ export async function renderDashboard(container, uid, profile) {
   });
   quickAddBtn?.addEventListener("click", submitQuickAdd);
 
+  // BTech Banner
+  renderBTechBanner(profile);
+
   // Fetch initial data
   await updateDashboardState(uid, profile, true);
 
@@ -103,6 +109,45 @@ export async function renderDashboard(container, uid, profile) {
   if (el) el.remove();
   const content = document.getElementById("dash-content");
   if (content) content.classList.remove("hidden");
+}
+
+function renderBTechBanner(profile) {
+  const el = document.getElementById("dash-btech-banner");
+  if (!el) return;
+  const { btechStart, btechEnd, btechName } = profile || {};
+  if (!btechStart || !btechEnd) { el.innerHTML = ""; return; }
+
+  const start = new Date(btechStart + "T00:00:00");
+  const end = new Date(btechEnd + "T00:00:00");
+  const now = new Date(); now.setHours(0,0,0,0);
+  const totalDays = Math.round((end - start) / 86400000);
+  const elapsed = Math.min(Math.max(Math.round((now - start) / 86400000), 0), totalDays);
+  const remaining = totalDays - elapsed;
+  const pct = Math.round((elapsed / totalDays) * 100);
+  const monthsLeft = Math.round(remaining / 30.44);
+
+  el.innerHTML = `
+    <div class="btech-banner mb-md">
+      <div class="btech-banner-top">
+        <div>
+          <div class="btech-degree-label">🎓 ${escHtml(btechName || "B.Tech Journey")}</div>
+          <div class="btech-tagline">Keep pushing — you've got this!</div>
+        </div>
+        <div class="btech-count-box">
+          <div class="btech-count-num">${monthsLeft}</div>
+          <div class="btech-count-label">months left</div>
+        </div>
+      </div>
+      <div class="btech-progress-bar">
+        <div class="btech-progress-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="btech-progress-meta">
+        <span>${elapsed} days done</span>
+        <span>${pct}% complete</span>
+        <span>${remaining} days left</span>
+      </div>
+    </div>
+  `;
 }
 
 async function updateDashboardState(uid, profile, isFirstLoad = false) {
