@@ -9,12 +9,21 @@ import { navigate } from "../app.js";
 import { showSnackbar } from "../snackbar.js";
 
 let dashboardChart = null;
+let dashboardInterval = null;
 
 export async function renderDashboard(container, uid, profile) {
   if (dashboardChart) {
     dashboardChart.destroy();
     dashboardChart = null;
   }
+  if (dashboardInterval) {
+    clearInterval(dashboardInterval);
+  }
+  
+  // Refresh schedule every minute to update current task logic
+  dashboardInterval = setInterval(() => {
+    updateDashboardState(uid, profile);
+  }, 60000);
 
   container.innerHTML = `
     <div class="page-header">
@@ -28,76 +37,21 @@ export async function renderDashboard(container, uid, profile) {
       <!-- BTech Banner -->
       <div id="dash-btech-banner"></div>
 
-      <!-- Quick Add Task -->
-      <div class="quick-add-container mb-md">
-        <div class="quick-add-input-wrapper">
-          <input type="text" id="quick-add-input" class="form-input" placeholder="Quick add task (Press Enter)..." style="border-radius:24px;padding-right:48px;" />
-          <button id="quick-add-btn" class="quick-add-submit" aria-label="Add task"><i data-lucide="arrow-right" style="width:20px;height:20px"></i></button>
-        </div>
-      </div>
-
       <div class="stats-row mb-md" id="dash-stats"></div>
 
-      <!-- Weekly chart -->
-      <div class="chart-container mb-md stagger-item" style="animation-delay:160ms">
-        <div class="chart-title">This Week's Progress</div>
-        <canvas id="dash-chart" height="140"></canvas>
-      </div>
-
-      <!-- Today's tasks -->
+      <!-- Today's Schedule -->
       <div class="section-header mb-sm">
-        <div class="section-title">Today's Tasks</div>
-        <button class="btn btn-sm btn-ghost ripple" id="btn-see-all-tasks">See all</button>
+        <div class="section-title">Today's Schedule</div>
+        <button class="btn btn-sm btn-ghost ripple" id="btn-see-schedule">Manage</button>
       </div>
-      <div id="today-tasks-list"></div>
+      <div id="today-schedule-list" class="mb-md"></div>
 
       <!-- Subject summary -->
       <div id="dash-subjects-section"></div>
     </div>
   `;
 
-  document.getElementById("btn-see-all-tasks")?.addEventListener("click", () => navigate("tasks"));
-
-  // ── Quick Add Task ───────────────────────────────────────────
-  const quickAddInput = document.getElementById("quick-add-input");
-  const quickAddBtn = document.getElementById("quick-add-btn");
-
-  const submitQuickAdd = async () => {
-    const title = quickAddInput.value.trim();
-    if (!title) return;
-    quickAddInput.disabled = true;
-    quickAddBtn.disabled = true;
-    
-    const today = new Date();
-    today.setHours(12, 0, 0, 0); // Noon
-
-    try {
-      const { createTask } = await import("../db.js");
-      await createTask(uid, {
-        title,
-        priority: "medium",
-        dueDate: today.toISOString(),
-      });
-      showSnackbar("Task added to Today", "success");
-      quickAddInput.value = "";
-      quickAddInput.disabled = false;
-      quickAddBtn.disabled = false;
-      quickAddInput.focus();
-      
-      // Update dynamically
-      await updateDashboardState(uid, profile);
-    } catch (err) {
-      showSnackbar("Failed to add task", "error");
-      quickAddInput.disabled = false;
-      quickAddBtn.disabled = false;
-      quickAddInput.focus();
-    }
-  };
-
-  quickAddInput?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") submitQuickAdd();
-  });
-  quickAddBtn?.addEventListener("click", submitQuickAdd);
+  document.getElementById("btn-see-schedule")?.addEventListener("click", () => navigate("schedule"));
 
   // BTech Banner
   renderBTechBanner(profile);
@@ -184,41 +138,101 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
     `;
   }
 
-  // 2. Chart Component Update
-  const ctx = document.getElementById("dash-chart");
-  const chartData = buildWeeklyLine(analyticsData);
-  if (dashboardChart) {
-    dashboardChart.data.labels = chartData.labels;
-    dashboardChart.data.datasets[0].data = chartData.datasets[0].data;
-    dashboardChart.update();
-  } else if (ctx && window.Chart) {
-    dashboardChart = new Chart(ctx, {
-      type: "line",
-      data: chartData,
-      options: chartBaseOptions("Tasks Completed"),
-    });
-  }
+  // 2. Scheduled Tasks Logic
+  const schedList = document.getElementById("today-schedule-list");
+  if (schedList) {
+    const { getWeeklySchedule } = await import("../db.js");
+    const scheduleData = await getWeeklySchedule(uid);
+    
+    const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const todayStr = DAYS[new Date().getDay()];
+    let todayTasks = scheduleData[todayStr] || [];
 
-  // 3. Today Tasks
-  const todayList = document.getElementById("today-tasks-list");
-  if (todayList) {
-    todayList.innerHTML = "";
-    if (analyticsData.todayTasks.length === 0) {
-      todayList.innerHTML = `
-        <div class="empty-state ${isFirstLoad ? 'stagger-item' : ''}" style="padding:var(--space-xl);animation-delay:200ms">
-          <div class="empty-icon"><i data-lucide="sparkles"></i></div>
-          <div class="empty-title">All clear today!</div>
-          <div class="empty-desc">No tasks due today. Add one above.</div>
+    // Sort by start time
+    todayTasks.sort((a, b) => a.start_time.localeCompare(b.start_time));
+
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    
+    // Parse HH:MM to minutes
+    const toMins = (t) => {
+      const [h, m] = t.split(":");
+      return parseInt(h) * 60 + parseInt(m);
+    };
+
+    let prevTask = null, currTask = null, nextTasks = [];
+
+    todayTasks.forEach(t => {
+      const sMins = toMins(t.start_time);
+      const eMins = toMins(t.end_time);
+
+      if (currentMins >= sMins && currentMins < eMins) {
+        currTask = t;
+      } else if (currentMins >= eMins) {
+        prevTask = t; // Will end up being the last completed task because of the sort
+      } else if (currentMins < sMins) {
+        nextTasks.push(t);
+      }
+    });
+
+    // Build the display list
+    let displayTasks = [];
+    if (currTask) {
+      if (prevTask) displayTasks.push({ ...prevTask, _state: "prev" });
+      displayTasks.push({ ...currTask, _state: "curr" });
+      if (nextTasks.length > 0) displayTasks.push({ ...nextTasks[0], _state: "next" });
+    } else {
+      // No current task, show up to 3 upcoming
+      displayTasks = nextTasks.slice(0, 3).map(t => ({ ...t, _state: "next" }));
+    }
+
+    if (displayTasks.length === 0 && todayTasks.length > 0) {
+      // Only previous tasks left today
+      displayTasks.push({ ...todayTasks[todayTasks.length - 1], _state: "prev" });
+    }
+
+    if (displayTasks.length === 0) {
+      schedList.innerHTML = `
+        <div class="empty-state" style="padding:var(--space-md); text-align:left; flex-direction:row; align-items:center; gap:var(--space-md);">
+          <div class="empty-icon" style="margin:0"><i data-lucide="coffee"></i></div>
+          <div>
+            <div class="empty-title" style="margin:0; font-size:var(--font-size-md)">Free Day!</div>
+            <div class="empty-desc">No more tasks scheduled for today.</div>
+          </div>
         </div>`;
     } else {
-      analyticsData.todayTasks.forEach((task, index) => {
-        const card = buildTaskCard(task, uid, () => updateDashboardState(uid, profile));
-        if (isFirstLoad) {
-          card.classList.add("stagger-item");
-          card.style.animationDelay = `${200 + (index * 40)}ms`;
+      schedList.innerHTML = displayTasks.map((task, index) => {
+        let badgeStyle = "background: var(--bg-hover); color: var(--text-secondary);";
+        let stateLabel = "";
+        let borderGlow = "";
+
+        if (task._state === "curr") {
+          badgeStyle = "background: #1B1B1B; color: #F5F5F5; border: 1px solid #333333; animation: pulse 2s infinite;";
+          stateLabel = "HAPPENING NOW";
+          borderGlow = "border: 1px solid #4A4A4A; box-shadow: 0 0 16px rgba(255,255,255,0.05);";
+        } else if (task._state === "prev") {
+          stateLabel = "COMPLETED";
+        } else if (task._state === "next") {
+          badgeStyle = "background: #111111; color: #A1A1A1; border: 1px solid #262626;";
+          stateLabel = "UPCOMING";
         }
-        todayList.appendChild(card);
-      });
+
+        return `
+          <div class="task-card priority-${task.priority.toLowerCase()} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${200 + (index * 40)}ms; cursor:default; margin-bottom:var(--space-sm); ${borderGlow}">
+            <div class="task-body" style="flex:1;">
+              <div style="font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:4px; padding:2px 6px; display:inline-block; border-radius:4px; ${badgeStyle}">${stateLabel}</div>
+              <div class="task-title" style="word-break:break-word; font-size:var(--font-size-md);">${escHtml(task.title)}</div>
+              <div class="task-meta" style="margin-top:4px;">
+                <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary)">
+                  <i data-lucide="clock" style="width:12px;height:12px"></i> 
+                  ${task.start_time} - ${task.end_time}
+                </span>
+                <span class="badge badge-${task.priority.toLowerCase()}">${task.priority}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
     }
   }
 

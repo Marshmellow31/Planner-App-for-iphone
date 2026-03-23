@@ -178,41 +178,37 @@
   <!-- ── MAIN APP ────────────────────────────────── -->
   <div id="page-app" class="hidden">
 
+    <!-- Hamburger Menu Button -->
+    <button class="menu-toggle btn btn-icon ripple" id="btn-menu-toggle" aria-label="Open Menu">
+      <i data-lucide="menu"></i>
+    </button>
+
     <!-- Page Content -->
     <div class="app-container">
       <div id="main-content" class="page-content"></div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav" id="bottom-nav">
-      <button class="nav-item active" data-page="dashboard">
-        <span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>
-        <span>Home</span>
-      </button>
-      <button class="nav-item" data-page="subjects">
-        <span class="nav-icon"><i data-lucide="book"></i></span>
-        <span>Subjects</span>
-      </button>
-      <button class="nav-item" data-page="tasks">
-        <span class="nav-icon"><i data-lucide="check-circle-2"></i></span>
-        <span>Tasks</span>
-      </button>
-      <button class="nav-item" data-page="calendar">
-        <span class="nav-icon"><i data-lucide="calendar-range"></i></span>
-        <span>Calendar</span>
-      </button>
-      <button class="nav-item" data-page="diary">
-        <span class="nav-icon"><i data-lucide="notebook-pen"></i></span>
-        <span>Diary</span>
-      </button>
-      <button class="nav-item" data-page="analytics">
-        <span class="nav-icon"><i data-lucide="bar-chart"></i></span>
-        <span>Stats</span>
-      </button>
-      <button class="nav-item" data-page="settings">
-        <span class="nav-icon"><i data-lucide="settings"></i></span>
-        <span>Settings</span>
-      </button>
+    <!-- Side Drawer & Overlay -->
+    <div class="drawer-overlay hidden" id="drawer-overlay"></div>
+    <nav class="side-drawer" id="side-drawer">
+      <div class="drawer-header">
+        <div class="drawer-logo"><i data-lucide="book-open"></i> StudyFlow</div>
+        <button class="drawer-close btn btn-ghost btn-sm" id="btn-close-drawer" aria-label="Close Menu"><i data-lucide="x"></i></button>
+      </div>
+      <div class="drawer-links">
+        <button class="drawer-item active ripple" data-page="dashboard">
+          <i data-lucide="layout-dashboard"></i> Dashboard
+        </button>
+        <button class="drawer-item ripple" data-page="subjects">
+          <i data-lucide="book"></i> Subjects
+        </button>
+        <button class="drawer-item ripple" data-page="schedule">
+          <i data-lucide="calendar"></i> Schedule
+        </button>
+        <button class="drawer-item ripple" data-page="settings">
+          <i data-lucide="settings"></i> Settings
+        </button>
+      </div>
     </nav>
 
     <!-- FAB (Quick Add Task) -->

@@ -70,8 +70,8 @@ export async function navigate(page, params = {}) {
   if (params.subjectId) state.selectedSubjectId = params.subjectId;
   if (params.subjectName) state.selectedSubjectName = params.subjectName;
 
-  // Update bottom nav active state
-  document.querySelectorAll(".nav-item").forEach((btn) => {
+  // Update drawer active state
+  document.querySelectorAll(".drawer-item").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.page === page);
   });
 
@@ -97,6 +97,10 @@ export async function navigate(page, params = {}) {
     case "settings":   await renderSettings(content, uid, profile, state); break;
     case "diary":      await renderDiary(content, uid); break;
     case "calendar":   await renderCalendar(content, uid); break;
+    case "schedule":   
+      const { renderSchedule } = await import("./pages/schedule.js");
+      await renderSchedule(content, uid, profile); 
+      break;
   }
 
   // Bind ripples to newly rendered content
@@ -214,10 +218,32 @@ function initLanding() {
   });
 }
 
-// ── Bottom navigation ─────────────────────────────────────────────────────────
-function initBottomNav() {
-  document.querySelectorAll(".nav-item[data-page]").forEach((btn) => {
-    btn.addEventListener("click", () => navigate(btn.dataset.page));
+// ── Side Drawer Navigation ───────────────────────────────────────────────────
+function initNavigation() {
+  const drawer = document.getElementById("side-drawer");
+  const overlay = document.getElementById("drawer-overlay");
+  const toggleBtn = document.getElementById("btn-menu-toggle");
+  const closeBtn = document.getElementById("btn-close-drawer");
+
+  function openDrawer() {
+    drawer?.classList.add("open");
+    overlay?.classList.add("active");
+  }
+
+  function closeDrawer() {
+    drawer?.classList.remove("open");
+    overlay?.classList.remove("active");
+  }
+
+  toggleBtn?.addEventListener("click", openDrawer);
+  closeBtn?.addEventListener("click", closeDrawer);
+  overlay?.addEventListener("click", closeDrawer);
+
+  document.querySelectorAll(".drawer-item[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      navigate(btn.dataset.page);
+      closeDrawer();
+    });
   });
 }
 
@@ -303,7 +329,7 @@ async function handleUserAuth(user) {
 
   // Show app
   showAppPage();
-  initBottomNav();
+  initNavigation();
   initFab();
   initForegroundMessages();
 

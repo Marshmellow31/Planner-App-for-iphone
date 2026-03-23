@@ -260,3 +260,26 @@ export async function saveCustomEvents(uid, events) {
     updatedAt: serverTimestamp(),
   });
 }
+
+// ─────────────────────────────────────────────────────────────
+//  WEEKLY SCHEDULE
+// ─────────────────────────────────────────────────────────────
+const defaultSchedule = {
+  Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
+};
+
+export async function getWeeklySchedule(uid) {
+  const snap = await getDoc(doc(db, "users", uid, "planner", "schedule"));
+  if (snap.exists()) {
+    const data = snap.data();
+    return { ...defaultSchedule, ...data.week_schedule };
+  }
+  return defaultSchedule;
+}
+
+export async function saveWeeklySchedule(uid, week_schedule) {
+  await setDoc(doc(db, "users", uid, "planner", "schedule"), {
+    week_schedule,
+    updatedAt: serverTimestamp(),
+  });
+}
