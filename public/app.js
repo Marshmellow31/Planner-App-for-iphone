@@ -88,6 +88,10 @@ export async function navigate(page, params = {}) {
 
   switch (page) {
     case "dashboard":  await renderDashboard(content, uid, profile); break;
+    case "schedule":
+      const { renderSchedule } = await import("./pages/schedule.js");
+      await renderSchedule(content, uid, profile);
+      break;
     case "subjects":   await renderSubjects(content, uid, profile); break;
     case "topics":     await renderTopics(content, uid, params.subjectId || state.selectedSubjectId, params.subjectName || state.selectedSubjectName); break;
     case "tasks":      await renderTasks(content, uid, profile); break;
