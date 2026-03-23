@@ -7,7 +7,7 @@ import { navigate } from "../app.js";
 import { escHtml } from "./dashboard.js";
 import { showSnackbar, showConfirmDialog } from "../snackbar.js";
 
-const COLORS = ["#6c63ff","#ff6b81","#ffa502","#2ed573","#1e90ff","#ff6348","#7bed9f","#eccc68"];
+const COLORS = ["#7C6FA8", "#B85A5A", "#C6A85B", "#5FA87A", "#5A8DB8", "#A87C6F", "#6FA8A8", "#A88A6F"];
 
 export async function renderSubjects(container, uid, profile) {
   container.innerHTML = `
@@ -57,19 +57,21 @@ async function loadSubjects(container, uid, profile) {
       const rate   = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
 
       const card = document.createElement("div");
-      card.className = "subject-card mb-sm clickable stagger-item";
+      card.className = "subject-card clickable stagger-item";
       card.style.setProperty("--subject-color", sub.color);
       card.style.animationDelay = `${index * 60}ms`;
       card.innerHTML = `
-        <div class="flex justify-between items-center mb-sm">
-          <div class="subject-name">${escHtml(sub.name)}</div>
-          <div class="flex gap-sm">
-            <button class="btn-icon btn-edit ripple" style="width:34px;height:34px" title="Edit"><i data-lucide="pencil" style="width:14px;height:14px"></i></button>
-            <button class="btn-icon btn-delete ripple" style="width:34px;height:34px" title="Delete"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button>
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="subject-name">${escHtml(sub.name)}</div>
+            <div class="subject-stats">${topics.length} topic${topics.length !== 1 ? "s" : ""} · ${done}/${tasks.length} tasks done</div>
+          </div>
+          <div class="flex gap-sm" style="margin-left: 12px; gap: 8px;">
+            <button class="btn-subject-action btn-edit" title="Edit"><i data-lucide="pencil" style="width:16px;height:16px"></i></button>
+            <button class="btn-subject-action btn-delete" title="Delete"><i data-lucide="trash-2" style="width:16px;height:16px"></i></button>
           </div>
         </div>
-        <div class="subject-stats">${topics.length} topic${topics.length !== 1 ? "s" : ""} · ${done}/${tasks.length} tasks done</div>
-        <div class="progress-bar mt-sm"><div class="progress-fill" style="width:${rate}%"></div></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${rate}%"></div></div>
       `;
 
       card.addEventListener("click", (e) => {

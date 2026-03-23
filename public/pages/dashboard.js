@@ -46,8 +46,8 @@ export async function renderDashboard(container, uid, profile) {
       </div>
       <div id="today-schedule-list" class="mb-md"></div>
 
-      <!-- Subject summary -->
-      <div id="dash-subjects-section"></div>
+      <!-- Tasks summary -->
+      <div id="dash-tasks-section"></div>
     </div>
   `;
 
@@ -236,34 +236,60 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
     }
   }
 
-  // 4. Subjects Summary
-  const subSection = document.getElementById("dash-subjects-section");
-  if (subSection) {
-    if (subjects.length > 0) {
-      const subjectMap = {};
-      analyticsData.subjectBreakdown.forEach((s) => { subjectMap[s.id] = s; });
-      let html = `
+  // 4. Tasks Summary
+  const tasksSection = document.getElementById("dash-tasks-section");
+  if (tasksSection) {
+    const allTasks = await getTasks(uid);
+    const pendingTasks = allTasks.filter(t => !t.isCompleted);
+    // Sort pending tasks by due date (closest first)
+    pendingTasks.sort((a, b) => {
+      const dateA = a.dueDate?.toMillis ? a.dueDate.toMillis() : (a.dueDate ? new Date(a.dueDate).getTime() : Infinity);
+      const dateB = b.dueDate?.toMillis ? b.dueDate.toMillis() : (b.dueDate ? new Date(b.dueDate).getTime() : Infinity);
+      return dateA - dateB;
+    });
+    
+    const displayTasks = pendingTasks.slice(0, 5);
+
+    if (displayTasks.length > 0) {
+      tasksSection.innerHTML = `
         <div class="section-header mb-sm" style="margin-top:var(--space-md)">
-          <div class="section-title">Subjects</div>
-          <button class="btn btn-sm btn-ghost ripple" id="btn-see-subjects">Manage</button>
+          <div class="section-title">Upcoming Tasks</div>
+          <button class="btn btn-sm btn-ghost ripple" id="btn-see-tasks">See All</button>
         </div>
-        <div class="subjects-grid" id="subject-summary-grid">
+        <div class="tasks-list" id="dashboard-tasks-list"></div>
       `;
-      subjects.slice(0, 4).forEach((sub, index) => {
-        const data = subjectMap[sub.id] || { total: 0, completed: 0, rate: 0 };
-        html += `
-          <div class="subject-card ${isFirstLoad ? 'stagger-item' : ''}" style="--subject-color:${sub.color}; animation-delay:${250 + (index * 40)}ms" onclick="window._navTopic('${sub.id}', '${escHtml(sub.name)}')">
-            <div class="subject-name">${escHtml(sub.name)}</div>
-            <div class="subject-stats">${data.completed}/${data.total} tasks</div>
-            <div class="progress-bar"><div class="progress-fill" style="width:${data.rate}%"></div></div>
-          </div>
-        `;
+      const listEl = document.getElementById("dashboard-tasks-list");
+      displayTasks.forEach((task, index) => {
+        const card = buildTaskCard(task, uid, () => updateDashboardState(uid, profile));
+        if (isFirstLoad) {
+          card.classList.add("stagger-item");
+          card.style.animationDelay = `${250 + (index * 40)}ms`;
+        }
+        card.style.cursor = "pointer";
+        card.addEventListener("click", (e) => {
+          // Prevent navigation if clicking on an action button
+          if (!e.target.closest('.btn')) {
+            navigate("tasks");
+          }
+        });
+        listEl.appendChild(card);
       });
-      html += `</div>`;
-      subSection.innerHTML = html;
-      document.getElementById("btn-see-subjects")?.addEventListener("click", () => navigate("subjects"));
+      document.getElementById("btn-see-tasks")?.addEventListener("click", () => navigate("tasks"));
     } else {
-      subSection.innerHTML = "";
+      tasksSection.innerHTML = `
+        <div class="section-header mb-sm" style="margin-top:var(--space-md)">
+          <div class="section-title">Upcoming Tasks</div>
+          <button class="btn btn-sm btn-ghost ripple" id="btn-see-tasks">Add Task</button>
+        </div>
+        <div class="empty-state" style="padding:var(--space-md); text-align:left; flex-direction:row; align-items:center; gap:var(--space-md);">
+          <div class="empty-icon" style="margin:0"><i data-lucide="check-circle"></i></div>
+          <div>
+            <div class="empty-title" style="margin:0; font-size:var(--font-size-md)">All caught up!</div>
+            <div class="empty-desc">No upcoming tasks right now.</div>
+          </div>
+        </div>
+      `;
+      document.getElementById("btn-see-tasks")?.addEventListener("click", () => navigate("tasks"));
     }
   }
 
@@ -283,20 +309,22 @@ export function buildTaskCard(task, uid, onUpdate) {
   card.className = `task-card priority-${priority}${isDone ? " completed" : ""}`;
   // Use explicit button controls for deletion and completion
   card.innerHTML = `
-    <div class="task-body" style="flex:1;">
-      <div class="task-title" style="word-break:break-word;">${escHtml(task.title)}</div>
-      <div class="task-meta" style="margin-top:4px;">
-        <span class="badge badge-${priority}">${priority}</span>
-        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : ""}
+    <div class="task-top-section">
+      <div class="priority-label ${priority.toLowerCase()}">${priority}</div>
+      <div class="task-actions" style="display:flex; gap:8px;">
+        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} task-check-btn" style="padding: 4px 10px;" title="${isDone ? "Undo" : "Done"}">
+          <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;"></i>
+        </button>
+        <button class="btn btn-sm btn-danger task-delete-btn" style="padding: 4px 10px;" aria-label="Delete" title="Delete">
+          <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+        </button>
       </div>
     </div>
-    <div class="task-actions" style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-      <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} task-check-btn" style="min-width:80px; justify-content:center; padding: 6px 12px;">
-        <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;margin-right:4px;"></i> ${isDone ? "Undo" : "Done"}
-      </button>
-      <button class="btn btn-sm btn-danger task-delete-btn" style="padding: 6px 12px;" aria-label="Delete">
-        <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-      </button>
+    <div class="task-main-section">
+      <div class="task-title">${escHtml(task.title)}</div>
+      <div class="task-meta">
+        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar-off" style="width:12px;height:12px"></i> No date</span>`}
+      </div>
     </div>
   `;
 

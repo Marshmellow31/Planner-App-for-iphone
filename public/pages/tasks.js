@@ -130,26 +130,26 @@ function buildFullTaskCard(task, uid, onUpdate) {
   card.className = `task-card priority-${priority}${isDone ? " completed" : ""}`;
   card.style.marginBottom = "10px";
   card.innerHTML = `
-    <div class="task-body" style="flex:1;">
-      <div class="task-title" style="word-break:break-word;">${escHtml(task.title)}</div>
-      ${task.description ? `<div class="text-muted text-sm" style="margin:2px 0 4px">${escHtml(task.description)}</div>` : ""}
-      <div class="task-meta" style="margin-top:4px;">
-        <span class="badge badge-${priority}">${priority}</span>
-        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : ""}
-        ${task.reminderTime ? `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="bell" style="width:12px;height:12px"></i> Reminder set</span>` : ""}
-      </div>
-    </div>
-    <div class="task-actions" style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-      <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} btn-check ripple" style="min-width:85px; justify-content:center; padding: 6px 12px;">
-        <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;margin-right:4px;"></i> ${isDone ? "Undo" : "Done"}
-      </button>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-sm btn-secondary btn-edit ripple" style="padding: 6px 12px;" aria-label="Edit">
+    <div class="task-top-section">
+      <div class="priority-label ${priority.toLowerCase()}">${priority}</div>
+      <div class="task-actions" style="display:flex; gap:8px;">
+        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} btn-check ripple" style="padding: 4px 10px;" title="${isDone ? "Undo" : "Done"}">
+          <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;"></i>
+        </button>
+        <button class="btn btn-sm btn-ghost btn-edit ripple" style="padding: 4px 10px;" aria-label="Edit" title="Edit">
           <i data-lucide="pencil" style="width:14px;height:14px"></i>
         </button>
-        <button class="btn btn-sm btn-danger btn-del ripple" style="padding: 6px 12px;" aria-label="Delete">
+        <button class="btn btn-sm btn-danger btn-del ripple" style="padding: 4px 10px;" aria-label="Delete" title="Delete">
           <i data-lucide="trash-2" style="width:14px;height:14px"></i>
         </button>
+      </div>
+    </div>
+    <div class="task-main-section">
+      <div class="task-title">${escHtml(task.title)}</div>
+      ${task.description ? `<div class="text-muted text-sm" style="margin-bottom: 4px">${escHtml(task.description)}</div>` : ""}
+      <div class="task-meta">
+        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar-off" style="width:12px;height:12px"></i> No date</span>`}
+        ${task.reminderTime ? `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="bell" style="width:12px;height:12px"></i> Reminder set</span>` : ""}
       </div>
     </div>
   `;

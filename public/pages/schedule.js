@@ -92,23 +92,25 @@ function renderScheduleList(uid) {
 
   listEl.innerHTML = dayTasks.map((task, i) => `
     <div class="task-card priority-${task.priority.toLowerCase()}" style="animation-delay:${i * 40}ms; cursor:default;">
-      <div class="task-body" style="flex:1;">
-        <div class="task-title" style="word-break:break-word;">${escHtml(task.title)}</div>
-        <div class="task-meta" style="margin-top:4px;">
-          <span class="badge badge-${task.priority.toLowerCase()}">${task.priority}</span>
-          <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary)">
+      <div class="task-top-section">
+        <div class="priority-label ${task.priority.toLowerCase()}">${task.priority}</div>
+        <div class="task-actions" style="display:flex; gap:8px;">
+          <button class="btn btn-sm btn-ghost btn-edit-sched" data-id="${task.id}" style="padding: 4px 10px;">
+            <i data-lucide="edit-2" style="width:14px;height:14px;"></i>
+          </button>
+          <button class="btn btn-sm btn-danger btn-del-sched" data-id="${task.id}" style="padding: 4px 10px;">
+            <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+      </div>
+      <div class="task-main-section">
+        <div class="task-title">${escHtml(task.title)}</div>
+        <div class="task-meta">
+          <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:#9CA3AF">
             <i data-lucide="clock" style="width:12px;height:12px"></i> 
             ${task.start_time} - ${task.end_time}
           </span>
         </div>
-      </div>
-      <div class="task-actions" style="display:flex; flex-direction:column; gap:8px;">
-        <button class="btn btn-sm btn-ghost btn-edit-sched" data-id="${task.id}" style="padding: 6px;">
-          <i data-lucide="edit-2" style="width:14px;height:14px;"></i>
-        </button>
-        <button class="btn btn-sm btn-danger btn-del-sched" data-id="${task.id}" style="padding: 6px;">
-          <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
-        </button>
       </div>
     </div>
   `).join("");
