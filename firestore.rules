@@ -57,6 +57,31 @@ service cloud.firestore {
                     && request.resource.data.title is string;
     }
 
+    // ── Scheduler Tasks ──────────────────────────────────────────────
+    match /schedulerTasks/{docId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ── Personal Goals ───────────────────────────────────────────────
+    match /personalGoals/{docId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.title is string;
+    }
+
+    // ── Goal Tasks (auto-generated daily tasks) ──────────────────────
+    match /goalTasks/{docId} {
+      allow read, update, delete: if request.auth != null
+                                  && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+    }
+
     // Deny everything else by default
     match /{document=**} {
       allow read, write: if false;

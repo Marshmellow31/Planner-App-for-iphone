@@ -41,7 +41,7 @@ export async function renderTasks(container, uid, profile) {
   let activeSort   = "newest";
   let allTasks     = [];
 
-  const reload = async () => {
+  const refreshTaskList = async () => {
     try {
       allTasks = await getTasks(uid);
       renderFiltered();
@@ -94,7 +94,7 @@ export async function renderTasks(container, uid, profile) {
     }
 
     tasks.forEach((task, i) => {
-      const card = buildFullTaskCard(task, uid, reload);
+      const card = renderTaskCard(task, uid, refreshTaskList);
       card.classList.add("stagger-item");
       card.style.animationDelay = `${i * 40}ms`;
       list.appendChild(card);
@@ -117,10 +117,49 @@ export async function renderTasks(container, uid, profile) {
     renderFiltered();
   });
 
-  await reload();
+  await refreshTaskList();
 }
 
-function buildFullTaskCard(task, uid, onUpdate) {
+export function isTaskOverdue(task, currentTime) {
+  if (!task.scheduledEnd) return false;
+  let endDate;
+  if (task.scheduledEnd.includes("T")) {
+    endDate = new Date(task.scheduledEnd);
+  } else {
+    // HH:MM format, assume today's date for comparison
+    const [h, m] = task.scheduledEnd.split(":").map(Number);
+    endDate = new Date(currentTime);
+    endDate.setHours(h, m, 0, 0);
+  }
+  return currentTime > endDate;
+}
+
+export function shouldShowStatusActions(task, currentTime) {
+  if (task.isCompleted || task.status === "completed") return false;
+  if (task.status === "missed") return false;
+  return isTaskOverdue(task, currentTime);
+}
+
+export async function updateTaskStatus(taskId, newStatus, refreshCallback) {
+  try {
+    const updates = { status: newStatus };
+    if (newStatus === "pending") {
+      // Keep eligible for rescheduling by dropping the old scheduled times
+      updates.scheduledEnd = null;
+      updates.scheduledStart = null;
+    }
+    await updateTask(taskId, updates);
+    // Persist to localStorage as requested for state backups
+    localStorage.setItem(`task_status_${taskId}`, newStatus);
+    
+    if (refreshCallback) await refreshCallback();
+  } catch (err) {
+    console.error("Failed to update status", err);
+    showSnackbar("Failed to update status", "error");
+  }
+}
+
+function renderTaskCard(task, uid, onUpdate) {
   const card = document.createElement("div");
   const isDone = task.isCompleted;
   const priority = task.priority || "medium";
@@ -149,10 +188,36 @@ function buildFullTaskCard(task, uid, onUpdate) {
       ${task.description ? `<div class="text-muted text-sm" style="margin-bottom: 4px">${escHtml(task.description)}</div>` : ""}
       <div class="task-meta">
         ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar-off" style="width:12px;height:12px"></i> No date</span>`}
-        ${task.reminderTime ? `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="bell" style="width:12px;height:12px"></i> Reminder set</span>` : ""}
+        ${task.scheduledStart && task.scheduledEnd ? `<span style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary);"><i data-lucide="clock" style="width:12px;height:12px"></i> ${task.scheduledStart} - ${task.scheduledEnd}</span>` : ""}
+        ${task.status ? `<span class="badge ${task.status === 'missed' ? 'badge-high' : 'badge-low'}">${task.status}</span>` : ""}
       </div>
     </div>
   `;
+
+  const currentTime = new Date();
+  if (shouldShowStatusActions(task, currentTime)) {
+    const actionsRow = document.createElement("div");
+    actionsRow.style.cssText = "display:flex; gap:8px; margin-top:12px; border-top:1px solid var(--border); padding-top:12px; align-items:center;";
+    actionsRow.innerHTML = `
+      <span style="font-size:12px; color:var(--error); flex:1; display:flex; align-items:center;">
+        <i data-lucide="alert-circle" style="width:14px;height:14px;margin-right:4px;"></i> Overdue
+      </span>
+      <button class="btn btn-sm btn-danger btn-missed" style="font-size:11px; padding:6px 10px;">Missed</button>
+      <button class="btn btn-sm btn-secondary btn-pending" style="font-size:11px; padding:6px 10px;">Pending</button>
+    `;
+
+    actionsRow.querySelector(".btn-missed").addEventListener("click", (e) => {
+      e.stopPropagation();
+      updateTaskStatus(task.id, "missed", onUpdate);
+    });
+
+    actionsRow.querySelector(".btn-pending").addEventListener("click", (e) => {
+      e.stopPropagation();
+      updateTaskStatus(task.id, "pending", onUpdate);
+    });
+
+    card.appendChild(actionsRow);
+  }
 
   card.querySelector(".btn-check").addEventListener("click", async (e) => {
     e.stopPropagation();

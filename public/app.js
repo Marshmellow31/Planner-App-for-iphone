@@ -101,6 +101,14 @@ export async function navigate(page, params = {}) {
       const { renderSchedule } = await import("./pages/schedule.js");
       await renderSchedule(content, uid, profile); 
       break;
+    case "scheduler":   
+      const { renderSchedulerTab } = await import("./pages/scheduler.js");
+      await renderSchedulerTab(content, uid, profile); 
+      break;
+    case "personalDevelopment":
+      const { renderPersonalDevelopment } = await import("./pages/personalDevelopment.js");
+      await renderPersonalDevelopment(content, uid, profile);
+      break;
   }
 
   // Bind ripples to newly rendered content

@@ -91,9 +91,8 @@ function renderScheduleList(uid) {
   }
 
   listEl.innerHTML = dayTasks.map((task, i) => `
-    <div class="task-card priority-${task.priority.toLowerCase()}" style="animation-delay:${i * 40}ms; cursor:default;">
+    <div class="task-card" style="animation-delay:${i * 40}ms; cursor:default; border-color:var(--border);">
       <div class="task-top-section">
-        <div class="priority-label ${task.priority.toLowerCase()}">${task.priority}</div>
         <div class="task-actions" style="display:flex; gap:8px;">
           <button class="btn btn-sm btn-ghost btn-edit-sched" data-id="${task.id}" style="padding: 4px 10px;">
             <i data-lucide="edit-2" style="width:14px;height:14px;"></i>
@@ -109,6 +108,9 @@ function renderScheduleList(uid) {
           <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:#9CA3AF">
             <i data-lucide="clock" style="width:12px;height:12px"></i> 
             ${task.start_time} - ${task.end_time}
+          </span>
+          <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:var(--bg-secondary); color:var(--text-secondary); margin-left:8px;">
+            ${task.type || "Study"}
           </span>
         </div>
       </div>
@@ -145,7 +147,7 @@ function openScheduleModal(uid, editingTask = null) {
   backdrop.className = "modal-backdrop centered";
   const defaultDay = selectedDay;
 
-  const t = editingTask || { title: "", start_time: "09:00", end_time: "10:00", priority: "Medium", day: defaultDay };
+  const t = editingTask || { title: "", start_time: "09:00", end_time: "10:00", type: "Study", day: defaultDay };
   const taskDay = editingTask ? selectedDay : defaultDay;
 
   backdrop.innerHTML = `
@@ -175,12 +177,14 @@ function openScheduleModal(uid, editingTask = null) {
         </div>
       </div>
 
+
+
       <div class="form-group">
-        <label class="form-label">Priority</label>
-        <select id="sched-priority" class="form-select">
-          <option value="Low" ${t.priority === "Low" ? "selected" : ""}>Low</option>
-          <option value="Medium" ${t.priority === "Medium" ? "selected" : ""}>Medium</option>
-          <option value="High" ${t.priority === "High" ? "selected" : ""}>High</option>
+        <label class="form-label">Type</label>
+        <select id="sched-type" class="form-select">
+          <option value="Study" ${(!t.type || t.type === "Study") ? "selected" : ""}>Study</option>
+          <option value="Free" ${t.type === "Free" ? "selected" : ""}>Free Time</option>
+          <option value="Busy" ${t.type === "Busy" ? "selected" : ""}>Busy / Unavailable</option>
         </select>
       </div>
 
@@ -198,7 +202,7 @@ function openScheduleModal(uid, editingTask = null) {
     const day = backdrop.querySelector("#sched-day").value;
     const start_time = backdrop.querySelector("#sched-start").value;
     const end_time = backdrop.querySelector("#sched-end").value;
-    const priority = backdrop.querySelector("#sched-priority").value;
+    const type = backdrop.querySelector("#sched-type").value;
 
     if (!title || !start_time || !end_time) {
       showSnackbar("Please fill all fields.", "error");
@@ -215,7 +219,7 @@ function openScheduleModal(uid, editingTask = null) {
       title,
       start_time,
       end_time,
-      priority
+      type
     };
 
     // Remove from old day if edited and day changed
