@@ -3,7 +3,7 @@
 // ============================================================
 
 import { getTasks, completeTask, snoozeTask } from "../db.js";
-import { computeAnalytics, buildWeeklyLine } from "../analytics.js";
+import { computeAnalytics } from "../analytics.js";
 import { getSubjects } from "../db.js";
 import { navigate } from "../app.js";
 import { showSnackbar } from "../snackbar.js";

@@ -22,6 +22,10 @@ import {
   deleteGoalWithTasks,
   CATEGORY_META,
   UNIT_OPTIONS,
+  getCustomCategories,
+  saveCustomCategory,
+  getCustomUnits,
+  saveCustomUnit
 } from "../utils/personalDevelopment.js";
 import { autoGenerateTodaysTasks } from "../utils/dailyGenerator.js";
 import { pushToScheduler, pushAllPendingGoalTasks } from "../utils/schedulerIntegration.js";
@@ -153,9 +157,9 @@ export async function renderPersonalDevelopment(container, uid, profile) {
         letter-spacing: 0.4px;
         text-transform: uppercase;
       }
-      .goal-status-active   { background: rgba(52,211,153,0.1); color: #34D399; border: 1px solid rgba(52,211,153,0.25); }
-      .goal-status-paused   { background: rgba(251,191,36,0.1);  color: #FBBF24; border: 1px solid rgba(251,191,36,0.25); }
-      .goal-status-completed{ background: rgba(139,92,246,0.1);  color: #A78BFA; border: 1px solid rgba(139,92,246,0.25); }
+      .goal-status-active   { background: rgba(80, 255, 120, 0.03); color: #cccccc; border: 1px solid rgba(80, 255, 120, 0.2); }
+      .goal-status-paused   { background: rgba(255, 255, 255, 0.02);  color: #cccccc; border: 1px solid rgba(255, 255, 255, 0.08); }
+      .goal-status-completed{ background: rgba(255, 255, 255, 0.05);  color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.15); }
 
       /* ── Progress ── */
       .goal-progress-wrap { margin-bottom: 14px; }
@@ -276,21 +280,20 @@ export async function renderPersonalDevelopment(container, uid, profile) {
       .goal-push-btn:hover { background: #1E2E1E; border-color: #34D399; color: #34D399; }
       .goal-push-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-      /* ── Completion banner ── */
       .completion-banner {
         display: flex;
         align-items: center;
         gap: 10px;
         padding: 10px 14px;
-        background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(52,211,153,0.08));
-        border: 1px solid rgba(139,92,246,0.25);
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
         border-radius: 10px;
         margin-bottom: 10px;
       }
       .completion-banner-text {
         font-size: 13px;
         font-weight: 600;
-        color: #A78BFA;
+        color: #ffffff;
       }
 
       /* ── Today Tasks Section ── */
@@ -333,8 +336,8 @@ export async function renderPersonalDevelopment(container, uid, profile) {
       .goal-task-push-btn {
         padding: 5px 10px;
         border-radius: 7px;
-        background: #161616;
-        border: 1px solid #2A2A2A;
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.08);
         color: var(--text-muted);
         font-size: 11px;
         font-weight: 600;
@@ -342,8 +345,8 @@ export async function renderPersonalDevelopment(container, uid, profile) {
         transition: all 0.18s;
         white-space: nowrap;
       }
-      .goal-task-push-btn:hover { background: #1E2E1E; border-color: #34D399; color: #34D399; }
-      .goal-task-push-btn.scheduled { color: #34D399; border-color: rgba(52,211,153,0.3); cursor: default; background: rgba(52,211,153,0.05); }
+      .goal-task-push-btn:hover { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15); color: #fff; }
+      .goal-task-push-btn.scheduled { color: #cccccc; border-color: rgba(255,255,255,0.1); cursor: default; background: rgba(255,255,255,0.05); }
 
       /* ── Empty state ── */
       .pd-empty {
@@ -370,6 +373,44 @@ export async function renderPersonalDevelopment(container, uid, profile) {
         color: #34D399;
       }
       .pd-daily-preview strong { font-weight: 700; }
+
+      /* ── Custom Hybrid Dropdown ── */
+      .hd-wrap { position: relative; width: 100%; border-radius: 12px; }
+      .hd-trigger {
+        display: flex; align-items: center; justify-content: space-between;
+        width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px; color: #ffffff; font-size: 14px; cursor: pointer; transition: all 0.2s;
+      }
+      .hd-trigger:hover { border-color: rgba(255,255,255,0.15); }
+      .hd-trigger:focus { outline: none; border-color: rgba(255,255,255,0.2); }
+      .hd-trigger-val { display: flex; align-items: center; gap: 8px; }
+      .hd-menu {
+        position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #0f0f0f;
+        border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; z-index: 50;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.4); max-height: 240px; overflow-y: auto;
+        opacity: 0; visibility: hidden; transform: translateY(-4px); transition: all 0.2s ease;
+      }
+      .hd-wrap.open .hd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+      .hd-option {
+        display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+        color: #cccccc; font-size: 14px; cursor: pointer; transition: all 0.15s;
+      }
+      .hd-option:hover { background: rgba(255,255,255,0.05); color: #ffffff; }
+      .hd-option.selected { background: rgba(255,255,255,0.08); color: #ffffff; }
+      .hd-option-custom { border-top: 1px solid rgba(255,255,255,0.04); color: #aaaaaa; }
+      .hd-input-wrap { display: none; width: 100%; position: relative; }
+      .hd-input-wrap.active { display: block; animation: fadeIn 0.3s ease; }
+      .hd-trigger.hidden { display: none; }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      .hd-custom-input {
+        width: 100%; padding: 12px 14px; padding-right: 40px; background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.2); border-radius: 12px; color: #ffffff; font-size: 14px; outline: none;
+      }
+      .hd-input-close {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        color: #A1A1A1; cursor: pointer;
+      }
+      .hd-input-close:hover { color: #FFF; }
     </style>
 
     <div class="pd-page-header">
@@ -546,7 +587,12 @@ function renderGoalsList(uid) {
 }
 
 function renderGoalCardHTML(goal) {
-  const meta = CATEGORY_META[goal.category] || CATEGORY_META.custom;
+  let meta = CATEGORY_META[String(goal.category).toLowerCase()];
+  if (!meta) {
+    const rawCat = goal.category || "Custom";
+    const capCat = rawCat.charAt(0).toUpperCase() + rawCat.slice(1);
+    meta = { ...CATEGORY_META.custom, label: capCat };
+  }
   const pct = progressPercent(goal.totalProgress || 0, goal.totalTarget);
   const remaining = daysRemaining(goal.endDate);
   const today = new Date().toISOString().split("T")[0];
@@ -683,8 +729,9 @@ function renderTodayTasks(uid) {
       Today's Generated Tasks
     </div>
     ${todayTasks.map(task => {
-      const goal = _goals.find(g => g.id === task.sourceGoalId);
-      const meta = CATEGORY_META[(goal?.category) || "custom"] || CATEGORY_META.custom;
+      const goal = _goals.find(g => g.id === task.sourceGoalId) || {};
+      let meta = CATEGORY_META[String(goal.category).toLowerCase()];
+      if (!meta) meta = CATEGORY_META.custom;
       const isScheduled = task.status === "scheduled" || !!task.schedulerTaskId;
       const isCompleted = task.status === "completed";
       return `
@@ -728,6 +775,136 @@ function renderTodayTasks(uid) {
   if (window.lucide) window.lucide.createIcons();
 }
 
+// ─── Custom Hybrid Dropdown Helper ───────────────────────────
+function attachHybridDropdown(containerId, optionsConfig) {
+  const container = document.getElementById(containerId);
+  if (!container) return () => {};
+
+  const { isCategory, defaultVal, onChange, placeholder } = optionsConfig;
+  
+  let currentVal = defaultVal;
+  let isInputMode = false;
+  
+  const getOpts = () => {
+    if (isCategory) {
+      const predefined = Object.entries(CATEGORY_META).filter(([k]) => k !== "custom").map(([k, v]) => ({ value: k, label: v.label, icon: v.icon }));
+      const custom = getCustomCategories().map(c => ({ value: c, label: c, icon: "star" }));
+      return [...predefined, ...custom];
+    } else {
+      const predefined = UNIT_OPTIONS.filter(u => u.value !== "custom");
+      const custom = getCustomUnits().map(u => ({ value: u, label: u }));
+      return [...predefined, ...custom];
+    }
+  };
+
+  const render = () => {
+    const opts = getOpts();
+    const activeOpt = opts.find(o => String(o.value).toLowerCase() === String(currentVal).toLowerCase()) || { value: currentVal, label: currentVal, icon: isCategory ? "star" : "" };
+    
+    container.innerHTML = `
+      <div class="hd-wrap" id="${containerId}-wrap">
+        <div class="hd-trigger ${isInputMode ? 'hidden' : ''}" tabindex="0">
+          <div class="hd-trigger-val">
+            ${isCategory && activeOpt.icon ? `<i data-lucide="${activeOpt.icon}" style="width:14px;height:14px;"></i>` : ""}
+            <span>${esc(activeOpt.label || placeholder)}</span>
+          </div>
+          <i data-lucide="chevron-down" style="width:14px;height:14px;color:#666;"></i>
+        </div>
+        <div class="hd-input-wrap ${isInputMode ? 'active' : ''}">
+          <input type="text" class="hd-custom-input" placeholder="${placeholder}" value="${!opts.some(o => o.value === currentVal) && currentVal !== (isCategory?'custom':'sessions') ? esc(currentVal) : ""}" />
+          <i data-lucide="x" class="hd-input-close" style="width:14px;height:14px;"></i>
+        </div>
+        <div class="hd-menu">
+          ${opts.map(o => `
+            <div class="hd-option ${String(o.value).toLowerCase() === String(currentVal).toLowerCase() ? 'selected' : ''}" data-val="${esc(o.value)}">
+              ${isCategory && o.icon ? `<i data-lucide="${o.icon}" style="width:14px;height:14px;"></i>` : ""}
+              ${esc(o.label)}
+            </div>
+          `).join("")}
+          <div class="hd-option hd-option-custom" data-val="--trigger-custom--">
+            <i data-lucide="edit-3" style="width:14px;height:14px;"></i> Custom...
+          </div>
+        </div>
+      </div>
+    `;
+
+    if (window.lucide) window.lucide.createIcons();
+    
+    const wrap = container.querySelector(".hd-wrap");
+    const trigger = container.querySelector(".hd-trigger");
+    const menu = container.querySelector(".hd-menu");
+    const input = container.querySelector(".hd-custom-input");
+    const closeBtn = container.querySelector(".hd-input-close");
+
+    const outsideClick = (e) => {
+      if (!wrap.contains(e.target)) {
+        wrap.classList.remove("open");
+        document.removeEventListener("click", outsideClick);
+      }
+    };
+
+    trigger.addEventListener("click", () => {
+      const isOpen = wrap.classList.contains("open");
+      if (isOpen) {
+        wrap.classList.remove("open");
+        document.removeEventListener("click", outsideClick);
+      } else {
+        wrap.classList.add("open");
+        setTimeout(() => document.addEventListener("click", outsideClick), 10);
+      }
+    });
+
+    container.querySelectorAll(".hd-option").forEach(opt => {
+      opt.addEventListener("click", () => {
+        const val = opt.getAttribute("data-val");
+        wrap.classList.remove("open");
+        document.removeEventListener("click", outsideClick);
+        
+        if (val === "--trigger-custom--") {
+          isInputMode = true;
+          render();
+          setTimeout(() => {
+            const el = container.querySelector(".hd-custom-input");
+            if (el) el.focus();
+          }, 50);
+        } else {
+          currentVal = val;
+          render();
+          onChange(currentVal);
+        }
+      });
+    });
+
+    closeBtn.addEventListener("click", () => {
+      isInputMode = false;
+      render();
+    });
+
+    const commitInput = () => {
+      const val = input.value.trim();
+      if (val) {
+        if (isCategory) saveCustomCategory(val);
+        else saveCustomUnit(val);
+        currentVal = val;
+      }
+      isInputMode = false;
+      render();
+      onChange(currentVal);
+    };
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commitInput(); }
+      if (e.key === "Escape") { isInputMode = false; render(); }
+    });
+    input.addEventListener("blur", () => {
+      setTimeout(() => { if (isInputMode) commitInput(); }, 150);
+    });
+  };
+
+  render();
+  return () => currentVal;
+}
+
 // ─── Goal Form Modal ─────────────────────────────────────────
 function openGoalForm(uid, existingGoal, onSave) {
   const isEdit = !!existingGoal;
@@ -735,14 +912,6 @@ function openGoalForm(uid, existingGoal, onSave) {
 
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
-
-  const categoryOptions = Object.entries(CATEGORY_META).map(([val, m]) =>
-    `<option value="${val}" ${(existingGoal?.category || "custom") === val ? "selected" : ""}>${m.label}</option>`
-  ).join("");
-
-  const unitOptions = UNIT_OPTIONS.map(u =>
-    `<option value="${u.value}" ${(existingGoal?.unit || "sessions") === u.value ? "selected" : ""}>${u.label}</option>`
-  ).join("");
 
   const priorityOptions = ["high", "medium", "low"].map(p =>
     `<option value="${p}" ${(existingGoal?.priority || "medium") === p ? "selected" : ""}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`
@@ -762,7 +931,7 @@ function openGoalForm(uid, existingGoal, onSave) {
       <div class="pd-form-grid">
         <div class="form-group">
           <label class="form-label">Category</label>
-          <select class="form-select" id="pd-goal-category">${categoryOptions}</select>
+          <div id="pd-goal-category-container"></div>
         </div>
         <div class="form-group">
           <label class="form-label">Priority</label>
@@ -778,7 +947,7 @@ function openGoalForm(uid, existingGoal, onSave) {
         </div>
         <div class="form-group">
           <label class="form-label">Unit</label>
-          <select class="form-select" id="pd-goal-unit">${unitOptions}</select>
+          <div id="pd-goal-unit-container"></div>
         </div>
       </div>
 
@@ -831,12 +1000,15 @@ function openGoalForm(uid, existingGoal, onSave) {
     </div>
   `;
 
+  let getCategoryVal = () => existingGoal?.category || "custom";
+  let getUnitVal = () => existingGoal?.unit || "sessions";
+
   // Auto-calculate daily target preview
   const updatePreview = () => {
     const total = parseInt(backdrop.querySelector("#pd-goal-total").value, 10);
     const dur   = parseInt(backdrop.querySelector("#pd-goal-duration").value, 10);
     const dailyInput = backdrop.querySelector("#pd-goal-daily");
-    const unit  = backdrop.querySelector("#pd-goal-unit").value;
+    const unit  = getUnitVal();
     const preview = backdrop.querySelector("#pd-daily-preview");
     const previewText = backdrop.querySelector("#pd-daily-preview-text");
 
@@ -858,7 +1030,6 @@ function openGoalForm(uid, existingGoal, onSave) {
       updatePreview();
     });
   });
-  backdrop.querySelector("#pd-goal-unit").addEventListener("change", updatePreview);
   backdrop.querySelector("#pd-goal-daily").addEventListener("input", updatePreview);
 
   // Trigger initial preview if editing
@@ -876,10 +1047,10 @@ function openGoalForm(uid, existingGoal, onSave) {
 
     const rawData = {
       title: backdrop.querySelector("#pd-goal-title").value.trim(),
-      category: backdrop.querySelector("#pd-goal-category").value,
+      category: getCategoryVal(),
       priority: backdrop.querySelector("#pd-goal-priority").value,
       totalTarget: backdrop.querySelector("#pd-goal-total").value,
-      unit: backdrop.querySelector("#pd-goal-unit").value,
+      unit: getUnitVal(),
       durationDays: backdrop.querySelector("#pd-goal-duration").value,
       startDate: backdrop.querySelector("#pd-goal-start").value,
       dailyTarget: backdrop.querySelector("#pd-goal-daily").value,
@@ -915,13 +1086,29 @@ function openGoalForm(uid, existingGoal, onSave) {
   });
 
   document.body.appendChild(backdrop);
+  
+  getCategoryVal = attachHybridDropdown("pd-goal-category-container", {
+    isCategory: true,
+    defaultVal: existingGoal?.category || "custom",
+    placeholder: "Enter custom category...",
+    onChange: () => {}
+  });
+
+  getUnitVal = attachHybridDropdown("pd-goal-unit-container", {
+    isCategory: false,
+    defaultVal: existingGoal?.unit || "sessions",
+    placeholder: "Enter custom unit...",
+    onChange: updatePreview
+  });
+
   if (window.lucide) window.lucide.createIcons();
   setTimeout(() => backdrop.querySelector("#pd-goal-title")?.focus(), 150);
 }
 
 // ─── Progress Log Modal ───────────────────────────────────────
 function openProgressModal(uid, goal, onSave) {
-  const meta = CATEGORY_META[goal.category] || CATEGORY_META.custom;
+  let meta = CATEGORY_META[String(goal.category).toLowerCase()];
+  if (!meta) meta = CATEGORY_META.custom;
   const pct = progressPercent(goal.totalProgress || 0, goal.totalTarget);
 
   const backdrop = document.createElement("div");

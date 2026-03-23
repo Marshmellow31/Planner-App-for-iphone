@@ -208,60 +208,6 @@ export async function removeFcmToken(uid, token) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  DIARY
-// ─────────────────────────────────────────────────────────────
-// dateKey format: "YYYY-MM-DD"
-export async function getDiaryEntry(uid, dateKey) {
-  const snap = await getDoc(doc(db, "users", uid, "diary", dateKey));
-  return snap.exists() ? snap.data() : null;
-}
-
-export async function saveDiaryEntry(uid, dateKey, data) {
-  await setDoc(doc(db, "users", uid, "diary", dateKey), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-// Returns all diary entries for a given "YYYY-MM" month
-export async function getDiaryMonth(uid, yearMonth) {
-  const snap = await getDocs(collection(db, "users", uid, "diary"));
-  const entries = {};
-  snap.docs.forEach((d) => {
-    if (d.id.startsWith(yearMonth)) entries[d.id] = d.data();
-  });
-  return entries;
-}
-
-// ─────────────────────────────────────────────────────────────
-//  SEMESTER / CALENDAR DATA
-// ─────────────────────────────────────────────────────────────
-export async function getSemesterData(uid) {
-  const snap = await getDoc(doc(db, "users", uid, "planner", "semester"));
-  return snap.exists() ? snap.data() : {};
-}
-
-export async function saveSemesterData(uid, data) {
-  await setDoc(doc(db, "users", uid, "planner", "semester"), {
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-// Custom calendar events: { [dateKey]: [{title, type}] }
-export async function getCustomEvents(uid) {
-  const snap = await getDoc(doc(db, "users", uid, "planner", "events"));
-  return snap.exists() ? snap.data().events || {} : {};
-}
-
-export async function saveCustomEvents(uid, events) {
-  await setDoc(doc(db, "users", uid, "planner", "events"), {
-    events,
-    updatedAt: serverTimestamp(),
-  });
-}
-
-// ─────────────────────────────────────────────────────────────
 //  WEEKLY SCHEDULE
 // ─────────────────────────────────────────────────────────────
 const defaultSchedule = {

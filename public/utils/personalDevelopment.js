@@ -146,12 +146,12 @@ export async function deleteGoalWithTasks(goalId) {
 // ── Category metadata ─────────────────────────────────────────
 
 export const CATEGORY_META = {
-  leetcode:  { label: "LeetCode",   icon: "code-2",       color: "#F97316" },
-  yoga:      { label: "Yoga",        icon: "activity",     color: "#A78BFA" },
-  meditation:{ label: "Meditation",  icon: "wind",         color: "#38BDF8" },
-  course:    { label: "Course",      icon: "graduation-cap",color: "#34D399" },
-  reading:   { label: "Reading",     icon: "book-open",    color: "#FBBF24" },
-  custom:    { label: "Custom",      icon: "star",         color: "#8A8A8A" },
+  leetcode:  { label: "LeetCode",   icon: "code-2",       color: "rgba(255, 255, 255, 0.4)" },
+  yoga:      { label: "Yoga",        icon: "activity",     color: "rgba(255, 255, 255, 0.4)" },
+  meditation:{ label: "Meditation",  icon: "wind",         color: "rgba(255, 255, 255, 0.4)" },
+  course:    { label: "Course",      icon: "graduation-cap",color: "rgba(255, 255, 255, 0.4)" },
+  reading:   { label: "Reading",     icon: "book-open",    color: "rgba(255, 255, 255, 0.4)" },
+  custom:    { label: "Custom",      icon: "star",         color: "rgba(255, 255, 255, 0.4)" },
 };
 
 export const UNIT_OPTIONS = [
@@ -163,3 +163,43 @@ export const UNIT_OPTIONS = [
   { value: "chapters",  label: "Chapters"  },
   { value: "custom",    label: "Custom"    },
 ];
+
+// ── Custom Options Storage ────────────────────────────────────
+
+export function getCustomCategories() {
+  try { return JSON.parse(localStorage.getItem("pd_custom_categories")) || []; }
+  catch(e) { return []; }
+}
+
+export function saveCustomCategory(cat) {
+  if (!cat) return;
+  const name = String(cat).trim();
+  if (!name || name.toLowerCase() === "custom") return;
+  
+  if (Object.keys(CATEGORY_META).some(k => k.toLowerCase() === name.toLowerCase())) return;
+  
+  const arr = getCustomCategories();
+  if (!arr.some(c => c.toLowerCase() === name.toLowerCase())) {
+    arr.unshift(name);
+    localStorage.setItem("pd_custom_categories", JSON.stringify(arr));
+  }
+}
+
+export function getCustomUnits() {
+  try { return JSON.parse(localStorage.getItem("pd_custom_units")) || []; }
+  catch(e) { return []; }
+}
+
+export function saveCustomUnit(unitRaw) {
+  if (!unitRaw) return;
+  const unit = String(unitRaw).trim();
+  if (!unit || unit.toLowerCase() === "custom") return;
+  
+  if (UNIT_OPTIONS.some(u => u.value.toLowerCase() === unit.toLowerCase() || u.label.toLowerCase() === unit.toLowerCase())) return;
+  
+  const arr = getCustomUnits();
+  if (!arr.some(u => u.toLowerCase() === unit.toLowerCase())) {
+    arr.unshift(unit);
+    localStorage.setItem("pd_custom_units", JSON.stringify(arr));
+  }
+}

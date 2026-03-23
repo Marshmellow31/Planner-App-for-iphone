@@ -104,6 +104,74 @@ export async function computeAnalytics(uid, weekStartDay = "monday", subjects = 
     return due >= today && due < tomorrow;
   });
 
+  // ── Study Time ───────────────────────────────────────────────────────────
+  let studyTime = 0;
+  completed.forEach(t => { studyTime += (t.estimatedTime || 0); });
+
+  // ── Heatmap Data (Last 84 days) ──────────────────────────────────────────
+  const heatmapData = [];
+  const todayFull = new Date();
+  todayFull.setHours(23,59,59,999);
+  const startHeatmap = new Date(todayFull);
+  startHeatmap.setDate(todayFull.getDate() - 83); // 12 weeks * 7 days = 84 days
+  startHeatmap.setHours(0,0,0,0);
+
+  const taskCountsByDate = {};
+  allTasks.forEach(t => {
+    if (t.isCompleted && t.completedAt) {
+      const d = t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt);
+      if (d >= startHeatmap && d <= todayFull) {
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        taskCountsByDate[key] = (taskCountsByDate[key] || 0) + 1;
+      }
+    }
+  });
+
+  for (let i = 0; i < 84; i++) {
+    const d = new Date(startHeatmap);
+    d.setDate(startHeatmap.getDate() + i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    heatmapData.push({ date: key, count: taskCountsByDate[key] || 0 });
+  }
+
+  // ── Insights Generation ──────────────────────────────────────────────────
+  const insights = [];
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const allDayTotals = new Array(7).fill(0);
+  let totalHistoricCompleted = 0;
+  allTasks.forEach(t => {
+    if (t.isCompleted && t.completedAt) {
+      const d = t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt);
+      allDayTotals[d.getDay()]++;
+      totalHistoricCompleted++;
+    }
+  });
+  
+  if (totalHistoricCompleted > 0) {
+    const maxDayIdx = allDayTotals.indexOf(Math.max(...allDayTotals));
+    if (allDayTotals[maxDayIdx] > 0) {
+      insights.push(`You are historically most productive on ${dayNames[maxDayIdx]}s.`);
+    }
+  }
+
+  if (overdue.length > 3) {
+    insights.push(`You have ${overdue.length} overdue tasks heavily impacting your system velocity.`);
+  } else if (overdue.length === 0 && completed.length > 5) {
+    insights.push(`Zero overdue tasks! Your execution pipeline is running optimally.`);
+  }
+
+  if (studyTime > 0) {
+    const hrs = Math.floor(studyTime / 60);
+    const mins = studyTime % 60;
+    insights.push(`You have logged ${hrs > 0 ? hrs + 'h ' : ''}${mins}m of deep focus this week.`);
+  }
+
+  if (completionRate < 50 && total > 5) {
+    insights.push(`Your completion rate dropped below 50%. Consider reducing your active scope.`);
+  } else if (completionRate > 80 && total > 5) {
+    insights.push(`High output detected. You've completed over 80% of your planned load.`);
+  }
+
   return {
     weekStart,
     weekEnd,
@@ -120,6 +188,9 @@ export async function computeAnalytics(uid, weekStartDay = "monday", subjects = 
     streak,
     todayTasks,
     allTasks,
+    studyTime,
+    heatmapData,
+    insights
   };
 }
 
@@ -152,63 +223,4 @@ function computeStreak(tasks) {
   return streak;
 }
 
-// ── Chart data builders ───────────────────────────────────────────────────────
-export function buildDailyChart(stats) {
-  return {
-    labels: stats.dailyLabels,
-    datasets: [
-      {
-        label: "Completed",
-        data: stats.dailyCompleted,
-        backgroundColor: "rgba(108, 99, 255, 0.8)",
-        borderRadius: 6,
-        borderSkipped: false,
-      },
-      {
-        label: "Total",
-        data: stats.dailyTotal,
-        backgroundColor: "rgba(108, 99, 255, 0.2)",
-        borderRadius: 6,
-        borderSkipped: false,
-      },
-    ],
-  };
-}
-
-export function buildSubjectDoughnut(stats) {
-  const labels = stats.subjectBreakdown.map((s) => s.name);
-  const data = stats.subjectBreakdown.map((s) => s.completed || 0.001); // avoid 0
-  const colors = stats.subjectBreakdown.map((s) => s.color);
-
-  return {
-    labels,
-    datasets: [
-      {
-        data,
-        backgroundColor: colors,
-        borderColor: "rgba(15, 15, 26, 0.5)",
-        borderWidth: 2,
-        hoverOffset: 8,
-      },
-    ],
-  };
-}
-
-export function buildWeeklyLine(stats) {
-  return {
-    labels: stats.dailyLabels,
-    datasets: [
-      {
-        label: "Tasks Completed",
-        data: stats.dailyCompleted,
-        borderColor: "#6c63ff",
-        backgroundColor: "rgba(108, 99, 255, 0.15)",
-        tension: 0.4,
-        fill: true,
-        pointBackgroundColor: "#6c63ff",
-        pointRadius: 5,
-        pointHoverRadius: 8,
-      },
-    ],
-  };
-}
+// ── Removed Chart.js builders per UI refactor constraint ──────────────────
