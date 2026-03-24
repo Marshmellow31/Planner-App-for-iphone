@@ -217,7 +217,7 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
         }
 
         return `
-          <div class="task-card priority-${task.priority.toLowerCase()} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${200 + (index * 40)}ms; cursor:default; margin-bottom:var(--space-sm); ${borderGlow}">
+          <div class="task-card priority-${(task.priority || 'medium').toLowerCase()} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${200 + (index * 40)}ms; cursor:default; margin-bottom:var(--space-sm); ${borderGlow}">
             <div class="task-body" style="flex:1;">
               <div style="font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:4px; padding:2px 6px; display:inline-block; border-radius:4px; ${badgeStyle}">${stateLabel}</div>
               <div class="task-title" style="word-break:break-word; font-size:var(--font-size-md);">${escHtml(task.title)}</div>
@@ -226,7 +226,7 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
                   <i data-lucide="clock" style="width:12px;height:12px"></i> 
                   ${task.start_time} - ${task.end_time}
                 </span>
-                <span class="badge badge-${task.priority.toLowerCase()}">${task.priority}</span>
+                <span class="badge badge-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</span>
               </div>
             </div>
           </div>

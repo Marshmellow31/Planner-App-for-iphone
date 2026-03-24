@@ -17,8 +17,8 @@ export function generateStudyPlan(tasks, weeklySchedule) {
   const priorityWeight = { high: 3, medium: 2, low: 1 };
   
   const sortedTasks = [...tasks].sort((a, b) => {
-    const pwA = priorityWeight[a.priority.toLowerCase()] || 0;
-    const pwB = priorityWeight[b.priority.toLowerCase()] || 0;
+    const pwA = priorityWeight[(a.priority || 'medium').toLowerCase()] || 0;
+    const pwB = priorityWeight[(b.priority || 'medium').toLowerCase()] || 0;
     
     if (pwA !== pwB) {
       return pwB - pwA; // higher priority first
@@ -118,7 +118,7 @@ export function generateStudyPlan(tasks, weeklySchedule) {
       planByDay[alloc.day].push({
         taskId: st.task.id,
         taskTitle: st.task.title,
-        priority: st.task.priority,
+        priority: st.task.priority || 'Medium',
         startTime: alloc.startTime,
         endTime: alloc.endTime,
         timeSpent: alloc.timeSpent,

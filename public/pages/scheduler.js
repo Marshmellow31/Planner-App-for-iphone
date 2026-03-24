@@ -159,12 +159,12 @@ function renderTaskList(uid) {
 
   listEl.innerHTML = tasks.map(t => `
     <div class="task-card" style="position:relative; background:#121212; border:1px solid #1E1E1E; padding:14px 16px; margin-bottom:10px; border-radius:12px; display:flex; flex-direction:row; justify-content:space-between; align-items:center; transition:all 0.2s;">
-      <div style="position:absolute; left:-1px; top:-1px; bottom:-1px; width:4px; background:var(--priority-${t.priority.toLowerCase()}); border-top-left-radius:12px; border-bottom-left-radius:12px;"></div>
+      <div style="position:absolute; left:-1px; top:-1px; bottom:-1px; width:4px; background:var(--priority-${(t.priority || 'medium').toLowerCase()}); border-top-left-radius:12px; border-bottom-left-radius:12px;"></div>
       
       <div style="margin-left:6px; display:flex; flex-direction:column; gap:4px; flex:1; text-align:left;">
         <div style="font-weight:600; color:#F5F5F5; font-size:15px; display:flex; align-items:center; gap:8px;">
           ${escHtml(t.title)} 
-          <span class="priority-label ${t.priority.toLowerCase()}" style="font-size:10px; padding:2px 6px;">${t.priority}</span>
+          <span class="priority-label ${(t.priority || 'medium').toLowerCase()}" style="font-size:10px; padding:2px 6px;">${t.priority || 'Medium'}</span>
         </div>
         <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:10px;">
           <span style="display:flex; align-items:center; gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;"></i> ${t.estimatedTime} mins</span>
@@ -233,7 +233,7 @@ function renderPlanView() {
           </h4>
           <div style="display:flex; flex-direction:column; gap:8px;">
             ${dayPlan.map(block => `
-              <div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-left:3px solid var(--priority-${block.priority.toLowerCase()}); padding:12px; border-radius:12px;">
+              <div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-left:3px solid var(--priority-${(block.priority || 'medium').toLowerCase()}); padding:12px; border-radius:12px;">
                 <div style="font-weight:600; color:#ffffff; font-size:14px;">${escHtml(block.taskTitle)}</div>
                 <div style="font-size:12px; color:var(--text-muted); margin-top:4px; display:flex; gap:12px; align-items:center;">
                   <span style="display:flex; align-items:center; gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;"></i> ${block.startTime} - ${block.endTime} (${block.timeSpent}m)</span>
