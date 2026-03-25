@@ -5,13 +5,26 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.(?:js|css|png|ico|json|svg|woff2?|ttf|webmanifest|txt|webp|jpg|jpeg|gif|mp4|woff|eot)).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/(service-worker\\.js|sw\\.js)",
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.js)",
       "headers": [
         {
           "key": "Cache-Control",

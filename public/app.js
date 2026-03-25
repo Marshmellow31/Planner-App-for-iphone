@@ -1,3 +1,13 @@
+// ── Capture beforeinstallprompt ASAP (before async imports can delay us) ─────
+// This must be at the very top of the module so it runs synchronously on load.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  window.deferredPrompt = e;
+  console.log('[PWA] beforeinstallprompt captured ✓');
+  // Notify initInstallPrompt if it's already been called (late capture)
+  window.dispatchEvent(new Event('pwa-prompt-ready'));
+});
+
 import "./styles.css";
 import { createIcons, icons } from "lucide";
 window.lucide = { 
@@ -176,64 +186,65 @@ function initInstallPrompt() {
   const banner = $("install-banner");
   const installBtn = $("btn-install-app");
   const dismissBtn = $("btn-dismiss-install");
-  
+
   if (!banner || !installBtn || !dismissBtn) return;
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const isStandalone =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
 
   // Don't show on iOS (manual instructions already on landing) or if already installed
   if (isIOS || isStandalone) return;
 
-  // 3-day cooldown logic for dismissal
+  // 3-day cooldown check
   const lastDismissed = localStorage.getItem("install_prompt_dismissed");
   if (lastDismissed) {
     const threeDays = 3 * 24 * 60 * 60 * 1000;
     if (Date.now() - parseInt(lastDismissed) < threeDays) return;
   }
 
-  window.addEventListener("beforeinstallprompt", (e) => {
-    // Prevent the mini-infobar from appearing on mobile
-    e.preventDefault();
-    // Stash the event so it can be triggered later.
-    window.deferredPrompt = e;
-    
-    // Show the banner after a short delay (engagement)
-    setTimeout(() => {
-      if (window.deferredPrompt) showInstallBanner();
-    }, 5000);
-  });
+  // The beforeinstallprompt listener at the top of this file already captured
+  // the event into window.deferredPrompt. We just need to react to it here.
+  function maybeShowBanner() {
+    if (window.deferredPrompt) {
+      // Small delay so the user has a moment to engage with the page
+      setTimeout(() => { if (window.deferredPrompt) showInstallBanner(); }, 3000);
+    }
+  }
+
+  if (window.deferredPrompt) {
+    // Event was already captured before initInstallPrompt ran
+    maybeShowBanner();
+  } else {
+    // Wait for the top-level listener to capture it and dispatch the custom event
+    window.addEventListener('pwa-prompt-ready', maybeShowBanner, { once: true });
+  }
 
   installBtn.addEventListener("click", async () => {
     if (!window.deferredPrompt) return;
-    
-    // Show the native install prompt
+
     window.deferredPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
     const { outcome } = await window.deferredPrompt.userChoice;
-    
-    // We've used the prompt, and can't use it again, so clear it
+    console.log('[PWA] Install outcome:', outcome);
+
     window.deferredPrompt = null;
     hideInstallBanner();
   });
 
   dismissBtn.addEventListener("click", () => {
     hideInstallBanner();
-    // Set cool-down for 3 days
     localStorage.setItem("install_prompt_dismissed", Date.now().toString());
   });
 
   function showInstallBanner() {
-    banner.classList.remove("hidden");
-    banner.classList.remove("animate-out");
+    banner.classList.remove("hidden", "animate-out");
     banner.classList.add("animate-in");
   }
 
-  async function hideInstallBanner() {
+  function hideInstallBanner() {
     banner.classList.remove("animate-in");
     banner.classList.add("animate-out");
-    // Wait for animation to finish (styles.css says 180ms)
     setTimeout(() => {
       banner.classList.add("hidden");
       banner.classList.remove("animate-out");
