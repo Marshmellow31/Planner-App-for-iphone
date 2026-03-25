@@ -20,29 +20,35 @@ export async function renderTasks(container, uid, profile) {
     <!-- Filter bar -->
     <div class="filter-wrapper">
       <div class="filter-row">
-        <div class="custom-select-wrapper">
-          <select class="filter-select ripple" id="filter-status">
-            <option value="all">Status: All</option>
-            <option value="today">Today</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-            <option value="overdue">Overdue</option>
-          </select>
+        <div class="custom-select-wrapper" id="wrapper-status">
+          <div class="filter-select ripple" id="select-status" data-value="all">Status: All</div>
+          <div class="custom-dropdown-menu" id="menu-status">
+            <div class="dropdown-item active" data-value="all">Status: All</div>
+            <div class="dropdown-item" data-value="today">Today</div>
+            <div class="dropdown-item" data-value="pending">Pending</div>
+            <div class="dropdown-item" data-value="completed">Completed</div>
+            <div class="dropdown-item" data-value="overdue">Overdue</div>
+          </div>
         </div>
-        <div class="custom-select-wrapper">
-          <select class="filter-select ripple" id="filter-priority">
-            <option value="all">Priority: All</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
+        
+        <div class="custom-select-wrapper" id="wrapper-priority">
+          <div class="filter-select ripple" id="select-priority" data-value="all">Priority: All</div>
+          <div class="custom-dropdown-menu" id="menu-priority">
+            <div class="dropdown-item active" data-value="all">Priority: All</div>
+            <div class="dropdown-item" data-value="high">High</div>
+            <div class="dropdown-item" data-value="medium">Medium</div>
+            <div class="dropdown-item" data-value="low">Low</div>
+          </div>
         </div>
-        <div class="custom-select-wrapper">
-          <select class="filter-select ripple" id="filter-subject">
-            <option value="all">Subject: All</option>
+
+        <div class="custom-select-wrapper" id="wrapper-subject">
+          <div class="filter-select ripple" id="select-subject" data-value="all">Subject: All</div>
+          <div class="custom-dropdown-menu" id="menu-subject">
+            <div class="dropdown-item active" data-value="all">Subject: All</div>
             <!-- Dynamic subjects -->
-          </select>
+          </div>
         </div>
+
         <button class="filter-pill-btn ripple" id="btn-manage-subjects" title="Manage Subjects">
           <i data-lucide="settings-2" style="width:14px;height:14px"></i>
         </button>
@@ -52,13 +58,14 @@ export async function renderTasks(container, uid, profile) {
     <!-- Sort & Count -->
     <div class="flex justify-between items-center mb-md px-md">
       <span class="text-muted text-sm" id="task-count">Loading…</span>
-      <div class="custom-select-wrapper">
-        <select class="filter-select ripple" id="task-sort">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-          <option value="due">Due date</option>
-          <option value="priority">Priority Order</option>
-        </select>
+      <div class="custom-select-wrapper" id="wrapper-sort">
+        <div class="filter-select ripple" id="select-sort" data-value="newest">Newest first</div>
+        <div class="custom-dropdown-menu" id="menu-sort" style="right:0; left:auto;">
+          <div class="dropdown-item active" data-value="newest">Newest first</div>
+          <div class="dropdown-item" data-value="oldest">Oldest first</div>
+          <div class="dropdown-item" data-value="due">Due date</div>
+          <div class="dropdown-item" data-value="priority">Priority Order</div>
+        </div>
       </div>
     </div>
     <div id="tasks-list"></div>
@@ -78,13 +85,31 @@ export async function renderTasks(container, uid, profile) {
       allSubjects = subjects;
       
       // Populate subject filter
-      const subFilter = document.getElementById("filter-subject");
-      if (subFilter) {
-        subFilter.innerHTML = `<option value="all">Subject: All</option>`;
+      // Populate subject filter
+      const subMenu = document.getElementById("menu-subject");
+      const subSelect = document.getElementById("select-subject");
+      if (subMenu && subSelect) {
+        subMenu.innerHTML = `<div class="dropdown-item ${activeSubject === 'all' ? 'active' : ''}" data-value="all">Subject: All</div>`;
         allSubjects.forEach(s => {
-          subFilter.innerHTML += `<option value="${s.id}">${escHtml(s.name)}</option>`;
+          subMenu.innerHTML += `<div class="dropdown-item ${activeSubject === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`;
         });
-        subFilter.value = activeSubject;
+        
+        // Re-init subject dropdown items
+        subMenu.querySelectorAll(".dropdown-item").forEach(item => {
+          item.onclick = (e) => {
+            e.stopPropagation();
+            activeSubject = item.dataset.value;
+            subSelect.textContent = item.textContent;
+            subSelect.dataset.value = activeSubject;
+            subMenu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
+            item.classList.add("active");
+            document.getElementById("wrapper-subject").classList.remove("open");
+            renderFiltered();
+          };
+        });
+        
+        // Setup initial position if it's open (rare but safe)
+        updateDropdownPosition("subject");
       }
       
       renderFiltered();
@@ -160,22 +185,79 @@ export async function renderTasks(container, uid, profile) {
     if (window.lucide) window.lucide.createIcons();
   };
 
-  // Status Filter Event
-  document.getElementById("filter-status")?.addEventListener("change", (e) => {
-    activeStatus = e.target.value;
-    renderFiltered();
-  });
+  // Setup Dropdown Interactions
+  const updateDropdownPosition = (id) => {
+    const wrapper = document.getElementById(`wrapper-${id}`);
+    const select = document.getElementById(`select-${id}`);
+    const menu = document.getElementById(`menu-${id}`);
+    if (!wrapper || !select || !menu || !wrapper.classList.contains("open")) return;
 
-  // Priority Filter Event
-  document.getElementById("filter-priority")?.addEventListener("change", (e) => {
-    activePriority = e.target.value;
-    renderFiltered();
-  });
+    const rect = select.getBoundingClientRect();
+    menu.style.top = `${rect.bottom + 8}px`;
+    
+    // Check if button is on the right half of the screen to prevent overflow
+    if (rect.left > window.innerWidth / 2 || id === 'sort') {
+      menu.style.left = 'auto';
+      menu.style.right = `${window.innerWidth - rect.right}px`;
+      menu.style.minWidth = id === 'sort' ? '180px' : '200px';
+    } else {
+      menu.style.right = 'auto';
+      menu.style.left = `${rect.left}px`;
+      menu.style.minWidth = `${rect.width}px`;
+    }
+  };
 
-  // Subject Filter Event
-  document.getElementById("filter-subject")?.addEventListener("change", (e) => {
-    activeSubject = e.target.value;
-    renderFiltered();
+  const initDropdown = (id, onChange) => {
+    const wrapper = document.getElementById(`wrapper-${id}`);
+    const select = document.getElementById(`select-${id}`);
+    const menu = document.getElementById(`menu-${id}`);
+    if (!wrapper || !select || !menu) return;
+
+    select.onclick = (e) => {
+      e.stopPropagation();
+      const isOpen = wrapper.classList.contains("open");
+      // Close all others first
+      document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
+      if (!isOpen) {
+        wrapper.classList.add("open");
+        updateDropdownPosition(id);
+      }
+    };
+
+    menu.querySelectorAll(".dropdown-item").forEach(item => {
+      item.onclick = (e) => {
+        e.stopPropagation();
+        const val = item.dataset.value;
+        select.textContent = item.textContent;
+        select.dataset.value = val;
+        
+        menu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+        
+        wrapper.classList.remove("open");
+        onChange(val);
+      };
+    });
+  };
+
+  initDropdown("status", (v) => { activeStatus = v; renderFiltered(); });
+  initDropdown("priority", (v) => { activePriority = v; renderFiltered(); });
+  initDropdown("subject", (v) => { activeSubject = v; renderFiltered(); });
+  initDropdown("sort", (v) => { activeSort = v; renderFiltered(); });
+  
+  // Re-init subject dropdown on refreshTaskList population
+  // handled by initDropdown("subject", ...) if we ensure the structure exists
+
+  // Scroll/Resize handling for fixed menus
+  window.addEventListener("scroll", () => {
+    document.querySelectorAll(".custom-select-wrapper.open").forEach(w => {
+      const id = w.id.replace("wrapper-", "");
+      updateDropdownPosition(id);
+    });
+  }, true);
+  
+  window.addEventListener("resize", () => {
+    document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
   });
 
   // Manage Subjects
@@ -183,10 +265,11 @@ export async function renderTasks(container, uid, profile) {
     openSubjectManagementModal(uid, refreshTaskList);
   });
 
-  // Sort change
-  document.getElementById("task-sort")?.addEventListener("change", (e) => {
-    activeSort = e.target.value;
-    renderFiltered();
+  // Global click to close dropdowns
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".custom-select-wrapper")) {
+      document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
+    }
   });
 
   await refreshTaskList();

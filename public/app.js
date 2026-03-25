@@ -106,14 +106,49 @@ export async function navigate(page, params = {}) {
 
 // ── Sub-component Init ────────────────────────────────────────────────────────
 function initNavigation() {
-  const drawer = $("side-drawer"), overlay = $("drawer-overlay"), toggleBtn = $("btn-menu-toggle"), closeBtn = $("btn-close-drawer");
+  const drawer = $("side-drawer"), 
+        overlay = $("drawer-overlay"), 
+        toggleBtn = $("btn-menu-toggle"), 
+        closeBtn = $("btn-close-drawer");
+
+  const open = () => { drawer?.classList.add("open"); overlay?.classList.add("active"); };
   const close = () => { drawer?.classList.remove("open"); overlay?.classList.remove("active"); };
-  toggleBtn?.addEventListener("click", () => { drawer?.classList.add("open"); overlay?.classList.add("active"); });
+
+  toggleBtn?.addEventListener("click", open);
   closeBtn?.addEventListener("click", close);
   overlay?.addEventListener("click", close);
+
   document.querySelectorAll(".drawer-item[data-page]").forEach((btn) => {
     btn.addEventListener("click", () => { navigate(btn.dataset.page); close(); });
   });
+
+  // ── Swipe Gestures ──
+  let touchStartX = 0;
+  let touchTranslateX = 0;
+  const SWIPE_THRESHOLD = 80;
+  const EDGE_THRESHOLD = 40;
+
+  document.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+  }, { passive: true });
+
+  document.addEventListener("touchend", (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX;
+    const isOpen = drawer?.classList.contains("open");
+
+    if (!isOpen) {
+      // Swipe to Open (from left edge)
+      if (touchStartX < EDGE_THRESHOLD && deltaX > SWIPE_THRESHOLD) {
+        open();
+      }
+    } else {
+      // Swipe to Close (anywhere leftwards)
+      if (deltaX < -SWIPE_THRESHOLD) {
+        close();
+      }
+    }
+  }, { passive: true });
 }
 
 function initFab() {
