@@ -173,24 +173,72 @@ function initFab() {
 }
 
 function initInstallPrompt() {
+  const banner = $("install-banner");
+  const installBtn = $("btn-install-app");
+  const dismissBtn = $("btn-dismiss-install");
+  
+  if (!banner || !installBtn || !dismissBtn) return;
+
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-  if (isIOS && !isStandalone && !localStorage.getItem("sf_install_dismissed")) {
-    setTimeout(() => $("install-prompt")?.classList.remove("hidden"), 30000);
+
+  // Don't show on iOS (manual instructions already on landing) or if already installed
+  if (isIOS || isStandalone) return;
+
+  // 3-day cooldown logic for dismissal
+  const lastDismissed = localStorage.getItem("install_prompt_dismissed");
+  if (lastDismissed) {
+    const threeDays = 3 * 24 * 60 * 60 * 1000;
+    if (Date.now() - parseInt(lastDismissed) < threeDays) return;
   }
-  $("install-prompt-close")?.addEventListener("click", () => {
-    $("install-prompt")?.classList.add("hidden");
-    localStorage.setItem("sf_install_dismissed", "1");
-  });
+
   window.addEventListener("beforeinstallprompt", (e) => {
+    // Prevent the mini-infobar from appearing on mobile
     e.preventDefault();
-    const p = $("install-prompt");
-    if (p) {
-      p.querySelector(".install-prompt-desc").textContent = "Install Your Day for the best experience";
-      p.classList.remove("hidden");
-      p.addEventListener("click", () => e.prompt(), { once: true });
-    }
+    // Stash the event so it can be triggered later.
+    window.deferredPrompt = e;
+    
+    // Show the banner after a short delay (engagement)
+    setTimeout(() => {
+      if (window.deferredPrompt) showInstallBanner();
+    }, 5000);
   });
+
+  installBtn.addEventListener("click", async () => {
+    if (!window.deferredPrompt) return;
+    
+    // Show the native install prompt
+    window.deferredPrompt.prompt();
+    
+    // Wait for the user to respond to the prompt
+    const { outcome } = await window.deferredPrompt.userChoice;
+    
+    // We've used the prompt, and can't use it again, so clear it
+    window.deferredPrompt = null;
+    hideInstallBanner();
+  });
+
+  dismissBtn.addEventListener("click", () => {
+    hideInstallBanner();
+    // Set cool-down for 3 days
+    localStorage.setItem("install_prompt_dismissed", Date.now().toString());
+  });
+
+  function showInstallBanner() {
+    banner.classList.remove("hidden");
+    banner.classList.remove("animate-out");
+    banner.classList.add("animate-in");
+  }
+
+  async function hideInstallBanner() {
+    banner.classList.remove("animate-in");
+    banner.classList.add("animate-out");
+    // Wait for animation to finish (styles.css says 180ms)
+    setTimeout(() => {
+      banner.classList.add("hidden");
+      banner.classList.remove("animate-out");
+    }, 200);
+  }
 }
 
 async function handleUserAuth(user) {

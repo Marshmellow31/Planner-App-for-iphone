@@ -38,19 +38,19 @@ export async function renderDashboard(container, uid, profile) {
       <h1 class="premium-name">${profile?.displayName || "Student"}</h1>
       <div class="premium-subtitle">${getSubtitle()}</div>
     </div>
-    <div id="dash-loading" class="animate-pulse text-muted text-sm mb-md">Loading your day…</div>
+    <div id="dash-loading" class="animate-pulse text-muted text-sm mb-md">Preparing your day…</div>
     <div id="dash-content" class="hidden">
       <!-- BTech Banner -->
       <div id="dash-btech-banner"></div>
 
-      <div class="stats-row mb-md" id="dash-stats"></div>
+      <div class="stats-row mb-lg" id="dash-stats"></div>
 
       <!-- Today's Schedule -->
-      <div class="section-header mb-sm">
+      <div class="section-header mb-md">
         <div class="section-title">Today's Schedule</div>
         <button class="btn btn-sm btn-ghost ripple" id="btn-see-schedule">Manage</button>
       </div>
-      <div id="today-schedule-list" class="mb-md"></div>
+      <div id="today-schedule-list" class="mb-lg"></div>
 
       <!-- Tasks summary -->
       <div id="dash-tasks-section"></div>
@@ -89,11 +89,11 @@ function renderBTechBanner(profile) {
   const monthsLeft = Math.round(remaining / 30.44);
 
   el.innerHTML = `
-    <div class="btech-banner mb-md">
+    <div class="btech-banner">
       <div class="btech-banner-top">
         <div>
-          <div class="btech-degree-label">🎓 ${escHtml(btechName || "B.Tech Journey")}</div>
-          <div class="btech-tagline">Keep pushing — you've got this!</div>
+          <div class="btech-degree-label">${escHtml(btechName || "Your Academic Journey")}</div>
+          <div class="btech-tagline">Progress is steady. Stay on track.</div>
         </div>
         <div class="btech-count-box">
           <div class="btech-count-num">${monthsLeft}</div>
@@ -104,9 +104,9 @@ function renderBTechBanner(profile) {
         <div class="btech-progress-fill" style="width:${pct}%"></div>
       </div>
       <div class="btech-progress-meta">
-        <span>${elapsed} days done</span>
+        <span>${elapsed} days down</span>
         <span>${pct}% complete</span>
-        <span>${remaining} days left</span>
+        <span>${remaining} to go</span>
       </div>
     </div>
   `;
@@ -129,15 +129,15 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
     statsEl.innerHTML = `
       <div class="stat-card ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:0ms">
         <div class="stat-number">${analyticsData.completed}</div>
-        <div class="stat-label">Done this week</div>
+        <div class="stat-label">Done</div>
       </div>
       <div class="stat-card ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:40ms">
         <div class="stat-number">${analyticsData.completionRate}%</div>
-        <div class="stat-label">Completion rate</div>
+        <div class="stat-label">Rate</div>
       </div>
       <div class="stat-card ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:80ms">
         <div class="stat-number">${analyticsData.streak}</div>
-        <div class="stat-label">Day streak <i data-lucide="flame" style="width:14px;height:14px;display:inline-block;vertical-align:middle;color:#ff9f43"></i></div>
+        <div class="stat-label">Streak <i data-lucide="flame" style="width:14px;height:14px;display:inline-block;vertical-align:middle;color:var(--warning)"></i></div>
       </div>
       <div class="stat-card ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:120ms">
         <div class="stat-number" style="${analyticsData.overdue > 0 ? 'color:var(--error)' : ''}">${analyticsData.overdue}</div>
@@ -210,32 +210,31 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
         </div>`;
     } else {
       schedList.innerHTML = displayTasks.map((task, index) => {
-        let badgeStyle = "background: var(--bg-hover); color: var(--text-secondary);";
+        let badgeStyle = "background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-subtle);";
         let stateLabel = "";
-        let borderGlow = "";
 
         if (task._state === "curr") {
-          badgeStyle = "background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-active); animation: pulse 2s infinite;";
+          badgeStyle = "background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-active); animation: pulse 2s infinite;";
           stateLabel = "HAPPENING NOW";
-          borderGlow = "border: 1px solid var(--border-active); box-shadow: 0 0 16px rgba(var(--text-primary-rgb), 0.05);";
         } else if (task._state === "prev") {
           stateLabel = "COMPLETED";
         } else if (task._state === "next") {
-          badgeStyle = "background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border);";
           stateLabel = "UPCOMING";
         }
 
+        const priority = (task.priority || 'medium').toLowerCase();
+
         return `
-          <div class="task-card priority-${(task.priority || 'medium').toLowerCase()} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${200 + (index * 40)}ms; cursor:default; margin-bottom:var(--space-sm); ${borderGlow}">
-            <div class="task-body" style="flex:1;">
-              <div style="font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:4px; padding:2px 6px; display:inline-block; border-radius:4px; ${badgeStyle}">${stateLabel}</div>
-              <div class="task-title" style="word-break:break-word; font-size:var(--font-size-md);">${escHtml(task.title)}</div>
-              <div class="task-meta" style="margin-top:4px;">
-                <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary)">
-                  <i data-lucide="clock" style="width:12px;height:12px"></i> 
+          <div class="task-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${200 + (index * 40)}ms; cursor:default;">
+            <div class="task-body">
+              <div style="font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:8px; padding:4px 10px; display:inline-block; border-radius:var(--border-radius-full); ${badgeStyle}">${stateLabel}</div>
+              <div class="task-title" style="word-break:break-word; font-size:var(--font-size-md); font-weight:600;">${escHtml(task.title)}</div>
+              <div class="task-meta" style="margin-top:8px;">
+                <span class="task-due" style="display:inline-flex;align-items:center;gap:6px;color:var(--text-secondary)">
+                  <i data-lucide="clock" style="width:14px;height:14px"></i> 
                   ${task.start_time} - ${task.end_time}
                 </span>
-                <span class="badge badge-${(task.priority || 'medium').toLowerCase()}">${task.priority || 'Medium'}</span>
+                <span class="badge badge-${priority}">${task.priority || 'Medium'}</span>
               </div>
             </div>
           </div>
@@ -319,19 +318,19 @@ export function buildTaskCard(task, uid, onUpdate) {
   card.innerHTML = `
     <div class="task-top-section">
       <div class="priority-label ${priority.toLowerCase()}">${priority}</div>
-      <div class="task-actions" style="display:flex; gap:8px;">
-        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} task-check-btn" style="padding: 4px 10px;" title="${isDone ? "Undo" : "Done"}">
-          <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;"></i>
+      <div class="task-actions">
+        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} task-check-btn" title="${isDone ? "Undo" : "Done"}">
+          <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:16px;height:16px;"></i>
         </button>
-        <button class="btn btn-sm btn-danger task-delete-btn" style="padding: 4px 10px;" aria-label="Delete" title="Delete">
-          <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+        <button class="btn btn-sm btn-danger task-delete-btn" aria-label="Delete" title="Delete">
+          <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
         </button>
       </div>
     </div>
     <div class="task-main-section">
       <div class="task-title">${escHtml(task.title)}</div>
       <div class="task-meta">
-        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar-off" style="width:12px;height:12px"></i> No date</span>`}
+        ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="calendar" style="width:14px;height:14px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:6px"><i data-lucide="calendar-off" style="width:14px;height:14px"></i> No date</span>`}
       </div>
     </div>
   `;

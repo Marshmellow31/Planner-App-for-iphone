@@ -94,6 +94,12 @@ export async function renderTasks(container, uid, profile) {
           subMenu.innerHTML += `<div class="dropdown-item ${activeSubject === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`;
         });
         
+        // Portal: Move subMenu to modal-container if not already there
+        const modalContainer = document.getElementById("modal-container");
+        if (modalContainer && subMenu.parentElement !== modalContainer) {
+          modalContainer.appendChild(subMenu);
+        }
+
         // Re-init subject dropdown items
         subMenu.querySelectorAll(".dropdown-item").forEach(item => {
           item.onclick = (e) => {
@@ -104,11 +110,11 @@ export async function renderTasks(container, uid, profile) {
             subMenu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
             item.classList.add("active");
             document.getElementById("wrapper-subject").classList.remove("open");
+            subMenu.classList.remove("open");
             renderFiltered();
           };
         });
         
-        // Setup initial position if it's open (rare but safe)
         updateDropdownPosition("subject");
       }
       
@@ -190,7 +196,7 @@ export async function renderTasks(container, uid, profile) {
     const wrapper = document.getElementById(`wrapper-${id}`);
     const select = document.getElementById(`select-${id}`);
     const menu = document.getElementById(`menu-${id}`);
-    if (!wrapper || !select || !menu || !wrapper.classList.contains("open")) return;
+    if (!wrapper || !select || !menu || !menu.classList.contains("open")) return;
 
     const rect = select.getBoundingClientRect();
     menu.style.top = `${rect.bottom + 8}px`;
@@ -215,11 +221,14 @@ export async function renderTasks(container, uid, profile) {
 
     select.onclick = (e) => {
       e.stopPropagation();
-      const isOpen = wrapper.classList.contains("open");
+      const isOpen = menu.classList.contains("open");
       // Close all others first
       document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
+      document.querySelectorAll(".custom-dropdown-menu").forEach(m => m.classList.remove("open"));
+      
       if (!isOpen) {
         wrapper.classList.add("open");
+        menu.classList.add("open");
         updateDropdownPosition(id);
       }
     };
@@ -235,6 +244,7 @@ export async function renderTasks(container, uid, profile) {
         item.classList.add("active");
         
         wrapper.classList.remove("open");
+        menu.classList.remove("open");
         onChange(val);
       };
     });
@@ -266,14 +276,22 @@ export async function renderTasks(container, uid, profile) {
   };
 
   const handleClickOutside = (e) => {
-    if (!e.target.closest(".custom-select-wrapper")) {
+    if (!e.target.closest(".custom-select-wrapper") && !e.target.closest(".custom-dropdown-menu")) {
       document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
+      document.querySelectorAll(".custom-dropdown-menu").forEach(m => m.classList.remove("open"));
     }
   };
 
   window.addEventListener("scroll", handleScroll, true);
   window.addEventListener("resize", handleResize);
   document.addEventListener("click", handleClickOutside);
+
+  // Portal: Move all static menus to modal-container to avoid iOS clipping
+  const modalContainer = document.getElementById("modal-container");
+  const menusToPortal = container.querySelectorAll(".custom-dropdown-menu");
+  if (modalContainer) {
+    menusToPortal.forEach(m => modalContainer.appendChild(m));
+  }
 
   await refreshTaskList();
 
@@ -283,6 +301,8 @@ export async function renderTasks(container, uid, profile) {
       window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleResize);
       document.removeEventListener("click", handleClickOutside);
+      // Remove portaled menus
+      menusToPortal.forEach(m => m.remove());
     }
   };
 }

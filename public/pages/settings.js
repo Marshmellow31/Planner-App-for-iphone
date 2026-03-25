@@ -107,8 +107,9 @@ export async function renderSettings(container, uid, profile, state) {
       </div>
     </div>
 
-    <div class="text-center text-muted text-sm" style="margin:var(--space-xl) 0 var(--space-md)">
-      Your Day v1.0.0 · Built with Firebase + Vercel
+    <div class="text-center text-muted text-sm" style="margin:var(--space-xl) 0 var(--space-md); line-height:1.6">
+      Your Day v1.0.0 · made with love by Harshil<br/>
+      report any bugs to github repo comments
     </div>
     <div id="settings-msg" class="form-error hidden" style="text-align:center;margin-bottom:var(--space-md)"></div>
     <button class="btn btn-primary btn-full" id="btn-save-settings">Save Changes</button>

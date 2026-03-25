@@ -261,16 +261,23 @@
     <button class="home-btn ripple" id="btn-home" aria-label="Home" title="Home"><i data-lucide="home"></i></button>
     <button class="fab ripple" id="fab-add-task" aria-label="Add Task" title="Add Task"><i data-lucide="plus"></i></button>
 
-    <!-- Install Prompt Banner -->
-    <div class="install-prompt hidden" id="install-prompt">
-      <span style="font-size:24px;color:var(--accent)"><i data-lucide="smartphone"></i></span>
-      <div class="install-prompt-text">
-        <div class="install-prompt-title">Add to Home Screen</div>
-        <div class="install-prompt-desc">Tap Share <i data-lucide="share" style="width:14px;height:14px;display:inline"></i> 
-          <i data-lucide="arrow-right" style="width:14px;height:14px;display:inline"></i> 
-          "Add to Home Screen" in Safari</div>
+    <!-- Premium PWA Install Banner -->
+    <div class="install-banner-premium hidden" id="install-banner">
+      <div class="install-banner-content">
+        <div class="install-banner-icon">
+          <i data-lucide="smartphone"></i>
+        </div>
+        <div class="install-banner-info">
+          <div class="install-banner-title">Add to Home Screen</div>
+          <div class="install-banner-subtitle">Install Your Day for the best experience</div>
+        </div>
       </div>
-      <button class="install-prompt-close" id="install-prompt-close"><i data-lucide="x" style="width:18px;height:18px"></i></button>
+      <div class="install-banner-actions">
+        <button class="btn-install-premium ripple" id="btn-install-app">Install</button>
+        <button class="btn-install-dismiss ripple" id="btn-dismiss-install" aria-label="Dismiss">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
     </div>
 
   </div><!-- /#page-app -->
