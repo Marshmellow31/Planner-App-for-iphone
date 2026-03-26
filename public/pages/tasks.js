@@ -19,11 +19,11 @@ export async function renderTasks(container, uid, profile) {
     <div class="filter-wrapper">
       <div class="filter-row">
         <div class="custom-select-wrapper" id="wrapper-status">
-          <div class="filter-select ripple" id="select-status" data-value="all">Status: All</div>
+          <div class="filter-select ripple" id="select-status" data-value="pending">Status: Pending</div>
           <div class="custom-dropdown-menu" id="menu-status">
-            <div class="dropdown-item active" data-value="all">Status: All</div>
+            <div class="dropdown-item" data-value="all">Status: All</div>
             <div class="dropdown-item" data-value="today">Today</div>
-            <div class="dropdown-item" data-value="pending">Pending</div>
+            <div class="dropdown-item active" data-value="pending">Pending</div>
             <div class="dropdown-item" data-value="completed">Completed</div>
             <div class="dropdown-item" data-value="overdue">Overdue</div>
           </div>
@@ -69,7 +69,7 @@ export async function renderTasks(container, uid, profile) {
     <div id="tasks-list"></div>
   `;
 
-  let activeStatus   = "all";
+  let activeStatus   = "pending";
   let activePriority = "all";
   let activeTopic    = "all";
   let activeSort     = "newest";

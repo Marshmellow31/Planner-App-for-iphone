@@ -406,9 +406,9 @@ export async function renderPersonalDevelopment(container, uid, profile) {
       .hd-input-close:hover { color: #FFF; }
     </style>
 
-    <div style="margin-top:10px; display:flex; justify-content:flex-end;">
-      <button class="btn btn-sm btn-ghost ripple" id="btn-add-goal-local" style="border-radius:var(--border-radius-md); color:var(--accent)">
-        <i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Add Goal
+    <div style="margin-top:20px; margin-bottom:20px; display:flex; justify-content:flex-end;">
+      <button class="btn btn-sm btn-ghost ripple" id="btn-add-goal-local" style="border-radius:var(--border-radius-full); color:var(--accent); border:1px solid rgba(255,255,255,0.05); padding:6px 18px; font-weight:600">
+        <i data-lucide="plus" style="width:14px;height:14px;margin-right:6px"></i> Add Goal
       </button>
     </div>
     <div id="pd-goals-list"></div>

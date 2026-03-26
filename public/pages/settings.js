@@ -22,7 +22,7 @@ export async function renderSettings(container, uid, profile, state) {
       <div style="margin-bottom:var(--space-sm);color:var(--accent)"><i data-lucide="user-circle-2" style="width:52px;height:52px"></i></div>
       <div style="font-size:var(--font-size-xl);font-weight:700">${escHtml(p.displayName || "Student")}</div>
       <div class="text-muted text-sm">${escHtml(p.email || "")}</div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-md)" id="btn-edit-profile">Edit Profile</button>
+      <button class="btn btn-ghost btn-sm ripple" style="margin-top:var(--space-md); border-radius:var(--border-radius-full)" id="btn-edit-profile">Edit Profile</button>
     </div>
 
     <!-- Appearance -->
@@ -74,12 +74,22 @@ export async function renderSettings(container, uid, profile, state) {
       </div>` : ""}
     </div>
 
-    <!-- Course Section -->
-    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">🎓 Add your course here</div>
+    <!-- Course / Goal Section -->
+    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">🎯 Long-Term Focus</div>
     <div class="settings-list mb-md">
       <div class="settings-item" id="btn-edit-course">
         <span class="settings-item-icon"><i data-lucide="graduation-cap" style="width:18px;height:18px"></i></span>
-        <span class="settings-item-label" id="course-label">${p.btechName ? escHtml(p.btechName) : "Add course details"}</span>
+        <span class="settings-item-label" id="course-label">${p.btechName ? escHtml(p.btechName) : "Add degree or goal (e.g., B.Tech)"}</span>
+        <span class="settings-item-arrow" style="display:flex;align-items:center"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></span>
+      </div>
+    </div>
+
+    <!-- Support -->
+    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">Support</div>
+    <div class="settings-list mb-md">
+      <div class="settings-item" id="btn-how-to-use">
+        <span class="settings-item-icon"><i data-lucide="help-circle" style="width:18px;height:18px"></i></span>
+        <span class="settings-item-label">How to use</span>
         <span class="settings-item-arrow" style="display:flex;align-items:center"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></span>
       </div>
     </div>
@@ -101,7 +111,12 @@ export async function renderSettings(container, uid, profile, state) {
     <div class="text-center text-muted text-sm" style="margin:var(--space-xl) 0 var(--space-md); line-height:1.6">
       Your Day v1.0.0<br/>
       Designed & developed by Harshil<br/>
-      Feedback and bug reports → <a href="https://github.com/Marshmellow31/Planner-App-for-iphone" target="_blank" style="color:var(--accent);text-decoration:none">GitHub</a>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-top:4px;">
+        <span>Feedback and bug reports &rarr;</span>
+        <a href="https://github.com/Marshmellow31/Planner-App-for-iphone" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary); text-decoration:none; font-weight:600;">GitHub</a>
+        <span style="color:var(--border-active); font-size:10px;">&bull;</span>
+        <a href="https://www.linkedin.com/in/harshil-patel-5a7373333/" target="_blank" rel="noopener noreferrer" style="color:var(--text-primary); text-decoration:none; font-weight:600;">LinkedIn</a>
+      </div>
     </div>
     <div id="settings-msg" class="form-error hidden" style="text-align:center;margin-bottom:var(--space-md)"></div>
     <button class="btn btn-primary btn-full hidden" id="btn-save-settings">Save Changes</button>
@@ -144,6 +159,9 @@ export async function renderSettings(container, uid, profile, state) {
   // ── Course Details ───────────────────────────────────────────
   document.getElementById("btn-edit-course")?.addEventListener("click", () => openCourseModal(uid, profile, state));
 
+  // ── How to use ──────────────────────────────────────────────
+  document.getElementById("btn-how-to-use")?.addEventListener("click", () => openHowToModal());
+
   // ── Change password ───────────────────────────────────────────
   document.getElementById("btn-change-pw")?.addEventListener("click", async () => {
     if (!profile?.email) return;
@@ -184,8 +202,8 @@ function openProfileModal(uid, profile, state) {
         <input class="form-input" id="profile-name" value="${escHtml(profile?.displayName||"")}" placeholder="Your name" />
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="profile-cancel">Cancel</button>
-        <button class="btn btn-primary" id="profile-save">Save</button>
+        <button class="btn btn-secondary" id="profile-cancel" style="border-radius:var(--border-radius-full)">Cancel</button>
+        <button class="btn btn-primary" id="profile-save" style="border-radius:var(--border-radius-full)">Save</button>
       </div>
     </div>
   `;
@@ -210,11 +228,11 @@ function openCourseModal(uid, profile, state) {
   backdrop.className = "modal-backdrop centered";
   backdrop.innerHTML = `
     <div class="modal-box" style="max-width:400px">
-      <h3 class="modal-title">Course Details</h3>
+      <h3 class="modal-title">Long-Term Focus</h3>
       
       <div class="form-group">
-        <label class="form-label">Program Name</label>
-        <input class="form-input" id="course-name" placeholder="e.g. B.Tech CSE" value="${escHtml(profile?.btechName||'')}" />
+        <label class="form-label">Program or Goal</label>
+        <input class="form-input" id="course-name" placeholder="e.g. B.Tech, Semester 6" value="${escHtml(profile?.btechName||'')}" />
       </div>
       
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
@@ -223,14 +241,14 @@ function openCourseModal(uid, profile, state) {
           <input class="form-input" type="date" id="course-start" value="${profile?.btechStart||''}" />
         </div>
         <div class="form-group">
-          <label class="form-label">Graduation Date</label>
+          <label class="form-label">Target Date</label>
           <input class="form-input" type="date" id="course-end" value="${profile?.btechEnd||''}" />
         </div>
       </div>
 
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="course-cancel">Cancel</button>
-        <button class="btn btn-primary" id="course-save">Save Changes</button>
+        <button class="btn btn-secondary" id="course-cancel" style="border-radius:var(--border-radius-full)">Cancel</button>
+        <button class="btn btn-primary" id="course-save" style="border-radius:var(--border-radius-full)">Save Changes</button>
       </div>
     </div>
   `;
@@ -247,6 +265,68 @@ function openCourseModal(uid, profile, state) {
     navigate("settings");
   });
 
+  document.body.appendChild(backdrop);
+}
+
+// ── How to use Modal ────────────────────────────────────────────
+function openHowToModal() {
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop centered";
+  backdrop.innerHTML = `
+    <div class="modal-box" style="max-width:450px; max-height:80vh; overflow-y:auto;">
+      <h3 class="modal-title" style="display:flex; align-items:center; gap:8px">
+        <i data-lucide="help-circle" style="color:var(--accent)"></i> How to use Your Day
+      </h3>
+      
+      <div style="display:flex; flex-direction:column; gap:var(--space-md); margin-bottom:var(--space-lg)">
+        
+        <div style="display:flex; gap:12px;">
+          <div style="color:var(--accent)"><i data-lucide="layout-dashboard"></i></div>
+          <div>
+            <div style="font-weight:600; font-size:15px">Dashboard</div>
+            <div class="text-muted text-sm">Your central hub. View a summary of your day, quick stats, and upcoming high-priority tasks at a glance.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <div style="color:var(--accent)"><i data-lucide="check-square"></i></div>
+          <div>
+            <div style="font-weight:600; font-size:15px">Tasks</div>
+            <div class="text-muted text-sm">Manage your to-do lists. Add sub-tasks, set priorities, and organize everything you need to get done.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <div style="color:var(--accent)"><i data-lucide="sparkles"></i></div>
+          <div>
+            <div style="font-weight:600; font-size:15px">AI Scheduler</div>
+            <div class="text-muted text-sm">The brain of the app. It automatically organizes your tasks into your available study blocks based on urgency and priority.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <div style="color:var(--accent)"><i data-lucide="trending-up"></i></div>
+          <div>
+            <div style="font-weight:600; font-size:15px">Growth</div>
+            <div class="text-muted text-sm">Focus on long-term goals. Set a target date and the app will automatically generate daily tasks to help you stay on track.</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px;">
+          <div style="color:var(--accent)"><i data-lucide="settings"></i></div>
+          <div>
+            <div style="font-weight:600; font-size:15px">Profile</div>
+            <div class="text-muted text-sm">Personalize your experience. Adjust themes, manage notifications, and update your course details.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <button class="btn btn-primary btn-full" id="how-to-close" style="border-radius:var(--border-radius-full)">Got it!</button>
+    </div>
+  `;
+
+  backdrop.querySelector("#how-to-close").addEventListener("click", () => backdrop.remove());
   document.body.appendChild(backdrop);
   if (window.lucide) window.lucide.createIcons();
 }

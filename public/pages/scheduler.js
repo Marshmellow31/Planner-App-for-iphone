@@ -89,11 +89,11 @@ export async function renderSchedulerTab(container, uid, profile) {
       <div class="sched-card">
         <div id="scheduler-task-list"></div>
         
-        <div style="margin-top:var(--space-md); display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-          <button class="btn btn-secondary btn-sm ripple" id="btn-manage-blocks" style="border-radius:var(--border-radius-md)">
+        <div style="margin-top:var(--space-xl); display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <button class="btn btn-secondary btn-sm ripple" id="btn-manage-blocks" style="border-radius:var(--border-radius-full); padding:10px;">
             <i data-lucide="clock" style="width:14px;height:14px;margin-right:6px;"></i> Edit Schedule
           </button>
-          <button class="btn btn-primary btn-sm ripple" id="btn-generate-plan" style="border-radius:var(--border-radius-md)">
+          <button class="btn btn-primary btn-sm ripple" id="btn-generate-plan" style="border-radius:var(--border-radius-full); padding:10px;">
             <i data-lucide="sparkles" style="width:14px;height:14px;margin-right:6px;"></i> Generate Plan
           </button>
         </div>

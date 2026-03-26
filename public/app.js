@@ -38,14 +38,14 @@ export const state = {
 // ── Show Landing / Auth / App shells ──────────────────────────────────────────
 function showLanding(animateIn = false) {
   hideEl("page-auth", "page-app");
-  showEl("page-landing");
+  showEl("page-landing", "landing-bg");
   if (animateIn) triggerLandingReEnter();
   else triggerLandingEntrance();
 }
 
 function showAuthPage(view = "auth-login") {
   hideEl("page-landing", "page-app");
-  showEl("page-auth");
+  showEl("page-auth", "landing-bg");
   // Slider logic handles the specific view (login/signup/forgot)
   ["auth-login", "auth-signup", "auth-forgot"].forEach(id => {
     const el = $(id);
@@ -60,7 +60,7 @@ function showAuthPage(view = "auth-login") {
 }
 
 function showAppPage() {
-  hideEl("page-landing", "page-auth");
+  hideEl("page-landing", "page-auth", "landing-bg");
   showEl("page-app");
 }
 

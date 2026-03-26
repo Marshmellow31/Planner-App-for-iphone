@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="description" content="Plan smarter. Grow daily. Your personal companion for productivity and growth." />
   <title>Your Day — Student Planner</title>
 
@@ -43,7 +45,7 @@
         sunset: `<svg class="splash-svg-icon" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="8" y1="36" x2="56" y2="36" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/><path d="M18 36 A14 14 0 0 0 46 36" stroke="#cccccc" stroke-width="2" stroke-linecap="round" fill="none"/><line x1="32" y1="52" x2="32" y2="46" stroke="#999999" stroke-width="1.5" stroke-linecap="round"/><line x1="21" y1="48" x2="17" y2="52" stroke="#666666" stroke-width="1.5" stroke-linecap="round"/><line x1="43" y1="48" x2="47" y2="52" stroke="#666666" stroke-width="1.5" stroke-linecap="round"/><line x1="15" y1="30" x2="10" y2="29" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/><line x1="49" y1="30" x2="54" y2="29" stroke="#3a3a3a" stroke-width="1.5" stroke-linecap="round"/></svg>`,
       };
       const iconKey = h < 5 || h >= 20 ? "moon" : h < 8 ? "sunrise" : h < 17 ? "sun" : "sunset";
-      const captions = h < 5 ? [ "Rest well. Tomorrow belongs to the prepared.", "The night is quiet. So is focus.", "Even in silence, growth continues." ] : h < 9 ? [ "Morning clarity is a superpower. Use it.", "The early hours don't lie. Make them count.", "Sunrise. A blank slate. Go.", "What you do before 9am shapes your day." ] : h < 12 ? [ "Your best thinking happens now. Protect it.", "Mid-morning momentum. Keep it going.", "Focused mornings build great outcomes." ] : h < 14 ? [ "Midday check-in: are you on track?", "Refuel. Refocus. Finish strong.", "Half the day remains. More than enough." ] : h < 17 ? [ "Afternoons are for execution. Ship something.", "The grind is just discipline in disguise.", "Progress over perfection — always." ] : h < 20 ? [ "Evenings are for reflection and preparation.", "What did you do today that future you will thank you for?", "Wind down, but don't coast." ] : [ "Late nights belong to the dedicated.", "While others sleep, the focused prepare.", "End the day intentionally. You earned it." ];
+      const captions = h < 5 ? ["Rest well. Tomorrow belongs to the prepared.", "The night is quiet. So is focus.", "Even in silence, growth continues."] : h < 9 ? ["Morning clarity is a superpower. Use it.", "The early hours don't lie. Make them count.", "Sunrise. A blank slate. Go.", "What you do before 9am shapes your day."] : h < 12 ? ["Your best thinking happens now. Protect it.", "Mid-morning momentum. Keep it going.", "Focused mornings build great outcomes."] : h < 14 ? ["Midday check-in: are you on track?", "Refuel. Refocus. Finish strong.", "Half the day remains. More than enough."] : h < 17 ? ["Afternoons are for execution. Ship something.", "The grind is just discipline in disguise.", "Progress over perfection — always."] : h < 20 ? ["Evenings are for reflection and preparation.", "What did you do today that future you will thank you for?", "Wind down, but don't coast."] : ["Late nights belong to the dedicated.", "While others sleep, the focused prepare.", "End the day intentionally. You earned it."];
       const caption = captions[Math.floor(Math.random() * captions.length)];
       document.addEventListener("DOMContentLoaded", () => {
         const iconEl = document.getElementById("splash-icon");
@@ -54,250 +56,365 @@
     })();
   </script>
 </head>
+
 <body>
 
-<!-- ── SPLASH / LOADER ────────────────────────────────── -->
-<div id="app-splash">
-  <div class="splash-inner">
-    <div class="splash-logo-ring">
-      <div class="splash-ring"></div>
-      <div id="splash-icon"></div>
-    </div>
-    <div class="splash-title">Your Day</div>
-    <div class="splash-caption" id="splash-caption"></div>
-    <div class="splash-loading">
-      <span class="splash-dot"></span>
-      <span class="splash-dot"></span>
-      <span class="splash-dot"></span>
-    </div>
-  </div>
-</div>
-
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<!--  APP ROOT                                    -->
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-<div id="app-root">
-
-  <!-- ── LANDING PAGE ────────────────────────────── -->
-  <div id="page-landing" class="landing hidden">
-    <div class="landing-hero">
-      <h1 class="landing-title">Your Day</h1>
-      <p class="landing-subtitle">Plan smarter. Grow daily. Stay on top of everything that matters.</p>
-      <div class="landing-cta">
-        <button class="btn btn-primary btn-full ripple" id="btn-get-started">Get Started Free</button>
-        <button class="btn btn-secondary btn-full ripple" id="btn-landing-login">I already have an account</button>
+  <!-- ── SPLASH / LOADER ────────────────────────────────── -->
+  <div id="app-splash">
+    <div class="splash-inner">
+      <div class="splash-logo-ring">
+        <div class="splash-ring"></div>
+        <div id="splash-icon"></div>
       </div>
-    </div>
-
-    <div class="features-grid" style="padding:0 var(--space-md) var(--space-md)">
-      <div class="feature-card">
-        <div class="feature-icon"><i data-lucide="sparkles"></i></div>
-        <div class="feature-title">AI Scheduler</div>
-        <div class="feature-desc">Auto-plan tasks into your free time slots</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon"><i data-lucide="trending-up"></i></div>
-        <div class="feature-title">Personal Growth</div>
-        <div class="feature-desc">Track goals, habits & daily progress</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon"><i data-lucide="book-open"></i></div>
-        <div class="feature-title">Topic Tracker</div>
-        <div class="feature-desc">Manage courses, sub-topics & completion</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon"><i data-lucide="bell"></i></div>
-        <div class="feature-title">Smart Reminders</div>
-        <div class="feature-desc">Push notifications for deadlines</div>
-      </div>
-    </div>
-
-    <div class="install-banner" style="margin:0 var(--space-md) var(--space-xl)">
-      <div class="install-banner-title">📲 Install on your iPhone</div>
-      <div class="install-step"><span>1.</span><span>Open in <strong>Safari</strong></span></div>
-      <div class="install-step"><span>2.</span><span>Tap the <strong>Share</strong> icon (↑)</span></div>
-      <div class="install-step"><span>3.</span><span>Tap <strong>"Add to Home Screen"</strong></span></div>
-      <div class="install-step"><span>4.</span><span>Tap <strong>Add</strong> — done! 🎉</span></div>
-    </div>
-  </div>
-
-  <!-- ── AUTH PAGE ──────────────────────────────── -->
-  <div id="page-auth" class="hidden">
-    <!-- Login -->
-    <div id="auth-login" class="auth-page">
-      <div class="auth-card">
-        <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x" style="width:20px;height:20px"></i></button>
-        <h2 class="auth-title">Welcome back</h2>
-        <p class="auth-subtitle">Sign in to your Your Day account</p>
-        <form id="form-login" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="login-email">Email</label>
-            <input class="form-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="login-password">Password</label>
-            <input class="form-input" type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
-          </div>
-          <div id="login-error" class="form-error hidden"></div>
-          <button type="submit" class="btn btn-primary btn-full ripple" id="btn-login">Sign In</button>
-        </form>
-        <div class="auth-divider"><span>OR</span></div>
-        <button class="btn btn-google btn-full ripple" id="btn-google-login">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="btn-google-icon" alt="Google" />
-          Continue with Google
-        </button>
-        <div class="auth-switch">
-          <a href="#" id="link-forgot-pw">Forgot password?</a>
-        </div>
-        <div class="auth-switch" style="margin-top:8px">
-          Don't have an account? <a href="#" id="link-to-signup">Sign up</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Signup -->
-    <div id="auth-signup" class="auth-page hidden">
-      <div class="auth-card">
-        <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x" style="width:20px;height:20px"></i></button>
-        <div class="auth-logo"><i data-lucide="user-plus" style="width:40px;height:40px;color:var(--accent)"></i></div>
-        <h2 class="auth-title">Create account</h2>
-        <p class="auth-subtitle">Start your Your Day journey</p>
-        <form id="form-signup" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="signup-name">Display Name</label>
-            <input class="form-input" type="text" id="signup-name" placeholder="Your name" autocomplete="name" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="signup-email">Email</label>
-            <input class="form-input" type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="signup-password">Password</label>
-            <input class="form-input" type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" required />
-          </div>
-          <div id="signup-error" class="form-error hidden"></div>
-          <button type="submit" class="btn btn-primary btn-full ripple" id="btn-signup">Create Account</button>
-        </form>
-        <div class="auth-divider"><span>OR</span></div>
-        <button class="btn btn-google btn-full ripple" id="btn-google-signup">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="btn-google-icon" alt="Google" />
-          Sign up with Google
-        </button>
-        <div class="auth-switch">
-          Already have an account? <a href="#" id="link-to-login">Sign in</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Forgot Password -->
-    <div id="auth-forgot" class="auth-page hidden">
-      <div class="auth-card">
-        <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x" style="width:20px;height:20px"></i></button>
-        <div class="auth-logo"><i data-lucide="key-round" style="width:40px;height:40px;color:var(--accent)"></i></div>
-        <h2 class="auth-title">Reset Password</h2>
-        <p class="auth-subtitle">We'll send a reset link to your email</p>
-        <form id="form-forgot" novalidate>
-          <div class="form-group">
-            <label class="form-label" for="forgot-email">Email</label>
-            <input class="form-input" type="email" id="forgot-email" placeholder="you@example.com" autocomplete="email" required />
-          </div>
-          <div id="forgot-msg" class="form-error hidden"></div>
-          <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
-        </form>
-        <div class="auth-switch" style="margin-top:12px">
-          <a href="#" id="link-back-to-login">← Back to login</a>
-        </div>
+      <div class="splash-title">Your Day</div>
+      <div class="splash-caption" id="splash-caption"></div>
+      <div class="splash-loading">
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
+        <span class="splash-dot"></span>
       </div>
     </div>
   </div>
 
-  <!-- ── MAIN APP ────────────────────────────────── -->
-  <div id="page-app" class="hidden">
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <!--  APP ROOT                                    -->
+  <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
+  <div id="app-root">
 
-    <!-- Fixed Top Header -->
-    <header class="app-header">
-      <div class="header-container">
-        <button class="header-btn ripple" id="btn-analytics" aria-label="Analytics" title="Analytics">
-          <i data-lucide="pie-chart"></i>
-        </button>
-        <div class="header-title">Your Day</div>
-        <button class="header-btn ripple" id="btn-header-add-task" aria-label="Add Task" title="Add Task">
-          <i data-lucide="plus"></i>
-        </button>
-      </div>
-    </header>
-
-    <!-- Page Content -->
-    <div class="app-container">
-      <div id="main-content" class="page-content"></div>
+    <!-- Premium Background Animation -->
+    <div id="landing-bg" class="landing-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
     </div>
 
+    <!-- ── LANDING PAGE ────────────────────────────── -->
+    <div id="page-landing" class="landing hidden">
+      <div class="landing-hero" style="margin: 60px auto 24px auto; position:relative; z-index:10; padding:40px 24px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:32px; max-width:400px; width:calc(100% - 32px);">
+        <h1 class="landing-title">Your Day</h1>
+        <p class="landing-subtitle">Plan smarter. Grow daily. Stay on top of everything that matters.</p>
 
-
-    <!-- Bottom Tab Navigation -->
-    <nav class="bottom-nav">
-      <button class="nav-tab ripple" data-page="dashboard" title="Dashboard">
-        <i data-lucide="layout-dashboard"></i>
-        <span>Dashboard</span>
-      </button>
-      <button class="nav-tab ripple" data-page="tasks" title="Tasks">
-        <i data-lucide="check-square"></i>
-        <span>Tasks</span>
-      </button>
-      <button class="nav-tab ripple" data-page="scheduler" title="Ai scheduler">
-        <i data-lucide="sparkles"></i>
-        <span>Scheduler</span>
-      </button>
-      <button class="nav-tab ripple" data-page="growth" title="Growth">
-        <i data-lucide="trending-up"></i>
-        <span>Growth</span>
-      </button>
-      <button class="nav-tab ripple" data-page="settings" title="settings">
-        <i data-lucide="settings"></i>
-        <span>Settings</span>
-      </button>
-    </nav>
-
-    <!-- Premium PWA Install Banner -->
-    <div class="install-banner-premium hidden" id="install-banner">
-      <div class="install-banner-content">
-        <div class="install-banner-icon">
-          <i data-lucide="smartphone"></i>
-        </div>
-        <div class="install-banner-info">
-          <div class="install-banner-title">Add to Home Screen</div>
-          <div class="install-banner-subtitle">Install Your Day for the best experience</div>
+        <div class="landing-cta" style="display:flex; flex-direction:column; gap:12px;">
+          <button class="btn btn-primary btn-full ripple" id="btn-get-started">Get Started Free</button>
+          <button class="btn btn-secondary btn-full ripple" id="btn-landing-login">I already have an account</button>
         </div>
       </div>
-      <div class="install-banner-actions">
-        <button class="btn-install-premium ripple" id="btn-install-app">Install</button>
-        <button class="btn-install-dismiss ripple" id="btn-dismiss-install" aria-label="Dismiss">
-          <i data-lucide="x"></i>
-        </button>
+
+      <!-- How to Use Section -->
+      <div
+        style="padding:0 0 var(--space-md) 0; text-align:center; position:relative; z-index:10; max-width:400px; width:calc(100% - 32px); margin:0 auto;">
+        <div style="padding:40px 24px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:32px;">
+          <h2 style="font-size:var(--font-size-2xl); margin-bottom:var(--space-lg); letter-spacing:-0.5px">Master "Your
+            Day"
+          </h2>
+          <div class="usage-steps" style="text-align:left; max-width:340px; margin:0 auto; display:grid; gap:20px">
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            <div
+              style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
+              1</div>
+            <div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px">Dashboard</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.4">Get a bird's-eye view of your day,
+                progress, and upcoming deadlines in one place.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            <div
+              style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
+              2</div>
+            <div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px">Tasks</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.4">Manage all your to-do lists with
+                simple, powerful task creation and sorting.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            <div
+              style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
+              3</div>
+            <div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px">AI Scheduler</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.4">Automatically fit your urgent tasks
+                into empty calendar slots using smart AI.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            <div
+              style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
+              4</div>
+            <div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px">Growth</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.4">Define long-term goals and let the
+                app break them down into daily habits.</div>
+            </div>
+          </div>
+          <div style="display:flex; gap:12px; align-items:flex-start">
+            <div
+              style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
+              5</div>
+            <div>
+              <div style="font-weight:600; font-size:15px; margin-bottom:2px">Settings</div>
+              <div style="font-size:13px; color:var(--text-muted); line-height:1.4">Customize your profile, add academic
+                courses, and access the user manual.</div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+
+      <!-- Multi-Platform Install Section -->
+      <div style="padding:var(--space-xl) var(--space-md) var(--space-xl)">
+        <h3
+          style="text-align:center; margin-bottom:var(--space-lg); font-size:var(--font-size-xl); letter-spacing:-0.5px">
+          Add to your Home Screen</h3>
+
+        <div class="install-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <!-- iPhone -->
+          <div class="install-banner"
+            style="margin:0; padding:20px 16px; border-radius:24px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05)">
+            <div class="install-banner-title"
+              style="font-size:14px; margin-bottom:12px; display:flex; align-items:center; gap:6px">
+              <i data-lucide="apple" style="width:16px;height:16px"></i> iPhone
+            </div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>1.</span><span>Open in
+                <strong>Safari</strong></span></div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>2.</span><span>Tap the
+                <strong>Share</strong> icon (↑)</span></div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>3.</span><span>Tap <strong>"Add to
+                  Home Screen"</strong></span></div>
+            <div class="install-step" style="font-size:12px"><span>4.</span><span>Tap <strong>Add</strong> — done!
+                🎉</span></div>
+          </div>
+
+          <!-- Android -->
+          <div class="install-banner"
+            style="margin:0; padding:20px 16px; border-radius:24px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05)">
+            <div class="install-banner-title"
+              style="font-size:14px; margin-bottom:12px; display:flex; align-items:center; gap:6px">
+              <i data-lucide="smartphone" style="width:16px;height:16px"></i> Android
+            </div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>1.</span><span>Open in
+                <strong>Chrome</strong></span></div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>2.</span><span>Tap the
+                <strong>Menu</strong> icon (⋮)</span></div>
+            <div class="install-step" style="font-size:12px; margin-bottom:6px"><span>3.</span><span>Tap
+                <strong>"Install App"</strong></span></div>
+            <div class="install-step" style="font-size:12px"><span>4.</span><span>Tap <strong>Install</strong> — done!
+                🚀</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Landing Footer -->
+      <footer
+        style="padding:var(--space-xl) var(--space-md) var(--space-2xl); text-align:center; position:relative; z-index:10; border-top:1px solid rgba(255,255,255,0.05); margin-top:var(--space-xl)">
+        <div style="display:flex; justify-content:center; gap:20px; margin-bottom:16px">
+          <a href="https://github.com/Marshmellow31/Planner-App-for-iphone" target="_blank" class="social-link"
+            title="GitHub Repository">
+            <i data-lucide="git-pull-request" style="width:20px;height:20px"></i>
+          </a>
+          <a href="https://www.linkedin.com/in/harshil-patel-5a7373333/" target="_blank" class="social-link"
+            title="Contact on LinkedIn">
+            <i data-lucide="link" style="width:20px;height:20px"></i>
+          </a>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); opacity:0.7">
+          made by <strong>Harshil</strong> | for any bugs contact me
+        </p>
+      </footer>
+    </div>
+
+    <!-- ── AUTH PAGE ──────────────────────────────── -->
+    <div id="page-auth" class="hidden">
+      <!-- Login -->
+      <div id="auth-login" class="auth-page">
+        <div class="auth-card">
+          <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x"
+              style="width:20px;height:20px"></i></button>
+          <h2 class="auth-title">Welcome back</h2>
+          <p class="auth-subtitle">Sign in to your Your Day account</p>
+          <form id="form-login" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email</label>
+              <input class="form-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email"
+                required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="login-password">Password</label>
+              <input class="form-input" type="password" id="login-password" placeholder="••••••••"
+                autocomplete="current-password" required />
+            </div>
+            <div id="login-error" class="form-error hidden"></div>
+            <button type="submit" class="btn btn-primary btn-full ripple" id="btn-login">Sign In</button>
+          </form>
+          <div class="auth-divider"><span>OR</span></div>
+          <button class="btn btn-google btn-full ripple" id="btn-google-login">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="btn-google-icon"
+              alt="Google" />
+            Continue with Google
+          </button>
+          <div class="auth-switch">
+            <a href="#" id="link-forgot-pw">Forgot password?</a>
+          </div>
+          <div class="auth-switch" style="margin-top:8px">
+            Don't have an account? <a href="#" id="link-to-signup">Sign up</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Signup -->
+      <div id="auth-signup" class="auth-page hidden">
+        <div class="auth-card">
+          <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x"
+              style="width:20px;height:20px"></i></button>
+          <div class="auth-logo"><i data-lucide="user-plus" style="width:40px;height:40px;color:var(--accent)"></i>
+          </div>
+          <h2 class="auth-title">Create account</h2>
+          <p class="auth-subtitle">Start your Your Day journey</p>
+          <form id="form-signup" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Display Name</label>
+              <input class="form-input" type="text" id="signup-name" placeholder="Your name" autocomplete="name"
+                required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email</label>
+              <input class="form-input" type="email" id="signup-email" placeholder="you@example.com"
+                autocomplete="email" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-password">Password</label>
+              <input class="form-input" type="password" id="signup-password" placeholder="At least 6 characters"
+                autocomplete="new-password" required />
+            </div>
+            <div id="signup-error" class="form-error hidden"></div>
+            <button type="submit" class="btn btn-primary btn-full ripple" id="btn-signup">Create Account</button>
+          </form>
+          <div class="auth-divider"><span>OR</span></div>
+          <button class="btn btn-google btn-full ripple" id="btn-google-signup">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="btn-google-icon"
+              alt="Google" />
+            Sign up with Google
+          </button>
+          <div class="auth-switch">
+            Already have an account? <a href="#" id="link-to-login">Sign in</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forgot Password -->
+      <div id="auth-forgot" class="auth-page hidden">
+        <div class="auth-card">
+          <button class="auth-close auth-close-btn" aria-label="Close" title="Close"><i data-lucide="x"
+              style="width:20px;height:20px"></i></button>
+          <div class="auth-logo"><i data-lucide="key-round" style="width:40px;height:40px;color:var(--accent)"></i>
+          </div>
+          <h2 class="auth-title">Reset Password</h2>
+          <p class="auth-subtitle">We'll send a reset link to your email</p>
+          <form id="form-forgot" novalidate>
+            <div class="form-group">
+              <label class="form-label" for="forgot-email">Email</label>
+              <input class="form-input" type="email" id="forgot-email" placeholder="you@example.com"
+                autocomplete="email" required />
+            </div>
+            <div id="forgot-msg" class="form-error hidden"></div>
+            <button type="submit" class="btn btn-primary btn-full">Send Reset Link</button>
+          </form>
+          <div class="auth-switch" style="margin-top:12px">
+            <a href="#" id="link-back-to-login">← Back to login</a>
+          </div>
+        </div>
       </div>
     </div>
 
-  </div><!-- /#page-app -->
+    <!-- ── MAIN APP ────────────────────────────────── -->
+    <div id="page-app" class="hidden">
 
-</div><!-- /#app-root -->
+      <!-- Fixed Top Header -->
+      <header class="app-header">
+        <div class="header-container">
+          <button class="header-btn ripple" id="btn-analytics" aria-label="Analytics" title="Analytics">
+            <i data-lucide="pie-chart"></i>
+          </button>
+          <div class="header-title">Your Day</div>
+          <button class="header-btn ripple" id="btn-header-add-task" aria-label="Add Task" title="Add Task">
+            <i data-lucide="plus"></i>
+          </button>
+        </div>
+      </header>
 
-<!-- ── MODALS (rendered by JS) ─────────────────── -->
-<div id="modal-container"></div>
+      <!-- Page Content -->
+      <div class="app-container">
+        <div id="main-content" class="page-content"></div>
+      </div>
 
-<!-- ── SCRIPTS ─────────────────────────────────── -->
 
 
-<!-- App Entry Point (ES module) -->
-<script type="module" src="/app.js"></script>
+      <!-- Bottom Tab Navigation -->
+      <nav class="bottom-nav">
+        <button class="nav-tab ripple" data-page="dashboard" title="Dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-tab ripple" data-page="tasks" title="Tasks">
+          <i data-lucide="check-square"></i>
+          <span>Tasks</span>
+        </button>
+        <button class="nav-tab ripple" data-page="scheduler" title="Ai scheduler">
+          <i data-lucide="sparkles"></i>
+          <span>Scheduler</span>
+        </button>
+        <button class="nav-tab ripple" data-page="growth" title="Growth">
+          <i data-lucide="trending-up"></i>
+          <span>Growth</span>
+        </button>
+        <button class="nav-tab ripple" data-page="settings" title="settings">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
 
-<!-- Vite PWA Auto Reload -->
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload();
-    });
-  }
-</script>
+      <!-- Premium PWA Install Banner -->
+      <div class="install-banner-premium hidden" id="install-banner">
+        <div class="install-banner-content">
+          <div class="install-banner-icon">
+            <i data-lucide="smartphone"></i>
+          </div>
+          <div class="install-banner-info">
+            <div class="install-banner-title">Add to Home Screen</div>
+            <div class="install-banner-subtitle">Install Your Day for the best experience</div>
+          </div>
+        </div>
+        <div class="install-banner-actions">
+          <button class="btn-install-premium ripple" id="btn-install-app">Install</button>
+          <button class="btn-install-dismiss ripple" id="btn-dismiss-install" aria-label="Dismiss">
+            <i data-lucide="x"></i>
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /#page-app -->
+
+  </div><!-- /#app-root -->
+
+  <!-- ── MODALS (rendered by JS) ─────────────────── -->
+  <div id="modal-container"></div>
+
+  <!-- ── SCRIPTS ─────────────────────────────────── -->
+
+
+  <!-- App Entry Point (ES module) -->
+  <script type="module" src="/app.js"></script>
+
+  <!-- Vite PWA Auto Reload -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    }
+  </script>
 
 </body>
+
 </html>
