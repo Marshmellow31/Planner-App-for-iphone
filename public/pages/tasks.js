@@ -1,7 +1,3 @@
-// ============================================================
-// pages/tasks.js — Tasks page with filters, sorting, CRUD
-// ============================================================
-
 import { 
   getTasks, createTask, updateTask, deleteTask, completeTask, reopenTask, 
   getSubjects, createSubject, updateSubject, deleteSubject,
@@ -9,12 +5,13 @@ import {
 } from "../db.js";
 import { escHtml, formatDate, chunkProcess } from "../js/utils.js";
 import { showSnackbar, showConfirmDialog } from "../snackbar.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
 const PRIORITIES = ["high", "medium", "low"];
 
-export async function renderTasks(container, uid, profile) {
+export async function renderTasks(container, uid, profile, initialData = null) {
   container.innerHTML = `
-    <div id="tasks-content" style="margin-top:20px;"></div>
+    <div id="tasks-content" style="margin-top:5px;"></div>
     <!-- Filter bar -->
     <div class="filter-wrapper">
       <div class="filter-row">
@@ -55,7 +52,7 @@ export async function renderTasks(container, uid, profile) {
 
     <!-- Sort & Count -->
     <div class="flex justify-between items-center mb-md px-md">
-      <span class="text-muted text-sm" id="task-count">Loading…</span>
+      <span class="text-muted text-sm" id="task-count">${initialData ? 'Syncing...' : 'Loading…'}</span>
       <div class="custom-select-wrapper" id="wrapper-sort">
         <div class="filter-select ripple" id="select-sort" data-value="newest">Newest first</div>
         <div class="custom-dropdown-menu" id="menu-sort" style="right:0; left:auto;">
@@ -73,48 +70,62 @@ export async function renderTasks(container, uid, profile) {
   let activePriority = "all";
   let activeTopic    = "all";
   let activeSort     = "newest";
-  let allTasks       = [];
-  let allTopics      = [];
+  let allTasks       = initialData?.tasks || [];
+  let allTopics      = initialData?.topics || [];
 
-  const refreshTaskList = async () => {
+  const refreshTaskList = async (isBackground = false) => {
     try {
+      if (!isBackground) console.log("[Tasks] Fetching fresh data...");
       const [tasks, topics] = await Promise.all([getTasks(uid), getSubjects(uid)]);
-      allTasks = tasks;
-      allTopics = topics;
       
-      const subMenu = document.getElementById("menu-topic");
-      const subSelect = document.getElementById("select-topic");
-      if (subMenu && subSelect) {
-        subMenu.innerHTML = `<div class="dropdown-item ${activeTopic === 'all' ? 'active' : ''}" data-value="all">Topic: All</div>` +
-          allTopics.map(s =>
-            `<div class="dropdown-item ${activeTopic === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`
-          ).join('');
-        
-        const modalContainer = document.getElementById("modal-container");
-        if (modalContainer && subMenu.parentElement !== modalContainer) {
-          modalContainer.appendChild(subMenu);
-        }
+      const cacheKey = `tasks_${uid}`;
+      const oldCache = cacheManager.get(cacheKey);
+      const newData = { tasks, topics };
 
-        subMenu.querySelectorAll(".dropdown-item").forEach(item => {
-          item.onclick = (e) => {
-            e.stopPropagation();
-            activeTopic = item.dataset.value;
-            subSelect.textContent = item.textContent;
-            subSelect.dataset.value = activeTopic;
-            subMenu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
-            item.classList.add("active");
-            document.getElementById("wrapper-topic").classList.remove("open");
-            subMenu.classList.remove("open");
-            renderFiltered();
-          };
-        });
+      const hasChanged = !oldCache || 
+                       JSON.stringify(newData) !== JSON.stringify(oldCache);
+
+      if (hasChanged || !isBackground) {
+        allTasks = tasks;
+        allTopics = topics;
         
-        updateDropdownPosition("topic");
+        const subMenu = document.getElementById("menu-topic");
+        const subSelect = document.getElementById("select-topic");
+        if (subMenu && subSelect) {
+          subMenu.innerHTML = `<div class="dropdown-item ${activeTopic === 'all' ? 'active' : ''}" data-value="all">Topic: All</div>` +
+            allTopics.map(s =>
+              `<div class="dropdown-item ${activeTopic === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`
+            ).join('');
+          
+          const modalContainer = document.getElementById("modal-container");
+          if (modalContainer && subMenu.parentElement !== modalContainer) {
+            modalContainer.appendChild(subMenu);
+          }
+
+          subMenu.querySelectorAll(".dropdown-item").forEach(item => {
+            item.onclick = (e) => {
+              e.stopPropagation();
+              activeTopic = item.dataset.value;
+              subSelect.textContent = item.textContent;
+              subSelect.dataset.value = activeTopic;
+              subMenu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
+              item.classList.add("active");
+              document.getElementById("wrapper-topic").classList.remove("open");
+              subMenu.classList.remove("open");
+              renderFiltered();
+            };
+          });
+          
+          updateDropdownPosition("topic");
+        }
+        
+        renderFiltered();
+        cacheManager.set(cacheKey, newData);
+      } else {
+        console.log("[Tasks] Data unchanged, skipping refresh");
       }
-      
-      renderFiltered();
     } catch (err) {
-      showSnackbar("Failed to load tasks", "error");
+      if (!isBackground) showSnackbar("Failed to load tasks", "error");
       console.error("Load tasks error:", err);
     }
   };
@@ -290,7 +301,14 @@ export async function renderTasks(container, uid, profile) {
     menusToPortal.forEach(m => modalContainer.appendChild(m));
   }
 
-  await refreshTaskList();
+  // SWR: Immediate render if cached
+  if (initialData) {
+    console.log("[Tasks] SWR: Rendering from cache");
+    requestAnimationFrame(() => renderFiltered());
+  }
+
+  // Background refresh
+  refreshTaskList(!!initialData);
 
   // Return cleanup controller
   return {

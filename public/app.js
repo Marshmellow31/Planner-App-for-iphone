@@ -29,6 +29,7 @@ import { $, showEl, hideEl, initRipples } from "./js/utils.js";
 import { initAuthForms } from "./js/auth_ui.js";
 import { initLanding, triggerLandingEntrance, triggerLandingReEnter } from "./js/landing.js";
 
+import { cacheManager } from "./utils/cacheManager.js";
 // ── Global State ──────────────────────────────────────────────────────────────
 export const state = {
   user: null,
@@ -38,6 +39,7 @@ export const state = {
   selectedTopicName: null,
   currentPageController: null, // Tracks the currently active page for cleanup
 };
+
 
 // ── Show Landing / Auth / App shells ──────────────────────────────────────────
 function showLanding(animateIn = false) {
@@ -74,7 +76,16 @@ export function applyTheme(theme = "dark") {
 }
 
 // ── Navigation Logic ──────────────────────────────────────────────────────────
+const navDebounce = new Map();
+
+/**
+ * Navigate to a different tab or sub-page
+ */
 export async function navigate(page, params = {}) {
+  const now = Date.now();
+  if ((navDebounce.get(page) || 0) > now - 300) return; // 300ms debounce
+  navDebounce.set(page, now);
+
   // ── Lifecycle Cleanup ──
   if (state.currentPageController?.cleanup) {
     try {
@@ -85,6 +96,7 @@ export async function navigate(page, params = {}) {
   }
   state.currentPageController = null;
 
+  const oldPage = state.currentPage;
   state.currentPage = page;
   if (params.topicId) state.selectedTopicId = params.topicId;
   if (params.topicName) state.selectedTopicName = params.topicName;
@@ -96,25 +108,16 @@ export async function navigate(page, params = {}) {
   const content = $("main-content");
   if (!content) return;
   
-  // Show a lightweight loader while the page module is being fetched/rendered
-  content.innerHTML = `
-    <div class="route-loader">
-      <div class="loader-dots">
-        <div class="loader-dot"></div>
-        <div class="loader-dot"></div>
-        <div class="loader-dot"></div>
-      </div>
-    </div>
-  `;
-
+  // ── SWR Caching Step ──
   const uid = state.user?.uid;
-  const profile = state.profile;
+  const cacheKey = `${page}_${uid || 'guest'}`;
+  const cachedData = cacheManager.get(cacheKey);
 
+  // Apply visual transition
   content.classList.remove("fadeSlideUp");
   void content.offsetWidth;
   content.classList.add("fadeSlideUp");
-  
-  // No longer need to toggle Home/FAB visibility as they are replaced by fixed nav/header
+
   // Update header title based on page
   const headerTitle = document.querySelector(".header-title");
   if (headerTitle) {
@@ -125,65 +128,92 @@ export async function navigate(page, params = {}) {
       settings: "Profile",
       scheduler: "AI Scheduler",
       personalDevelopment: "Growth",
-      growth: "Growth"
+      growth: "Growth",
+      subtopics: state.selectedTopicName || "Topics"
     };
     headerTitle.textContent = titles[page] || "Your Day";
   }
 
-  let controller = null;
+  // If no cache, show a lightweight loading shell
+  if (!cachedData) {
+    renderLoadingShell(page.charAt(0).toUpperCase() + page.slice(1));
+  } else {
+    // If we have cache, we might want to skip the "Loading..." text in the shell
+    // but keep some structure if needed. For now, most pages will render immediately
+    // from cache anyway.
+    console.log(`[PWA] Instant render from cache: ${page}`);
+  }
 
-  switch (page) {
-    case "dashboard": {
-      content.innerHTML = ""; 
-      // renderDashboard returns the controller (sync shell setup)
-      controller = renderDashboard(content, uid, profile);
-      break;
+  let controller = null;
+  const moduleCache = window._moduleCache || (window._moduleCache = new Map());
+  const profile = state.profile;
+
+  try {
+    switch (page) {
+      case "dashboard": {
+        // Dashboard is usually pre-imported, but we ensure it supports initialData
+        controller = renderDashboard(content, uid, profile, cachedData);
+        break;
+      }
+      case "tasks": {
+        const pageModule = moduleCache.get("tasks") || (await import(/* @vite-ignore */ "./pages/tasks.js"));
+        moduleCache.set("tasks", pageModule);
+        controller = await pageModule.renderTasks(content, uid, profile, cachedData);
+        break;
+      }
+      case "analytics": {
+        const pageModule = moduleCache.get("analytics") || (await import(/* @vite-ignore */ "./pages/analytics.js"));
+        moduleCache.set("analytics", pageModule);
+        controller = await pageModule.renderAnalytics(content, uid, profile, cachedData);
+        break;
+      }
+      case "settings": {
+        const pageModule = moduleCache.get("settings") || (await import(/* @vite-ignore */ "./pages/settings.js"));
+        moduleCache.set("settings", pageModule);
+        controller = await pageModule.renderSettings(content, uid, profile, state, cachedData);
+        break;
+      }
+      case "scheduler": {
+        const pageModule = moduleCache.get("scheduler") || (await import(/* @vite-ignore */ "./pages/scheduler.js"));
+        moduleCache.set("scheduler", pageModule);
+        controller = await pageModule.renderSchedulerTab(content, uid, profile, cachedData); 
+        break;
+      }
+      case "personalDevelopment":
+      case "growth": {
+        const pageModule = moduleCache.get("growth") || (await import(/* @vite-ignore */ "./pages/personalDevelopment.js"));
+        moduleCache.set("growth", pageModule);
+        controller = await pageModule.renderPersonalDevelopment(content, uid, profile, cachedData);
+        break;
+      }
+      case "topics": {
+        const pageModule = moduleCache.get("topics") || (await import(/* @vite-ignore */ "./pages/topics.js"));
+        moduleCache.set("topics", pageModule);
+        controller = await pageModule.renderTopics(content, uid, profile, cachedData);
+        break;
+      }
+      case "subtopics": {
+        const pageModule = moduleCache.get("subtopics") || (await import(/* @vite-ignore */ "./pages/subtopics.js"));
+        moduleCache.set("subtopics", pageModule);
+        controller = await pageModule.renderSubtopics(content, uid, state.selectedTopicId, state.selectedTopicName, cachedData);
+        break;
+      }
     }
-    case "tasks": {
-      const { renderTasks } = await import(/* @vite-ignore */ "./pages/tasks.js");
-      content.innerHTML = ""; // Clear loader before rendering
-      controller = await renderTasks(content, uid, profile);
-      break;
-    }
-    case "analytics": {
-      const { renderAnalytics } = await import(/* @vite-ignore */ "./pages/analytics.js");
-      content.innerHTML = ""; 
-      controller = await renderAnalytics(content, uid, profile);
-      break;
-    }
-    case "settings": {
-      const { renderSettings } = await import(/* @vite-ignore */ "./pages/settings.js");
-      content.innerHTML = "";
-      controller = await renderSettings(content, uid, profile, state);
-      break;
-    }
-    case "scheduler": {
-      const { renderSchedulerTab } = await import(/* @vite-ignore */ "./pages/scheduler.js");
-      content.innerHTML = "";
-      controller = await renderSchedulerTab(content, uid, profile); 
-      break;
-    }
-    case "personalDevelopment":
-    case "growth": {
-      const { renderPersonalDevelopment } = await import(/* @vite-ignore */ "./pages/personalDevelopment.js");
-      content.innerHTML = "";
-      controller = await renderPersonalDevelopment(content, uid, profile);
-      break;
-    }
+  } catch (err) {
+    console.error(`Navigation failed for ${page}`, err);
+    content.innerHTML = `<div class="error-state">Failed to load ${page}. Please try again.</div>`;
   }
 
   state.currentPageController = controller;
   initRipples();
   if (window.lucide) {
-    const content = $("main-content");
-    if (content) {
-      // Defer icon creation to avoid blocking main thread during transitions
-      const runCreate = () => window.lucide.createIcons({ nodes: content.querySelectorAll('[data-lucide]') });
-      if (window.requestIdleCallback) window.requestIdleCallback(runCreate);
-      else setTimeout(runCreate, 0);
-    }
+    // Defer icon creation to avoid blocking main thread during transitions
+    const runCreate = () => window.lucide.createIcons({ nodes: content.querySelectorAll('[data-lucide]') });
+    if (window.requestIdleCallback) window.requestIdleCallback(runCreate);
+    else setTimeout(runCreate, 0);
   }
 }
+
 
 // ── Sub-component Init ────────────────────────────────────────────────────────
 function initNavigation() {
@@ -280,24 +310,42 @@ function initInstallPrompt() {
   }
 }
 
+function renderLoadingShell(pageName) {
+  const content = $("main-content");
+  if (!content) return;
+  content.innerHTML = `
+    <div class="premium-header">
+      <div class="premium-greeting">Loading...</div>
+      <h1 class="premium-name">${pageName}</h1>
+      <div class="premium-subtitle">Hang tight, we're getting things ready.</div>
+    </div>
+    <div class="stats-row mb-lg">
+      <div class="stat-card skeleton" style="height:80px"></div>
+      <div class="stat-card skeleton" style="height:80px"></div>
+    </div>
+    <div class="task-card skeleton" style="height:120px"></div>
+    <div class="task-card skeleton" style="height:120px"></div>
+  `;
+}
+
 async function handleUserAuth(user) {
   state.user = user;
 
-  // Load profile
-  const profile = await getUserProfile(user.uid);
-  state.profile = profile;
+  // 1. SWR: Initial profile from cache for instant transition
+  const profileCacheKey = `profile_${user.uid}`;
+  const cachedProfile = cacheManager.get(profileCacheKey);
+  if (cachedProfile) {
+    console.log("[PWA] SWR: Instant profile from cache");
+    state.profile = cachedProfile;
+    applyTheme(cachedProfile.theme || "dark");
+  }
 
-  // Apply saved theme
-  applyTheme(profile?.theme || "dark");
-
-  // Show app
+  // 2. Show app shell immediately (even if profile is just from cache)
   showAppPage();
   initNavigation();
   initFab();
 
-
-
-  // Foreground push message listener
+  // 3. Foreground push message listener
   try {
     onForegroundMessage((p) => {
       import("./notifications.js").then(({ showInAppNotification }) => {
@@ -306,25 +354,29 @@ async function handleUserAuth(user) {
     });
   } catch (_) {}
 
-  // Check for action shortcut in URL
-  // Start navigation to dashboard immediately (shell will show with fallback data)
-  const navTask = navigate("dashboard");
+  // 4. Background: Navigation and Fresh Profile Fetch
+  navigate("dashboard");
   
-  // Finish loading profile in background if it takes time
-  if (!state.profile) {
-    getUserProfile(user.uid).then(profile => {
-      state.profile = profile;
-      // If we are still on the dashboard, update it with full profile data
+  getUserProfile(user.uid).then(profile => {
+    if (!profile) return;
+    
+    const oldProfile = state.profile;
+    const hasChanged = JSON.stringify(profile) !== JSON.stringify(oldProfile);
+    state.profile = profile;
+    cacheManager.set(profileCacheKey, profile);
+
+    if (hasChanged) {
+      console.log("[PWA] Profile updated from server, refreshing UI");
+      applyTheme(profile.theme || "dark");
       if (state.currentPage === "dashboard" && state.currentPageController?.update) {
-         state.currentPageController.update(profile);
+        state.currentPageController.update(profile);
       }
-    });
-  }
+    }
+  });
   
   // ── Background Preloading ──
   // After initial paint, we preload other routes in the background during idle time
   // Wait a few seconds for the dashboard staggered content to settle
-  // Wait significantly (6s) for the dashboard content and stats to settle
   setTimeout(() => {
     requestIdlePreload([
       "./pages/tasks.js",
@@ -333,7 +385,7 @@ async function handleUserAuth(user) {
       "./pages/scheduler.js",
       "./pages/personalDevelopment.js"
     ]);
-  }, 6000);
+  }, 3000);
 }
 
 /**

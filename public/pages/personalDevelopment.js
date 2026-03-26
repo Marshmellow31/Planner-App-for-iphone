@@ -1,7 +1,3 @@
-// ============================================================
-// pages/personalDevelopment.js — Personal Development Tab
-// ============================================================
-
 import {
   getGoals,
   getGoalTasks,
@@ -32,15 +28,25 @@ import { autoGenerateTodaysTasks, effectiveTodayStr } from "../utils/dailyGenera
 import { pushToScheduler, pushAllPendingGoalTasks } from "../utils/schedulerIntegration.js";
 import { showSnackbar } from "../snackbar.js";
 import { escHtml } from "../js/utils.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
 // Module-level state
 let _uid = null;
 let _goals = [];
 let _goalTasks = [];
+let _topics = [];
 
 // ─── Main Renderer ──────────────────────────────────────────
-export async function renderPersonalDevelopment(container, uid, profile) {
+export async function renderPersonalDevelopment(container, uid, profile, initialData = null) {
   _uid = uid;
+
+  // 1. SWR: Populate from cache if available
+  if (initialData) {
+    console.log("[PD] SWR: Loading from cache");
+    _goals = initialData.goals || [];
+    _goalTasks = initialData.goalTasks || [];
+    _topics = initialData.topics || [];
+  }
 
   container.innerHTML = `
     <style>
@@ -422,46 +428,66 @@ export async function renderPersonalDevelopment(container, uid, profile) {
   });
 
   // Initial load + auto-generation
-  await reloadAll(uid);
+  if (!initialData) {
+     reloadAll(uid);
+  } else {
+    // Initial paint from cache
+    renderGoalsList(uid);
+    renderTodayTasks(uid);
+    // Background refresh
+    requestAnimationFrame(() => {
+        reloadAll(uid, true);
+    });
+  }
 
   if (window.lucide) window.lucide.createIcons();
+  return { cleanup: () => {} };
 }
 
-// Global topics list to avoid re-fetching for each card
-let _topics_global = [];
-
 // ─── Data reload ─────────────────────────────────────────────
-async function reloadAll(uid) {
+async function reloadAll(uid, isBackground = false) {
   try {
+    if (!isBackground) console.log("[PD] Fetching fresh data...");
+    
     const [goals, gtasks, topics] = await Promise.all([
       getGoals(uid),
       getGoalTasks(uid),
       getSubjects(uid)
     ]);
-    _goals = goals;
-    _goalTasks = gtasks;
-    _topics = topics;
+
+    const cacheKey = `pd_data_${uid}`;
+    const oldCache = cacheManager.get(cacheKey);
+    const newData = { goals, goalTasks: gtasks, topics };
+
+    const hasChanged = !oldCache || JSON.stringify(newData) !== JSON.stringify(oldCache);
+
+    if (hasChanged || !isBackground) {
+        _goals = goals;
+        _goalTasks = gtasks;
+        _topics = topics;
+        
+        renderGoalsList(uid);
+        renderTodayTasks(uid);
+        if (window.lucide) window.lucide.createIcons({ nodes: document.getElementById("main-content").querySelectorAll('[data-lucide]') });
+        
+        cacheManager.set(cacheKey, newData);
+    }
   } catch (err) {
     console.error("PD: Failed to load data", err);
-    _goals = [];
-    _goalTasks = [];
   }
 
   // Run auto-generation (catches missed days)
   if (_goals.length > 0) {
     try {
       await autoGenerateTodaysTasks(uid, _goals);
-      // Re-fetch tasks after generation
+      // Re-fetch tasks after generation ONLY if it's the first render or something changed
       _goalTasks = await getGoalTasks(uid);
+      renderGoalsList(uid);
+      renderTodayTasks(uid);
     } catch (err) {
       console.error("PD: Auto-generation failed", err);
     }
   }
-
-  renderGoalsList(uid);
-  renderTodayTasks(uid);
-
-  if (window.lucide) window.lucide.createIcons();
 }
 
 // ─── Goals List ──────────────────────────────────────────────
@@ -904,9 +930,6 @@ function attachHybridDropdown(containerId, optionsConfig) {
   render();
   return () => currentVal;
 }
-
-// Module-level topics for reference in cards
-let _topics = [];
 
 // ─── Goal Form Modal ─────────────────────────────────────────
 export async function openGoalForm(uid, existingGoal, onSave) {

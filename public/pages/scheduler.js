@@ -1,7 +1,3 @@
-// ============================================================
-// pages/scheduler.js — AI Task Scheduler
-// ============================================================
-
 import {
   getSchedulerTasks,
   createSchedulerTask,
@@ -14,39 +10,82 @@ import {
 import { generateStudyPlan } from "../utils/taskScheduler.js";
 import { showSnackbar } from "../snackbar.js";
 import { escHtml } from "../js/utils.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
 let tasks = [];
 let weeklySchedule = null;
 let generatedPlan = null;
 let unscheduled = [];
 
-export async function renderSchedulerTab(container, uid, profile) {
-  try {
-    // Load initial data
-    await reloadTasks(uid);
-    weeklySchedule = await getWeeklySchedule(uid);
-    const savedPlan = await getGeneratedPlan(uid);
-    if (savedPlan) {
-      generatedPlan = savedPlan.planByDay;
-      unscheduled = savedPlan.unscheduledTasks;
-      container.dataset.orderedLabels = JSON.stringify(savedPlan.orderedLabels || []);
-      const date = savedPlan.updatedAt ? (savedPlan.updatedAt.toDate ? savedPlan.updatedAt.toDate() : new Date(savedPlan.updatedAt)) : null;
-      container.dataset.generatedAt = date ? date.toLocaleString() : "";
-    }
-  } catch (err) {
-    if (err.message && err.message.toLowerCase().includes("permission")) {
-      container.innerHTML = `
-        <div class="card mb-xl" style="border-color:var(--error); background:rgba(153,51,51,0.05); margin-top:20px;">
-          <h3 style="color:#F87171; margin-bottom:12px;"><i data-lucide="shield-alert" style="width:20px;height:20px;display:inline-block;vertical-align:middle;"></i> Permissions Missing</h3>
-          <p style="color:var(--text-secondary); margin-bottom:12px; font-size:14px;">Scheduler features require updated Firestore rules.</p>
-          <pre style="background:var(--bg-tertiary); padding:12px; border-radius:8px; color:var(--text-primary); font-size:12px; font-family:monospace; overflow-x:auto;">npm run deploy:rules</pre>
-        </div>
-      `;
-      if (window.lucide) window.lucide.createIcons();
-      return;
-    }
-    throw err;
+export async function renderSchedulerTab(container, uid, profile, initialData = null) {
+  // 1. SWR: Populate internal state from cache if available
+  if (initialData) {
+    console.log("[Scheduler] SWR: Loading from cache");
+    tasks = initialData.tasks || [];
+    weeklySchedule = initialData.weeklySchedule || null;
+    generatedPlan = initialData.generatedPlan || null;
+    unscheduled = initialData.unscheduled || [];
+    if (initialData.orderedLabels) container.dataset.orderedLabels = JSON.stringify(initialData.orderedLabels);
+    if (initialData.generatedAt) container.dataset.generatedAt = initialData.generatedAt;
   }
+
+  const updateSchedulerState = async (isBackground = false) => {
+    try {
+      if (!isBackground) console.log("[Scheduler] Fetching fresh data...");
+      
+      const { allTasks } = await getUnifiedTasks(uid);
+      const ttTask = getWeeklySchedule(uid);
+      const planTask = getGeneratedPlan(uid);
+      
+      const [freshTT, freshPlan] = await Promise.all([ttTask, planTask]);
+      
+      const newTasks = allTasks;
+      const newWeeklySchedule = freshTT;
+      const newGeneratedPlan = freshPlan?.planByDay || null;
+      const newUnscheduled = freshPlan?.unscheduledTasks || [];
+      const newLabels = freshPlan?.orderedLabels || [];
+      const date = freshPlan?.updatedAt ? (freshPlan.updatedAt.toDate ? freshPlan.updatedAt.toDate() : new Date(freshPlan.updatedAt)) : null;
+      const newGenAt = date ? date.toLocaleString() : "";
+
+      const cacheKey = `scheduler_${uid}`;
+      const oldCache = cacheManager.get(cacheKey);
+      const newData = { 
+        tasks: newTasks, 
+        weeklySchedule: newWeeklySchedule, 
+        generatedPlan: newGeneratedPlan,
+        unscheduled: newUnscheduled,
+        orderedLabels: newLabels,
+        generatedAt: newGenAt
+      };
+
+      const hasChanged = !oldCache || JSON.stringify(newData) !== JSON.stringify(oldCache);
+
+      if (hasChanged || !isBackground) {
+        tasks = newTasks;
+        weeklySchedule = newWeeklySchedule;
+        generatedPlan = newGeneratedPlan;
+        unscheduled = newUnscheduled;
+        container.dataset.orderedLabels = JSON.stringify(newLabels);
+        container.dataset.generatedAt = newGenAt;
+        
+        renderTaskList(uid);
+        renderPlanView();
+        cacheManager.set(cacheKey, newData);
+      }
+    } catch (err) {
+      console.error("Scheduler update error:", err);
+      if (err.message && err.message.toLowerCase().includes("permission")) {
+        container.innerHTML = `
+          <div class="card mb-xl" style="border-color:var(--error); background:rgba(153,51,51,0.05); margin-top:20px;">
+            <h3 style="color:#F87171; margin-bottom:12px;"><i data-lucide="shield-alert" style="width:20px;height:20px;display:inline-block;vertical-align:middle;"></i> Permissions Missing</h3>
+            <p style="color:var(--text-secondary); margin-bottom:12px; font-size:14px;">Scheduler features require updated Firestore rules.</p>
+            <pre style="background:var(--bg-tertiary); padding:12px; border-radius:8px; color:var(--text-primary); font-size:12px; font-family:monospace; overflow-x:auto;">npm run deploy:rules</pre>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+      }
+    }
+  };
 
   container.innerHTML = `
     <style>
@@ -107,6 +146,11 @@ export async function renderSchedulerTab(container, uid, profile) {
   // Init list
   renderTaskList(uid);
   renderPlanView();
+
+  // Background refresh
+  requestAnimationFrame(() => {
+    updateSchedulerState(!!initialData);
+  });
 
   // Bind Generate Plan
   const genBtn = container.querySelector("#btn-generate-plan");

@@ -329,7 +329,7 @@
     </div>
 
     <!-- ── MAIN APP ────────────────────────────────── -->
-    <div id="page-app" class="hidden">
+    <div id="page-app">
 
       <!-- Fixed Top Header -->
       <header class="app-header">
@@ -346,7 +346,24 @@
 
       <!-- Page Content -->
       <div class="app-container">
-        <div id="main-content" class="page-content"></div>
+        <div id="main-content" class="page-content">
+          <!-- Initial Dashboard Skeleton for HTML-first rendering -->
+          <div class="premium-header">
+            <div class="premium-greeting">Good morning,</div>
+            <h1 class="premium-name">Student</h1>
+            <div class="premium-subtitle">Let’s make today productive.</div>
+          </div>
+          <div class="stats-row mb-lg">
+            <div class="stat-card skeleton" style="height:80px"></div>
+            <div class="stat-card skeleton" style="height:80px"></div>
+            <div class="stat-card skeleton" style="height:80px"></div>
+            <div class="stat-card skeleton" style="height:80px"></div>
+          </div>
+          <div class="section-header mb-md">
+            <div class="section-title">Today's Schedule</div>
+          </div>
+          <div class="task-card skeleton" style="height:120px"></div>
+        </div>
       </div>
 
 

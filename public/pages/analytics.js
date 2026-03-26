@@ -1,27 +1,65 @@
-// ============================================================
-// pages/analytics.js — Analytics page without Chart.js (Insights Dashboard)
-// ============================================================
-
 import { computeAnalytics } from "../analytics.js";
 import { getSubjects } from "../db.js";
 import { escHtml } from "../js/utils.js";
+import { cacheManager } from "../utils/cacheManager.js";
 
-export async function renderAnalytics(container, uid, profile) {
+export async function renderAnalytics(container, uid, profile, initialData = null) {
+  // 1. Initial Structure
   container.innerHTML = `
     <div class="page-header">
       <h1 class="page-title">Analytics</h1>
     </div>
-    <div id="analytics-loading" class="animate-pulse text-muted text-sm">Crunching the numbers…</div>
-    <div id="analytics-content" class="hidden"></div>
+    <div id="analytics-loading" class="${initialData ? 'hidden' : 'animate-pulse text-muted text-sm'}">Crunching the numbers…</div>
+    <div id="analytics-content" class="${initialData ? '' : 'hidden'}"></div>
   `;
 
-  const topics = await getSubjects(uid);
-  const stats = await computeAnalytics(uid, profile?.weekStartDay || "monday", topics);
-
-  document.getElementById("analytics-loading")?.remove();
   const content = document.getElementById("analytics-content");
+
+  // 2. Immediate Render if cache exists
+  if (initialData) {
+    console.log("[Analytics] SWR: Rendering from cache");
+    renderAnalyticsHtml(content, initialData);
+  }
+
+  // 3. Background Revalidation
+  const updateAnalyticsState = async (isFirstLoad = false) => {
+    try {
+      const topics = await getSubjects(uid);
+      const stats = await computeAnalytics(uid, profile?.weekStartDay || "monday", topics);
+      
+      const cacheKey = `analytics_${uid}`;
+      const oldCache = cacheManager.get(cacheKey);
+      
+      const hasChanged = !oldCache || JSON.stringify(stats) !== JSON.stringify(oldCache);
+      
+      if (hasChanged || isFirstLoad) {
+        console.log("[Analytics] Data changed or first load, updating UI");
+        document.getElementById("analytics-loading")?.remove();
+        content.classList.remove("hidden");
+        renderAnalyticsHtml(content, stats);
+        cacheManager.set(cacheKey, stats);
+      } else {
+        console.log("[Analytics] Data unchanged, skipping UI update");
+        document.getElementById("analytics-loading")?.remove();
+        content.classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Analytics update error:", err);
+      if (!initialData) {
+        container.innerHTML += `<div class="error-state">Failed to load analytics.</div>`;
+      }
+    }
+  };
+
+  requestAnimationFrame(() => {
+    updateAnalyticsState(!initialData);
+  });
+
+  return { cleanup: () => {} };
+}
+
+function renderAnalyticsHtml(content, stats) {
   if (!content) return;
-  content.classList.remove("hidden");
 
   const hrs = Math.floor(stats.studyTime / 60);
   const mins = stats.studyTime % 60;
@@ -34,19 +72,19 @@ export async function renderAnalytics(container, uid, profile) {
         <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
           <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Completion
         </div>
-        <div style="font-size:28px; font-weight:700; color:var(--text-primary);">${stats.completionRate}%</div>
+        <div style="font-size:28px; font-weight:700; color:var(--text-primary);">${stats.completionRate || 0}%</div>
       </div>
       <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
         <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
           <i data-lucide="check-square" style="width:14px;height:14px;"></i> Tasks
         </div>
-        <div style="font-size:28px; font-weight:700; color:var(--text-primary);">${stats.completed}</div>
+        <div style="font-size:28px; font-weight:700; color:var(--text-primary);">${stats.completed || 0}</div>
       </div>
       <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
         <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
           <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Overdue
         </div>
-        <div style="font-size:28px; font-weight:700; color:${stats.overdue > 0 ? 'var(--error)' : 'var(--text-primary)'};">${stats.overdue}</div>
+        <div style="font-size:28px; font-weight:700; color:${stats.overdue > 0 ? 'var(--error)' : 'var(--text-primary)'};">${stats.overdue || 0}</div>
       </div>
       <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:8px;">
         <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
@@ -76,12 +114,12 @@ export async function renderAnalytics(container, uid, profile) {
       <h3 style="font-size:14px; color:var(--text-secondary); margin-bottom:16px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600; display:flex; justify-content:space-between; align-items:center;">
         Consistency
         <span style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-primary); text-transform:none; font-weight:500;">
-          <i data-lucide="flame" style="width:14px;height:14px;color:var(--accent);"></i> ${stats.streak} Day Streak
+          <i data-lucide="flame" style="width:14px;height:14px;color:var(--accent);"></i> ${stats.streak || 0} Day Streak
         </span>
       </h3>
       <div style="display:flex; flex-direction:row-reverse; overflow-x:auto; padding-bottom:8px; gap:4px; margin-right:-8px; padding-right:8px; align-items:flex-end;">
         <div style="display:grid; grid-template-rows: repeat(7, 1fr); gap:4px; grid-auto-flow: column; grid-auto-columns: 12px; direction:ltr;">
-          ${stats.heatmapData.map(d => {
+          ${(stats.heatmapData || []).map(d => {
             let color = 'var(--heatmap-0)';
             if (d.count === 1) color = 'var(--heatmap-1)';
             else if (d.count === 2) color = 'var(--heatmap-2)';
@@ -111,7 +149,7 @@ export async function renderAnalytics(container, uid, profile) {
     </div>
 
     <!-- Focus Distribution -->
-    ${stats.topicBreakdown.length > 0 ? `
+    ${stats.topicBreakdown && stats.topicBreakdown.length > 0 ? `
     <div class="card mb-md" style="padding:20px;">
       <h3 style="font-size:14px; color:var(--text-secondary); margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Focus Distribution</h3>
       <div style="display:flex; flex-direction:column; gap:16px;">
@@ -131,7 +169,5 @@ export async function renderAnalytics(container, uid, profile) {
     ` : ""}
   `;
 
-  if (window.lucide) window.lucide.createIcons();
-
-  return { cleanup: () => {} };
+  if (window.lucide) window.lucide.createIcons({ nodes: content.querySelectorAll('[data-lucide]') });
 }

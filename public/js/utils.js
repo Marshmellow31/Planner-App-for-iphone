@@ -92,13 +92,21 @@ export function scheduleTask(fn, delay = 0) {
  * @param {Function} processor (item, index) => void
  * @param {number} chunkSize 
  */
-export async function chunkProcess(items, processor, chunkSize = 50) {
+export async function chunkProcess(items, processor, chunkSize = 20) {
   let index = 0;
   function doChunk() {
+    const startTime = performance.now();
     const end = Math.min(index + chunkSize, items.length);
+    
     for (; index < end; index++) {
       processor(items[index], index);
+      // Safety check: if a single chunk takes too long, stop early (>12ms)
+      if (performance.now() - startTime > 12) {
+        index++; 
+        break; 
+      }
     }
+    
     if (index < items.length) {
       return new Promise(resolve => {
         scheduleTask(() => resolve(doChunk()));
@@ -106,4 +114,12 @@ export async function chunkProcess(items, processor, chunkSize = 50) {
     }
   }
   return doChunk();
+}
+
+/**
+ * Lightweight performance logging
+ */
+export function perfLog(label, startTime) {
+  const duration = (performance.now() - startTime).toFixed(2);
+  console.log(`[Perf] ${label}: ${duration}ms`);
 }

@@ -85,6 +85,7 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
 
   // ── Chunked aggregation ─────────────────────────────────────────────────
   await chunkProcess(allTasks, (t) => {
+    // Logic remains the same, chunkProcess now handles 12ms limit
     const dueDate = t.dueDate ? (t.dueDate.toDate ? t.dueDate.toDate() : new Date(t.dueDate)) : null;
     const completedAt = (t.isCompleted && t.completedAt) ? (t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt)) : null;
 
@@ -134,7 +135,7 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
       // Streak dates
       streakDatesSet.add(`${completedAt.getFullYear()}-${completedAt.getMonth()}-${completedAt.getDate()}`);
     }
-  }, 100); // 100 items per chunk
+  }, 20); 
 
   const total = weekTasks.length;
   const completionRate = total > 0 ? Math.round((weekCompleted.length / total) * 100) : 0;
