@@ -14,9 +14,7 @@ const PRIORITIES = ["high", "medium", "low"];
 
 export async function renderTasks(container, uid, profile) {
   container.innerHTML = `
-    <div class="page-header">
-      <h1 class="page-title">All Tasks</h1>
-    </div>
+    <div id="tasks-content" style="margin-top:20px;"></div>
     <!-- Filter bar -->
     <div class="filter-wrapper">
       <div class="filter-row">
@@ -41,15 +39,15 @@ export async function renderTasks(container, uid, profile) {
           </div>
         </div>
 
-        <div class="custom-select-wrapper" id="wrapper-subject">
-          <div class="filter-select ripple" id="select-subject" data-value="all">Subject: All</div>
-          <div class="custom-dropdown-menu" id="menu-subject">
-            <div class="dropdown-item active" data-value="all">Subject: All</div>
-            <!-- Dynamic subjects -->
+        <div class="custom-select-wrapper" id="wrapper-topic">
+          <div class="filter-select ripple" id="select-topic" data-value="all">Topic: All</div>
+          <div class="custom-dropdown-menu" id="menu-topic">
+            <div class="dropdown-item active" data-value="all">Topic: All</div>
+            <!-- Dynamic topics -->
           </div>
         </div>
 
-        <button class="filter-pill-btn ripple" id="btn-manage-subjects" title="Manage Subjects">
+        <button class="filter-pill-btn ripple" id="btn-manage-topics" title="Manage Topics">
           <i data-lucide="settings-2" style="width:14px;height:14px"></i>
         </button>
       </div>
@@ -73,49 +71,45 @@ export async function renderTasks(container, uid, profile) {
 
   let activeStatus   = "all";
   let activePriority = "all";
-  let activeSubject  = "all";
+  let activeTopic    = "all";
   let activeSort     = "newest";
   let allTasks       = [];
-  let allSubjects    = [];
+  let allTopics      = [];
 
   const refreshTaskList = async () => {
     try {
-      const [tasks, subjects] = await Promise.all([getTasks(uid), getSubjects(uid)]);
+      const [tasks, topics] = await Promise.all([getTasks(uid), getSubjects(uid)]);
       allTasks = tasks;
-      allSubjects = subjects;
+      allTopics = topics;
       
-      // Populate subject filter
-      // Populate subject filter
-      const subMenu = document.getElementById("menu-subject");
-      const subSelect = document.getElementById("select-subject");
+      const subMenu = document.getElementById("menu-topic");
+      const subSelect = document.getElementById("select-topic");
       if (subMenu && subSelect) {
-        subMenu.innerHTML = `<div class="dropdown-item ${activeSubject === 'all' ? 'active' : ''}" data-value="all">Subject: All</div>`;
-        allSubjects.forEach(s => {
-          subMenu.innerHTML += `<div class="dropdown-item ${activeSubject === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`;
+        subMenu.innerHTML = `<div class="dropdown-item ${activeTopic === 'all' ? 'active' : ''}" data-value="all">Topic: All</div>`;
+        allTopics.forEach(s => {
+          subMenu.innerHTML += `<div class="dropdown-item ${activeTopic === s.id ? 'active' : ''}" data-value="${s.id}">${escHtml(s.name)}</div>`;
         });
         
-        // Portal: Move subMenu to modal-container if not already there
         const modalContainer = document.getElementById("modal-container");
         if (modalContainer && subMenu.parentElement !== modalContainer) {
           modalContainer.appendChild(subMenu);
         }
 
-        // Re-init subject dropdown items
         subMenu.querySelectorAll(".dropdown-item").forEach(item => {
           item.onclick = (e) => {
             e.stopPropagation();
-            activeSubject = item.dataset.value;
+            activeTopic = item.dataset.value;
             subSelect.textContent = item.textContent;
-            subSelect.dataset.value = activeSubject;
+            subSelect.dataset.value = activeTopic;
             subMenu.querySelectorAll(".dropdown-item").forEach(i => i.classList.remove("active"));
             item.classList.add("active");
-            document.getElementById("wrapper-subject").classList.remove("open");
+            document.getElementById("wrapper-topic").classList.remove("open");
             subMenu.classList.remove("open");
             renderFiltered();
           };
         });
         
-        updateDropdownPosition("subject");
+        updateDropdownPosition("topic");
       }
       
       renderFiltered();
@@ -152,9 +146,9 @@ export async function renderTasks(container, uid, profile) {
       tasks = tasks.filter(t => t.priority === activePriority);
     }
 
-    // Subject Filter
-    if (activeSubject !== "all") {
-      tasks = tasks.filter(t => t.subjectId === activeSubject);
+    // Topic Filter
+    if (activeTopic !== "all") {
+      tasks = tasks.filter(t => t.subjectId === activeTopic);
     }
 
     // Sort
@@ -182,7 +176,7 @@ export async function renderTasks(container, uid, profile) {
     }
 
     tasks.forEach((task, i) => {
-      const card = renderTaskCard(task, uid, refreshTaskList, allSubjects);
+      const card = renderTaskCard(task, uid, refreshTaskList, allTopics);
       card.classList.add("stagger-item");
       card.style.animationDelay = `${i * 40}ms`;
       list.appendChild(card);
@@ -252,15 +246,15 @@ export async function renderTasks(container, uid, profile) {
 
   initDropdown("status", (v) => { activeStatus = v; renderFiltered(); });
   initDropdown("priority", (v) => { activePriority = v; renderFiltered(); });
-  initDropdown("subject", (v) => { activeSubject = v; renderFiltered(); });
+  initDropdown("topic", (v) => { activeTopic = v; renderFiltered(); });
   initDropdown("sort", (v) => { activeSort = v; renderFiltered(); });
   
   // Re-init subject dropdown on refreshTaskList population
   // handled by initDropdown("subject", ...) if we ensure the structure exists
 
-  // Manage Subjects
-  document.getElementById("btn-manage-subjects")?.addEventListener("click", () => {
-    openSubjectManagementModal(uid, refreshTaskList);
+  // Manage Topics
+  document.getElementById("btn-manage-topics")?.addEventListener("click", () => {
+    openTopicManagementModal(uid, refreshTaskList);
   });
 
   // ── Global Event Listeners ──
@@ -359,16 +353,16 @@ function renderTaskCard(task, uid, onUpdate, allSubjects = []) {
     <div class="task-top-section">
       <div class="priority-label ${priority.toLowerCase()}">${priority}</div>
       <div class="task-actions" style="display:flex; gap:8px;">
-        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} btn-check ripple" style="padding: 4px 10px;" title="${isDone ? "Undo" : "Done"}">
+        <button class="btn ${isDone ? "btn-secondary" : "btn-primary"} btn-check btn-circle ripple" title="${isDone ? "Undo" : "Done"}">
           <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:14px;height:14px;"></i>
         </button>
-        <button class="btn btn-sm btn-ghost btn-push-sched ripple" style="padding: 4px 10px;" title="Push to Scheduler">
+        <button class="btn btn-ghost btn-push-sched btn-circle ripple" title="Push to Scheduler">
           <i data-lucide="send" style="width:14px;height:14px;color:var(--accent)"></i>
         </button>
-        <button class="btn btn-sm btn-ghost btn-edit ripple" style="padding: 4px 10px;" aria-label="Edit" title="Edit">
+        <button class="btn btn-ghost btn-edit btn-circle ripple" aria-label="Edit" title="Edit">
           <i data-lucide="pencil" style="width:14px;height:14px"></i>
         </button>
-        <button class="btn btn-sm btn-danger btn-del ripple" style="padding: 4px 10px;" aria-label="Delete" title="Delete">
+        <button class="btn btn-danger btn-del btn-circle ripple" aria-label="Delete" title="Delete">
           <i data-lucide="trash-2" style="width:14px;height:14px"></i>
         </button>
       </div>
@@ -378,9 +372,9 @@ function renderTaskCard(task, uid, onUpdate, allSubjects = []) {
       ${task.description ? `<div class="text-muted text-sm" style="margin-bottom: 4px">${escHtml(task.description)}</div>` : ""}
       
       ${task.subjectId ? `
-        <div class="task-subject-tag">
-          <i data-lucide="book" style="width:10px;height:10px"></i>
-          ${escHtml(allSubjects.find(s => s.id === task.subjectId)?.name || "Subject")}
+        <div class="task-topic-tag">
+          <i data-lucide="tag" style="width:10px;height:10px;"></i>
+          ${escHtml(allTopics.find(s => s.id === task.subjectId)?.name || "Topic")}
         </div>
       ` : ""}
 
@@ -501,8 +495,8 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="form-group">
-          <label class="form-label">Subject</label>
-          <select class="form-select" id="task-subject">
+          <label class="form-label">Topic</label>
+          <select class="form-select" id="task-topic">
             <option value="">— None —</option>
             ${subjects.map((s) => `<option value="${s.id}" ${existing?.subjectId===s.id?"selected":""}>${escHtml(s.name)}</option>`).join("")}
           </select>
@@ -515,7 +509,7 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Topic</label>
+        <label class="form-label">Sub-topic</label>
         <select class="form-select" id="task-topic">
           <option value="">— None —</option>
           ${topics.map((t) => `<option value="${t.id}" data-sub="${t.subjectId}" ${existing?.topicId===t.id?"selected":""}>${escHtml(t.name)}</option>`).join("")}
@@ -542,8 +536,8 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
     </div>
   `;
 
-  // Filter topics by selected subject
-  const subjSel  = backdrop.querySelector("#task-subject");
+  // Filter topics by selected topic
+  const subjSel  = backdrop.querySelector("#task-topic");
   const topicSel = backdrop.querySelector("#task-topic");
   const filterTopics = () => {
     const sid = subjSel.value;
@@ -586,7 +580,7 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
       const data = {
         title,
         description: backdrop.querySelector("#task-desc").value.trim(),
-        subjectId:  backdrop.querySelector("#task-subject").value  || null,
+        subjectId:  backdrop.querySelector("#task-topic").value  || null,
         topicId:    backdrop.querySelector("#task-topic").value    || null,
         priority:   backdrop.querySelector("#task-priority").value || "medium",
         dueDate:    backdrop.querySelector("#task-due").value      || null,
@@ -617,33 +611,33 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
   setTimeout(() => backdrop.querySelector("#task-title")?.focus(), 150);
 }
 
-// ── Subject Management Modal ────────────────────────────────
-async function openSubjectManagementModal(uid, onUpdate) {
-  const subjects = await getSubjects(uid);
+// ── Topic Management Modal ────────────────────────────────
+async function openTopicManagementModal(uid, onUpdate) {
+  const topics = await getSubjects(uid);
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop";
   backdrop.innerHTML = `
     <div class="drawer" style="max-width:480px;margin:0 auto">
       <div class="drawer-handle"></div>
       <div class="flex justify-between items-center mb-md">
-        <h3 class="modal-title" style="margin:0">Manage Subjects</h3>
-        <button class="btn btn-primary btn-sm ripple" id="btn-new-subject">
+        <h3 class="modal-title" style="margin:0">Manage Topics</h3>
+        <button class="btn btn-primary btn-sm ripple" id="btn-new-topic">
           <i data-lucide="plus" style="width:16px;height:16px"></i> Add
         </button>
       </div>
       
-      <div id="subjects-list-modal" class="modal-list-container">
-        ${subjects.length === 0 ? '<div class="text-muted text-center py-xl">No subjects yet.</div>' : ''}
-        ${subjects.map(s => `
+      <div id="topics-list-modal" class="modal-list-container">
+        ${topics.length === 0 ? '<div class="text-muted text-center py-xl">No topics yet.</div>' : ''}
+        ${topics.map(s => `
           <div class="modal-list-item">
             <div class="flex-1">
-              <div class="font-bold">${escHtml(s.name)}</div>
+              <div class="task-topic-tag">${escHtml(s.name)}</div>
             </div>
             <div class="flex gap-sm">
-              <button class="btn-icon ripple btn-edit-sub" data-id="${s.id}" data-name="${s.name}">
+              <button class="btn-circle ripple btn-edit-top" data-id="${s.id}" data-name="${s.name}">
                 <i data-lucide="pencil" style="width:16px;height:16px"></i>
               </button>
-              <button class="btn-icon ripple btn-del-sub" data-id="${s.id}" data-name="${s.name}">
+              <button class="btn-circle ripple btn-del-top" data-id="${s.id}" data-name="${s.name}">
                 <i data-lucide="trash-2" style="width:16px;height:16px"></i>
               </button>
             </div>
@@ -652,25 +646,25 @@ async function openSubjectManagementModal(uid, onUpdate) {
       </div>
 
       <div class="modal-actions pt-md">
-        <button class="btn btn-secondary w-full ripple" id="sub-mgmt-close">Close</button>
+        <button class="btn btn-secondary w-full ripple" id="top-mgmt-close">Close</button>
       </div>
     </div>
   `;
 
   const refreshModalList = async () => {
     const updated = await getSubjects(uid);
-    const listEl = backdrop.querySelector("#subjects-list-modal");
-    listEl.innerHTML = updated.length === 0 ? '<div class="text-muted text-center py-xl">No subjects yet.</div>' : 
+    const listEl = backdrop.querySelector("#topics-list-modal");
+    listEl.innerHTML = updated.length === 0 ? '<div class="text-muted text-center py-xl">No topics yet.</div>' : 
       updated.map(s => `
         <div class="modal-list-item">
           <div class="flex-1">
             <div class="font-bold">${escHtml(s.name)}</div>
           </div>
           <div class="flex gap-sm">
-            <button class="btn-icon ripple btn-edit-sub" data-id="${s.id}" data-name="${s.name}">
+            <button class="btn-circle ripple btn-edit-top" data-id="${s.id}" data-name="${s.name}">
               <i data-lucide="pencil" style="width:16px;height:16px"></i>
             </button>
-            <button class="btn-icon ripple btn-del-sub" data-id="${s.id}" data-name="${s.name}">
+            <button class="btn-circle ripple btn-del-top" data-id="${s.id}" data-name="${s.name}">
               <i data-lucide="trash-2" style="width:16px;height:16px"></i>
             </button>
           </div>
@@ -678,69 +672,69 @@ async function openSubjectManagementModal(uid, onUpdate) {
       `).join('');
     if (window.lucide) window.lucide.createIcons();
     attachListeners();
-    onUpdate(); // Refresh the main tasks list too
+    onUpdate(); 
   };
 
   const attachListeners = () => {
-    backdrop.querySelectorAll(".btn-edit-sub").forEach(btn => {
-      btn.onclick = () => openSubjectEditModal(uid, { id: btn.dataset.id, name: btn.dataset.name }, refreshModalList);
+    backdrop.querySelectorAll(".btn-edit-top").forEach(btn => {
+      btn.onclick = () => openTopicEditModal(uid, { id: btn.dataset.id, name: btn.dataset.name }, refreshModalList);
     });
-    backdrop.querySelectorAll(".btn-del-sub").forEach(btn => {
+    backdrop.querySelectorAll(".btn-del-top").forEach(btn => {
       btn.onclick = async () => {
-        const confirmed = await showConfirmDialog("Delete Subject", `Delete "${btn.dataset.name}"? Tasks remain but will lose their subject tag.`, "Delete", true);
+        const confirmed = await showConfirmDialog("Delete Topic", `Delete "${btn.dataset.name}"? Tasks remain but will lose their topic tag.`, "Delete", true);
         if (confirmed) {
           await deleteSubject(btn.dataset.id);
-          showSnackbar("Subject deleted", "success");
+          showSnackbar("Topic deleted", "success");
           refreshModalList();
         }
       };
     });
   };
 
-  backdrop.querySelector("#btn-new-subject").onclick = () => openSubjectEditModal(uid, null, refreshModalList);
-  backdrop.querySelector("#sub-mgmt-close").onclick = () => backdrop.remove();
+  backdrop.querySelector("#btn-new-topic").onclick = () => openTopicEditModal(uid, null, refreshModalList);
+  backdrop.querySelector("#top-mgmt-close").onclick = () => backdrop.remove();
   
   document.body.appendChild(backdrop);
   if (window.lucide) window.lucide.createIcons();
   attachListeners();
 }
 
-async function openSubjectEditModal(uid, existing, onSave) {
+async function openTopicEditModal(uid, existing, onSave) {
   const isEdit = !!existing;
   const subBackdrop = document.createElement("div");
   subBackdrop.className = "modal-backdrop sub-modal";
   subBackdrop.innerHTML = `
     <div class="drawer" style="max-width:400px;margin:0 auto;z-index:11000">
       <div class="drawer-handle"></div>
-      <h3 class="modal-title">${isEdit ? "Edit Subject" : "New Subject"}</h3>
+      <h3 class="modal-title">${isEdit ? "Edit Topic" : "New Topic"}</h3>
       <div class="form-group">
         <label class="form-label">Name</label>
-        <input class="form-input" id="sub-name-inp" value="${escHtml(existing?.name||'')}" placeholder="e.g. Science" />
+        <input class="form-input" id="top-name-inp" value="${escHtml(existing?.name||'')}" placeholder="e.g. Science" />
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary ripple" id="sub-edit-cancel">Cancel</button>
-        <button class="btn btn-primary ripple" id="sub-edit-save">Save</button>
+        <button class="btn btn-secondary ripple" id="top-edit-cancel">Cancel</button>
+        <button class="btn btn-primary ripple" id="top-edit-save">Save</button>
       </div>
     </div>
   `;
 
-  subBackdrop.querySelector("#sub-edit-cancel").onclick = () => subBackdrop.remove();
-  subBackdrop.querySelector("#sub-edit-save").onclick = async () => {
-    const name = subBackdrop.querySelector("#sub-name-inp").value.trim();
+  subBackdrop.querySelector("#top-edit-cancel").onclick = () => subBackdrop.remove();
+  subBackdrop.querySelector("#top-edit-save").onclick = async () => {
+    const name = subBackdrop.querySelector("#top-name-inp").value.trim();
     if (!name) return showSnackbar("Name required", "error");
     try {
       if (isEdit) await updateSubject(existing.id, { name });
       else await createSubject(uid, { name });
-      showSnackbar("Subject saved", "success");
+      showSnackbar("Topic saved", "success");
       subBackdrop.remove();
       onSave();
     } catch (err) {
-      showSnackbar("Error saving subject", "error");
+      showSnackbar("Error saving topic", "error");
     }
   };
 
   document.body.appendChild(subBackdrop);
-  setTimeout(() => subBackdrop.querySelector("#sub-name-inp").focus(), 150);
+  setTimeout(() => subBackdrop.querySelector("#top-name-inp").focus(), 150);
 }
 
 // helpers

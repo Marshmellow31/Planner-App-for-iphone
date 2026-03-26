@@ -15,8 +15,8 @@ export async function renderAnalytics(container, uid, profile) {
     <div id="analytics-content" class="hidden"></div>
   `;
 
-  const subjects = await getSubjects(uid);
-  const stats = await computeAnalytics(uid, profile?.weekStartDay || "monday", subjects);
+  const topics = await getSubjects(uid);
+  const stats = await computeAnalytics(uid, profile?.weekStartDay || "monday", topics);
 
   document.getElementById("analytics-loading")?.remove();
   const content = document.getElementById("analytics-content");
@@ -98,11 +98,11 @@ export async function renderAnalytics(container, uid, profile) {
     </div>
 
     <!-- Focus Distribution -->
-    ${stats.subjectBreakdown.length > 0 ? `
+    ${stats.topicBreakdown.length > 0 ? `
     <div class="card mb-md" style="padding:20px;">
       <h3 style="font-size:14px; color:var(--text-secondary); margin-bottom:20px; text-transform:uppercase; letter-spacing:0.5px; font-weight:600;">Focus Distribution</h3>
       <div style="display:flex; flex-direction:column; gap:16px;">
-        ${stats.subjectBreakdown.map((sub) => `
+        ${stats.topicBreakdown.map((sub) => `
           <div>
             <div class="flex justify-between mb-sm" style="align-items:center;">
               <span style="font-weight:600; font-size:14px; color:var(--text-primary);">${escHtml(sub.name)}</span>

@@ -94,6 +94,7 @@ export async function createGoal(uid, rawData) {
     autoAddDaily: rawData.autoAddDaily !== false,
     defaultDuration: parseInt(rawData.defaultDuration, 10) || null,
     notes: rawData.notes || "",
+    subjectId: rawData.subjectId || null,
   };
 
   return dbCreateGoal(uid, goalData);

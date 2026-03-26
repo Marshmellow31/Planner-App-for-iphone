@@ -113,10 +113,10 @@ function renderBTechBanner(profile) {
 }
 
 async function updateDashboardState(uid, profile, isFirstLoad = false) {
-  let subjects = [], analyticsData = null;
+  let topics = [], analyticsData = null;
   try {
-    subjects = await getSubjects(uid);
-    analyticsData = await computeAnalytics(uid, profile?.weekStartDay || "monday", subjects);
+    topics = await getSubjects(uid);
+    analyticsData = await computeAnalytics(uid, profile?.weekStartDay || "monday", topics);
   } catch (err) {
     showSnackbar("Failed to load dashboard data", "error");
     console.error("Dashboard load error:", err);
@@ -243,67 +243,16 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
     }
   }
 
-  // 4. Tasks Summary
+  // 4. Tasks Summary removed as requested - see tasks tab for all task management
   const tasksSection = document.getElementById("dash-tasks-section");
   if (tasksSection) {
-    const allTasks = await getTasks(uid);
-    const pendingTasks = allTasks.filter(t => !t.isCompleted);
-    // Sort pending tasks by due date (closest first)
-    pendingTasks.sort((a, b) => {
-      const dateA = a.dueDate?.toMillis ? a.dueDate.toMillis() : (a.dueDate ? new Date(a.dueDate).getTime() : Infinity);
-      const dateB = b.dueDate?.toMillis ? b.dueDate.toMillis() : (b.dueDate ? new Date(b.dueDate).getTime() : Infinity);
-      return dateA - dateB;
-    });
-    
-    const displayTasks = pendingTasks.slice(0, 5);
-
-    if (displayTasks.length > 0) {
-      tasksSection.innerHTML = `
-        <div class="section-header mb-sm" style="margin-top:var(--space-md)">
-          <div class="section-title">Upcoming Tasks</div>
-          <button class="btn btn-sm btn-ghost ripple" id="btn-see-tasks">See All</button>
-        </div>
-        <div class="tasks-list" id="dashboard-tasks-list"></div>
-      `;
-      const listEl = document.getElementById("dashboard-tasks-list");
-      displayTasks.forEach((task, index) => {
-        const card = buildTaskCard(task, uid, () => updateDashboardState(uid, profile));
-        if (isFirstLoad) {
-          card.classList.add("stagger-item");
-          card.style.animationDelay = `${250 + (index * 40)}ms`;
-        }
-        card.style.cursor = "pointer";
-        card.addEventListener("click", (e) => {
-          // Prevent navigation if clicking on an action button
-          if (!e.target.closest('.btn')) {
-            navigate("tasks");
-          }
-        });
-        listEl.appendChild(card);
-      });
-      document.getElementById("btn-see-tasks")?.addEventListener("click", () => navigate("tasks"));
-    } else {
-      tasksSection.innerHTML = `
-        <div class="section-header mb-sm" style="margin-top:var(--space-md)">
-          <div class="section-title">Upcoming Tasks</div>
-          <button class="btn btn-sm btn-ghost ripple" id="btn-see-tasks">Add Task</button>
-        </div>
-        <div class="empty-state" style="padding:var(--space-md); text-align:left; flex-direction:row; align-items:center; gap:var(--space-md);">
-          <div class="empty-icon" style="margin:0"><i data-lucide="check-circle"></i></div>
-          <div>
-            <div class="empty-title" style="margin:0; font-size:var(--font-size-md)">All caught up!</div>
-            <div class="empty-desc">No upcoming tasks right now.</div>
-          </div>
-        </div>
-      `;
-      document.getElementById("btn-see-tasks")?.addEventListener("click", () => navigate("tasks"));
-    }
+    tasksSection.innerHTML = "";
   }
 
   if (window.lucide) window.lucide.createIcons();
 }
 
-window._navTopic = (id, name) => navigate("topics", { subjectId: id, subjectName: name });
+window._navTopic = (id, name) => navigate("subtopics", { topicId: id, topicName: name });
 
 // ── Build task card DOM element ───────────────────────────────
 export function buildTaskCard(task, uid, onUpdate) {
@@ -318,14 +267,6 @@ export function buildTaskCard(task, uid, onUpdate) {
   card.innerHTML = `
     <div class="task-top-section">
       <div class="priority-label ${priority.toLowerCase()}">${priority}</div>
-      <div class="task-actions">
-        <button class="btn btn-sm ${isDone ? "btn-secondary" : "btn-primary"} task-check-btn" title="${isDone ? "Undo" : "Done"}">
-          <i data-lucide="${isDone ? "rotate-ccw" : "check"}" style="width:16px;height:16px;"></i>
-        </button>
-        <button class="btn btn-sm btn-danger task-delete-btn" aria-label="Delete" title="Delete">
-          <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
-        </button>
-      </div>
     </div>
     <div class="task-main-section">
       <div class="task-title">${escHtml(task.title)}</div>
@@ -335,20 +276,8 @@ export function buildTaskCard(task, uid, onUpdate) {
     </div>
   `;
 
-  card.querySelector(".task-check-btn").addEventListener("click", async (e) => {
-    e.stopPropagation();
-    const { completeTask, reopenTask } = await import("../db.js");
-    if (isDone) await reopenTask(task.id);
-    else await completeTask(task.id);
-    onUpdate();
-  });
-
-  card.querySelector(".task-delete-btn").addEventListener("click", async (e) => {
-    e.stopPropagation();
-    if (!confirm(`Delete "${task.title}"?`)) return;
-    const { deleteTask } = await import("../db.js");
-    await deleteTask(task.id);
-    onUpdate();
+  card.addEventListener("click", () => {
+    navigate("tasks");
   });
 
   return card;

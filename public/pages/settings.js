@@ -15,9 +15,7 @@ export async function renderSettings(container, uid, profile, state) {
   const notifPerm = getNotificationPermission();
 
   container.innerHTML = `
-    <div class="page-header">
-      <h1 class="page-title">Settings</h1>
-    </div>
+    <div style="margin-top:20px;"></div>
 
     <!-- Profile card -->
     <div class="card mb-md" style="text-align:center;padding:var(--space-xl) var(--space-md)">
@@ -76,20 +74,13 @@ export async function renderSettings(container, uid, profile, state) {
       </div>` : ""}
     </div>
 
-    <!-- BTech Journey -->
-    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">🎓 BTech Journey</div>
+    <!-- Course Section -->
+    <div class="text-muted text-sm font-bold mb-sm" style="text-transform:uppercase;letter-spacing:.5px">🎓 Add your course here</div>
     <div class="settings-list mb-md">
-      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
-        <span class="settings-item-label" style="font-size:13px">Program Name</span>
-        <input class="form-input" id="input-btech-name" style="font-size:13px" placeholder="e.g. B.Tech CSE" value="${escHtml(p.btechName||'')}" />
-      </div>
-      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
-        <span class="settings-item-label" style="font-size:13px">Start Date</span>
-        <input class="form-input" type="date" id="input-btech-start" style="font-size:13px" value="${p.btechStart||''}" />
-      </div>
-      <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px">
-        <span class="settings-item-label" style="font-size:13px">End Date (Graduation)</span>
-        <input class="form-input" type="date" id="input-btech-end" style="font-size:13px" value="${p.btechEnd||''}" />
+      <div class="settings-item" id="btn-edit-course">
+        <span class="settings-item-icon"><i data-lucide="graduation-cap" style="width:18px;height:18px"></i></span>
+        <span class="settings-item-label" id="course-label">${p.btechName ? escHtml(p.btechName) : "Add course details"}</span>
+        <span class="settings-item-arrow" style="display:flex;align-items:center"><i data-lucide="chevron-right" style="width:16px;height:16px"></i></span>
       </div>
     </div>
 
@@ -108,11 +99,12 @@ export async function renderSettings(container, uid, profile, state) {
     </div>
 
     <div class="text-center text-muted text-sm" style="margin:var(--space-xl) 0 var(--space-md); line-height:1.6">
-      Your Day v1.0.0 · made with love by Harshil<br/>
-      report any bugs to github repo comments
+      Your Day v1.0.0<br/>
+      Designed & developed by Harshil<br/>
+      Feedback and bug reports → <a href="https://github.com/Marshmellow31/Planner-App-for-iphone" target="_blank" style="color:var(--accent);text-decoration:none">GitHub</a>
     </div>
     <div id="settings-msg" class="form-error hidden" style="text-align:center;margin-bottom:var(--space-md)"></div>
-    <button class="btn btn-primary btn-full" id="btn-save-settings">Save Changes</button>
+    <button class="btn btn-primary btn-full hidden" id="btn-save-settings">Save Changes</button>
   `;
 
   // ── Theme toggle ─────────────────────────────────────────────
@@ -138,26 +130,19 @@ export async function renderSettings(container, uid, profile, state) {
     }
   });
 
-  // ── Save settings ─────────────────────────────────────────────
-  document.getElementById("btn-save-settings")?.addEventListener("click", async () => {
-    const weekStartDay = document.getElementById("sel-week-start")?.value || "monday";
-    const btechName    = document.getElementById("input-btech-name")?.value?.trim() || "";
-    const btechStart   = document.getElementById("input-btech-start")?.value || "";
-    const btechEnd     = document.getElementById("input-btech-end")?.value || "";
-    await updateUserProfile(uid, { weekStartDay, btechName, btechStart, btechEnd });
-    state.profile = { ...state.profile, weekStartDay, btechName, btechStart, btechEnd };
-    const msg = document.getElementById("settings-msg");
-    if (msg) {
-      msg.innerHTML = `<span style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="check" style="width:16px;height:16px"></i> Settings saved!</span>`;
-      msg.style.color = "var(--success)";
-      msg.classList.remove("hidden");
-      if (window.lucide) window.lucide.createIcons();
-      setTimeout(() => msg.classList.add("hidden"), 3000);
-    }
+  // ── Planner logic ─────────────────────────────────────────────
+  document.getElementById("sel-week-start")?.addEventListener("change", async (e) => {
+    const weekStartDay = e.target.value;
+    await updateUserProfile(uid, { weekStartDay });
+    state.profile = { ...state.profile, weekStartDay };
+    showSnackbar("Preferences saved", "success");
   });
 
   // ── Edit profile ──────────────────────────────────────────────
   document.getElementById("btn-edit-profile")?.addEventListener("click", () => openProfileModal(uid, profile, state));
+
+  // ── Course Details ───────────────────────────────────────────
+  document.getElementById("btn-edit-course")?.addEventListener("click", () => openCourseModal(uid, profile, state));
 
   // ── Change password ───────────────────────────────────────────
   document.getElementById("btn-change-pw")?.addEventListener("click", async () => {
@@ -182,6 +167,8 @@ export async function renderSettings(container, uid, profile, state) {
     await logOut();
   });
 
+  if (window.lucide) window.lucide.createIcons();
+
   return { cleanup: () => {} };
 }
 
@@ -204,19 +191,62 @@ function openProfileModal(uid, profile, state) {
   `;
 
   backdrop.querySelector("#profile-cancel").addEventListener("click", () => backdrop.remove());
-
   backdrop.querySelector("#profile-save").addEventListener("click", async () => {
     const displayName = backdrop.querySelector("#profile-name").value.trim();
     if (!displayName) return;
     await updateUserProfile(uid, { displayName });
     state.profile = { ...state.profile, displayName };
     backdrop.remove();
-    state.profile = { ...state.profile, displayName };
-    backdrop.remove();
-    // Re-render settings via central navigate
     navigate("settings");
   });
 
   document.body.appendChild(backdrop);
   setTimeout(() => backdrop.querySelector("#profile-name")?.focus(), 100);
+}
+
+// ── Course Edit Modal ──────────────────────────────────────────
+function openCourseModal(uid, profile, state) {
+  const backdrop = document.createElement("div");
+  backdrop.className = "modal-backdrop centered";
+  backdrop.innerHTML = `
+    <div class="modal-box" style="max-width:400px">
+      <h3 class="modal-title">Course Details</h3>
+      
+      <div class="form-group">
+        <label class="form-label">Program Name</label>
+        <input class="form-input" id="course-name" placeholder="e.g. B.Tech CSE" value="${escHtml(profile?.btechName||'')}" />
+      </div>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input class="form-input" type="date" id="course-start" value="${profile?.btechStart||''}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Graduation Date</label>
+          <input class="form-input" type="date" id="course-end" value="${profile?.btechEnd||''}" />
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="course-cancel">Cancel</button>
+        <button class="btn btn-primary" id="course-save">Save Changes</button>
+      </div>
+    </div>
+  `;
+
+  backdrop.querySelector("#course-cancel").addEventListener("click", () => backdrop.remove());
+  backdrop.querySelector("#course-save").addEventListener("click", async () => {
+    const btechName = backdrop.querySelector("#course-name").value.trim();
+    const btechStart = backdrop.querySelector("#course-start").value;
+    const btechEnd = backdrop.querySelector("#course-end").value;
+    
+    await updateUserProfile(uid, { btechName, btechStart, btechEnd });
+    state.profile = { ...state.profile, btechName, btechStart, btechEnd };
+    backdrop.remove();
+    navigate("settings");
+  });
+
+  document.body.appendChild(backdrop);
+  if (window.lucide) window.lucide.createIcons();
 }

@@ -17,8 +17,6 @@ window.lucide = {
 import { onAuthStateChanged } from "./auth.js";
 import { getUserProfile } from "./db.js";
 import { renderDashboard } from "./pages/dashboard.js";
-import { renderSubjects } from "./pages/subjects.js";
-import { renderTopics } from "./pages/topics.js";
 import { renderTasks } from "./pages/tasks.js";
 import { renderAnalytics } from "./pages/analytics.js";
 import { renderSettings } from "./pages/settings.js";
@@ -32,8 +30,8 @@ export const state = {
   user: null,
   profile: null,
   currentPage: "dashboard",
-  selectedSubjectId: null,
-  selectedSubjectName: null,
+  selectedTopicId: null,
+  selectedTopicName: null,
   currentPageController: null, // Tracks the currently active page for cleanup
 };
 
@@ -84,10 +82,10 @@ export async function navigate(page, params = {}) {
   state.currentPageController = null;
 
   state.currentPage = page;
-  if (params.subjectId) state.selectedSubjectId = params.subjectId;
-  if (params.subjectName) state.selectedSubjectName = params.subjectName;
+  if (params.topicId) state.selectedTopicId = params.topicId;
+  if (params.topicName) state.selectedTopicName = params.topicName;
 
-  document.querySelectorAll(".drawer-item").forEach((btn) => {
+  document.querySelectorAll(".nav-tab").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.page === page);
   });
 
@@ -102,19 +100,26 @@ export async function navigate(page, params = {}) {
   void content.offsetWidth;
   content.classList.add("fadeSlideUp");
   
-  // Toggle FAB visibility
-  const fab = $("fab-add-task");
-  if (fab) {
-    const hideFabPages = ["subjects", "personalDevelopment", "settings", "analytics", "scheduler"];
-    fab.classList.toggle("hidden", hideFabPages.includes(page));
+  // No longer need to toggle Home/FAB visibility as they are replaced by fixed nav/header
+  // Update header title based on page
+  const headerTitle = document.querySelector(".header-title");
+  if (headerTitle) {
+    const titles = {
+      dashboard: "Dashboard",
+      tasks: "Tasks",
+      analytics: "Analytics",
+      settings: "Profile",
+      scheduler: "AI Scheduler",
+      personalDevelopment: "Growth",
+      growth: "Growth"
+    };
+    headerTitle.textContent = titles[page] || "Your Day";
   }
 
   let controller = null;
 
   switch (page) {
     case "dashboard":  controller = await renderDashboard(content, uid, profile); break;
-    case "subjects":   controller = await renderSubjects(content, uid, profile); break;
-    case "topics":     controller = await renderTopics(content, uid, params.subjectId || state.selectedSubjectId, params.subjectName || state.selectedSubjectName); break;
     case "tasks":      controller = await renderTasks(content, uid, profile); break;
     case "analytics":  controller = await renderAnalytics(content, uid, profile); break;
     case "settings":   controller = await renderSettings(content, uid, profile, state); break;
@@ -123,6 +128,7 @@ export async function navigate(page, params = {}) {
       controller = await renderSchedulerTab(content, uid, profile); 
       break;
     case "personalDevelopment":
+    case "growth":
       const { renderPersonalDevelopment } = await import("./pages/personalDevelopment.js");
       controller = await renderPersonalDevelopment(content, uid, profile);
       break;
@@ -135,50 +141,26 @@ export async function navigate(page, params = {}) {
 
 // ── Sub-component Init ────────────────────────────────────────────────────────
 function initNavigation() {
-  const drawer = $("side-drawer"), 
-        overlay = $("drawer-overlay"), 
-        toggleBtn = $("btn-menu-toggle"), 
-        closeBtn = $("btn-close-drawer");
-
-  const open = () => { drawer?.classList.add("open"); overlay?.classList.add("active"); };
-  const close = () => { drawer?.classList.remove("open"); overlay?.classList.remove("active"); };
-
-  toggleBtn?.addEventListener("click", open);
-  closeBtn?.addEventListener("click", close);
-  overlay?.addEventListener("click", close);
-
-  document.querySelectorAll(".drawer-item[data-page]").forEach((btn) => {
-    btn.addEventListener("click", () => { navigate(btn.dataset.page); close(); });
+  document.querySelectorAll(".nav-tab[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => navigate(btn.dataset.page));
   });
 
-  // ── Swipe Gestures ──
-  let touchStartX = 0;
-  const SWIPE_THRESHOLD = 80;
-  const EDGE_THRESHOLD = 40;
-
-  document.addEventListener("touchstart", (e) => {
-    touchStartX = e.touches[0].clientX;
-  }, { passive: true });
-
-  document.addEventListener("touchend", (e) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const deltaX = touchEndX - touchStartX;
-    const isOpen = drawer?.classList.contains("open");
-
-    if (!isOpen) {
-      if (touchStartX < EDGE_THRESHOLD && deltaX > SWIPE_THRESHOLD) open();
-    } else {
-      if (deltaX < -SWIPE_THRESHOLD) close();
-    }
-  }, { passive: true });
+  $("btn-analytics")?.addEventListener("click", () => navigate("analytics"));
 }
 
 function initFab() {
-  $("fab-add-task")?.addEventListener("click", async () => {
-    const { openTaskModal } = await import("./pages/tasks.js");
-    openTaskModal(state.user.uid, state.profile, () => {
-      if (state.currentPage === "tasks" || state.currentPage === "dashboard") navigate(state.currentPage);
-    });
+  $("btn-header-add-task")?.addEventListener("click", async () => {
+    if (state.currentPage === "growth") {
+      const { openGoalForm } = await import("./pages/personalDevelopment.js");
+      openGoalForm(state.user.uid, null, () => navigate("growth"));
+    } else {
+      const { openTaskModal } = await import("./pages/tasks.js");
+      openTaskModal(state.user.uid, state.profile, () => {
+        if (state.currentPage === "tasks") navigate("tasks");
+        else if (state.currentPage === "dashboard") navigate("dashboard");
+        else if (state.currentPage === "scheduler") navigate("scheduler");
+      });
+    }
   });
 }
 
@@ -267,8 +249,7 @@ async function handleUserAuth(user) {
   initNavigation();
   initFab();
 
-  // Home Button Logic
-  $("btn-home")?.addEventListener("click", () => navigate("dashboard"));
+
 
   // Foreground push message listener
   try {

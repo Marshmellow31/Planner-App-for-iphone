@@ -29,10 +29,6 @@ export async function renderSchedulerTab(container, uid, profile) {
     if (savedPlan) {
       generatedPlan = savedPlan.planByDay;
       unscheduled = savedPlan.unscheduledTasks;
-      
-      // We need to wait for the DOM render below before we can set datasets on the child.
-      // Or we can just set them on the tab container and make renderPlanView smarter.
-      // Let's set them on the tab container and update renderPlanView.
       container.dataset.orderedLabels = JSON.stringify(savedPlan.orderedLabels || []);
       const date = savedPlan.updatedAt ? (savedPlan.updatedAt.toDate ? savedPlan.updatedAt.toDate() : new Date(savedPlan.updatedAt)) : null;
       container.dataset.generatedAt = date ? date.toLocaleString() : "";
@@ -40,14 +36,10 @@ export async function renderSchedulerTab(container, uid, profile) {
   } catch (err) {
     if (err.message && err.message.toLowerCase().includes("permission")) {
       container.innerHTML = `
-        <div class="page-header">
-          <h1 class="page-title">Smart Scheduler</h1>
-        </div>
-        <div class="card mb-xl" style="border-color:var(--error); background:rgba(153,51,51,0.05);">
-          <h3 style="color:#F87171; margin-bottom:12px;"><i data-lucide="shield-alert" style="width:20px;height:20px;display:inline-block;vertical-align:middle;"></i> Database Permissions Missing</h3>
-          <p style="color:var(--text-secondary); margin-bottom:12px; font-size:14px;">Your Firebase database doesn't have permission to use the new Scheduler features yet.</p>
-          <p style="color:var(--text-secondary); font-size:14px;">Please deploy the updated <code>firestore.rules</code> file by running this in your terminal:</p>
-          <pre style="background:var(--bg-tertiary); padding:12px; border-radius:8px; margin-top:12px; color:var(--text-primary); font-size:13px; font-family:monospace; overflow-x:auto;">npm run deploy:rules</pre>
+        <div class="card mb-xl" style="border-color:var(--error); background:rgba(153,51,51,0.05); margin-top:20px;">
+          <h3 style="color:#F87171; margin-bottom:12px;"><i data-lucide="shield-alert" style="width:20px;height:20px;display:inline-block;vertical-align:middle;"></i> Permissions Missing</h3>
+          <p style="color:var(--text-secondary); margin-bottom:12px; font-size:14px;">Scheduler features require updated Firestore rules.</p>
+          <pre style="background:var(--bg-tertiary); padding:12px; border-radius:8px; color:var(--text-primary); font-size:12px; font-family:monospace; overflow-x:auto;">npm run deploy:rules</pre>
         </div>
       `;
       if (window.lucide) window.lucide.createIcons();
@@ -60,27 +52,51 @@ export async function renderSchedulerTab(container, uid, profile) {
     <style>
       @keyframes slowSpin { 100% { transform: rotate(360deg); } }
       .icon-spin { animation: slowSpin 2s linear infinite; }
+      .sched-section { margin-bottom: var(--space-xl); }
+      .sched-card { 
+        background: var(--bg-card); 
+        border: 1px solid var(--border-subtle); 
+        border-radius: var(--border-radius-lg); 
+        padding: var(--space-lg);
+        box-shadow: var(--shadow-sm);
+      }
+      .timeline-item {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 20px;
+        border-left: 2px solid var(--border-active);
+      }
+      .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -7px;
+        top: 0;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
     </style>
-    <div class="page-header">
-      <h1 class="page-title">Smart Scheduler</h1>
-      <button class="btn btn-sm btn-primary" id="btn-add-sched-task">
-        <i data-lucide="plus" style="width:16px;height:16px;"></i> Add Task
-      </button>
-    </div>
 
-    <div class="card mb-xl">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
-        <h3 style="color:var(--text-primary); margin:0;">Pending Tasks</h3>
+    <div class="sched-section">
+      <div class="section-header mb-md">
+        <h3 class="section-title">Pending Tasks</h3>
+        <button class="btn btn-sm btn-ghost ripple" id="btn-add-sched-task">
+          <i data-lucide="plus" style="width:14px;height:14px;margin-right:4px;"></i> Add
+        </button>
       </div>
-      <div id="scheduler-task-list"></div>
-      
-      <div style="margin-top:var(--space-lg); display:flex; flex-direction:column; gap:12px;">
-        <button class="btn btn-secondary ripple" id="btn-manage-blocks" style="width:100%;">
-          <i data-lucide="clock" style="width:16px;height:16px;margin-right:6px;"></i> Edit Schedule
-        </button>
-        <button class="btn btn-primary ripple" id="btn-generate-plan" style="width:100%;">
-          <i data-lucide="sparkles" style="width:16px;height:16px;margin-right:6px;"></i> Generate Plan
-        </button>
+      <div class="sched-card">
+        <div id="scheduler-task-list"></div>
+        
+        <div style="margin-top:var(--space-md); display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <button class="btn btn-secondary btn-sm ripple" id="btn-manage-blocks" style="border-radius:var(--border-radius-md)">
+            <i data-lucide="clock" style="width:14px;height:14px;margin-right:6px;"></i> Edit Schedule
+          </button>
+          <button class="btn btn-primary btn-sm ripple" id="btn-generate-plan" style="border-radius:var(--border-radius-md)">
+            <i data-lucide="sparkles" style="width:14px;height:14px;margin-right:6px;"></i> Generate Plan
+          </button>
+        </div>
       </div>
     </div>
 
@@ -96,7 +112,9 @@ export async function renderSchedulerTab(container, uid, profile) {
   const genBtn = container.querySelector("#btn-generate-plan");
   if (genBtn) {
     genBtn.addEventListener("click", async () => {
-      genBtn.innerHTML = `<i data-lucide="loader-2" class="icon-spin"></i> Generating...`;
+      const originalText = genBtn.innerHTML;
+      genBtn.innerHTML = `<i data-lucide="loader-2" class="icon-spin"></i> Processing...`;
+      genBtn.disabled = true;
       
       try {
         const { allTasks } = await getUnifiedTasks(uid);
@@ -105,7 +123,8 @@ export async function renderSchedulerTab(container, uid, profile) {
         
         if (tasks.length === 0) {
           showSnackbar("No pending tasks to schedule.", "info");
-          genBtn.innerHTML = `<i data-lucide="sparkles" style="width:16px;height:16px;margin-right:6px;"></i> Generate Plan`;
+          genBtn.innerHTML = originalText;
+          genBtn.disabled = false;
           if (window.lucide) window.lucide.createIcons();
           return;
         }
@@ -114,24 +133,22 @@ export async function renderSchedulerTab(container, uid, profile) {
         generatedPlan = planByDay;
         unscheduled = unscheduledTasks;
 
-        // Set on the Page container so renderPlanView can find it
         container.dataset.orderedLabels = JSON.stringify(orderedLabels);
         container.dataset.generatedAt = new Date().toLocaleString();
 
-        // Save plan
         await saveGeneratedPlan(uid, { 
           planByDay: generatedPlan, 
           unscheduledTasks: unscheduled,
           orderedLabels: orderedLabels
         });
         
-        showSnackbar("Study Plan Generated successfully!", "success");
+        showSnackbar("AI Study Plan Generated!", "success");
         renderPlanView();
       } catch (err) {
-        console.error(err);
         showSnackbar("Error generating plan.", "error");
       } finally {
-        genBtn.innerHTML = `<i data-lucide="sparkles" style="width:16px;height:16px;margin-right:6px;"></i> Generate Plan`;
+        genBtn.innerHTML = originalText;
+        genBtn.disabled = false;
         if (window.lucide) window.lucide.createIcons();
       }
     });
@@ -139,17 +156,14 @@ export async function renderSchedulerTab(container, uid, profile) {
 
   // Bind Manage Blocks
   container.querySelector("#btn-manage-blocks").addEventListener("click", () => {
-    openWeeklyTimetableModal(uid, weeklySchedule, async (newSched) => {
+    openWeeklyTimetableModal(uid, weeklySchedule, (newSched) => {
       weeklySchedule = newSched;
     });
   });
 
   // Bind Add Task
   container.querySelector("#btn-add-sched-task").addEventListener("click", () => {
-    openAddTaskModal(uid, () => {
-      // callback on task added
-      reloadTasks(uid);
-    });
+    openAddTaskModal(uid, () => reloadTasks(uid));
   });
 
   if (window.lucide) window.lucide.createIcons();
@@ -182,8 +196,8 @@ async function reloadTasks(uid) {
     tasks = allTasks;
     renderTaskList(uid);
   } catch (err) {
-    console.error("Failed to reload tasks:", err);
-    showSnackbar("Error refreshing task list", "error");
+    console.error(err);
+    showSnackbar("Error refreshing tasks", "error");
   }
 }
 
@@ -193,160 +207,116 @@ function renderTaskList(uid) {
 
   if (tasks.length === 0) {
     listEl.innerHTML = `
-      <div style="color:var(--text-muted); font-size:13px; font-style:italic; padding:12px 0;">
-        No tasks added yet. Add tasks above to include them in your dynamic study plan.
+      <div style="color:var(--text-muted); font-size:13px; text-align:center; padding:24px 0;">
+        <i data-lucide="inbox" style="width:32px;height:32px;display:block;margin:0 auto 8px;opacity:0.3;"></i>
+        Add tasks below to start planning.
       </div>`;
+    if (window.lucide) window.lucide.createIcons();
     return;
   }
 
-  listEl.innerHTML = tasks.map(t => `
-    <div class="task-card" style="position:relative; background:var(--bg-tertiary); border:1px solid var(--border); padding:14px 16px; margin-bottom:10px; border-radius:12px; display:flex; flex-direction:row; justify-content:space-between; align-items:center; transition:all 0.2s;">
-      <div style="position:absolute; left:-1px; top:-1px; bottom:-1px; width:4px; background:var(--priority-${(t.priority || 'medium').toLowerCase()}); border-top-left-radius:12px; border-bottom-left-radius:12px;"></div>
-      
-      <div style="margin-left:6px; display:flex; flex-direction:column; gap:4px; flex:1; text-align:left;">
-        <div style="font-weight:600; color:var(--text-primary); font-size:15px; display:flex; align-items:center; gap:8px;">
-          ${escHtml(t.title)} 
-          <span class="priority-label ${(t.priority || 'medium').toLowerCase()}" style="font-size:10px; padding:2px 6px;">${t.priority || 'Medium'}</span>
-          ${t.isMainTask ? `<span style="font-size:9px; background:rgba(var(--accent-rgb),0.1); color:var(--accent); padding:1px 5px; border-radius:4px; border:1px solid rgba(var(--accent-rgb),0.2);">Task List</span>` : ''}
-          ${t.autoGenerated ? `<span style="font-size:9px; background:rgba(52,211,153,0.1); color:#34D399; padding:1px 5px; border-radius:4px; border:1px solid rgba(52,211,153,0.2);">Goal</span>` : ''}
+  listEl.innerHTML = tasks.map((t, idx) => `
+    <div class="list-item stagger-item" style="padding:12px 0; border-bottom:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; animation-delay:${idx*40}ms;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:4px; display:flex; align-items:center; gap:8px;">
+          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escHtml(t.title)}</span>
+          <span class="badge badge-${(t.priority || 'medium').toLowerCase()}" style="font-size:10px;">${t.priority || 'Medium'}</span>
         </div>
-        <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-          <div style="display:flex; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:12px; font-size:11px; color:var(--text-muted);">
+          <div style="display:flex; align-items:center; gap:4px;">
             <i data-lucide="clock" style="width:12px;height:12px;"></i>
-            <input type="number" class="sched-task-time-edit" data-id="${t.id}" data-ismaintask="${!!t.isMainTask}" value="${t.estimatedTime}" style="width:45px; background:rgba(255,255,255,0.05); border:1px solid var(--border); border-radius:4px; color:#fff; font-size:11px; padding:2px 4px;" />
-            <span>mins</span>
+            <input type="number" class="sched-task-time-input" data-id="${t.id}" data-ismaintask="${!!t.isMainTask}" value="${t.estimatedTime}" style="width:36px; background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); border-radius:4px; color:#fff; font-size:11px; text-align:center; padding:1px;" />
+            <span>min</span>
           </div>
-          ${t.deadline ? `<span style="display:flex; align-items:center; gap:4px;"><i data-lucide="calendar" style="width:12px;height:12px;"></i> Due: ${t.deadline}</span>` : ''}
+          ${t.deadline ? `<span style="display:flex; align-items:center; gap:4px;"><i data-lucide="calendar" style="width:12px;height:12px;"></i> ${t.deadline}</span>` : ''}
         </div>
       </div>
-      
-      <button class="btn btn-sm btn-ghost btn-del-sched-task" data-id="${t.id}" data-ismaintask="${!!t.isMainTask}" style="padding:6px; margin-left:12px; color:var(--text-muted); border:1px solid transparent; flex-shrink:0;" onmouseover="this.style.color='var(--error)'; this.style.background='var(--bg-card)'" onmouseout="this.style.color='var(--text-muted)'; this.style.background='transparent'">
-        <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+      <button class="btn-circle btn-ghost btn-del-sched-task ripple" data-id="${t.id}" data-ismaintask="${!!t.isMainTask}" style="color:var(--text-muted);">
+        <i data-lucide="x" style="width:16px;height:16px;"></i>
       </button>
     </div>
   `).join("");
 
-  // Bind duration changes
-  listEl.querySelectorAll(".sched-task-time-edit").forEach(input => {
+  listEl.querySelectorAll(".sched-task-time-input").forEach(input => {
     input.addEventListener("change", async () => {
       const val = parseInt(input.value, 10);
-      const id = input.dataset.id;
-      const isMain = input.dataset.ismaintask === "true";
       if (isNaN(val) || val < 1) return;
-
       try {
         const { updateSchedulerTask, updateTask } = await import("../db.js");
-        if (isMain) {
-          await updateTask(id, { estimatedTime: val });
-        } else {
-          await updateSchedulerTask(id, { estimatedTime: val });
-        }
+        const id = input.dataset.id;
+        if (input.dataset.ismaintask === "true") await updateTask(id, { estimatedTime: val });
+        else await updateSchedulerTask(id, { estimatedTime: val });
         showSnackbar("Time updated", "success");
-        // Update local state without full reload
-        const t = tasks.find(x => x.id === id);
-        if (t) t.estimatedTime = val;
-      } catch (err) {
-        showSnackbar("Failed to update time", "error");
-      }
+      } catch (err) { showSnackbar("Update failed", "error"); }
     });
   });
 
-  // Bind deletes
   listEl.querySelectorAll(".btn-del-sched-task").forEach(btn => {
-    btn.addEventListener("click", async () => {
+    btn.onclick = async () => {
       const isMain = btn.dataset.ismaintask === "true";
-      const id = btn.dataset.id;
+      if (!confirm(`Remove ${isMain ? "from scheduler?" : "task?"}`)) return;
       if (isMain) {
-        if (!confirm("Remove this task from the Scheduler? (It will still exist in your All Tasks list)")) return;
         const { updateTask } = await import("../db.js");
-        await updateTask(id, { isScheduled: false });
+        await updateTask(btn.dataset.id, { isScheduled: false });
       } else {
-        if (!confirm("Remove this target study task?")) return;
-        await deleteSchedulerTask(id);
+        await deleteSchedulerTask(btn.dataset.id);
       }
-      showSnackbar("Task removed", "success");
       reloadTasks(uid);
-    });
+    };
   });
 
   if (window.lucide) window.lucide.createIcons();
 }
 
 function renderPlanView() {
-  // Use the main tab container to find datasets
   const tabContainer = document.getElementById("main-content");
   const container = document.getElementById("generated-plan-container");
-  if (!container || !tabContainer) return;
-
-  if (!generatedPlan) {
-    container.innerHTML = "";
-    return;
+  if (!container || !tabContainer || !generatedPlan) {
+     if (container) container.innerHTML = "";
+     return;
   }
 
   const generatedAt = tabContainer.dataset.generatedAt;
-  const orderedLabelsRaw = tabContainer.dataset.orderedLabels;
+  let orderedLabels = [];
+  try { orderedLabels = JSON.parse(tabContainer.dataset.orderedLabels || "[]"); } catch(e) {}
 
   let html = `
-    <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:var(--space-2xl); margin-bottom:var(--space-md);">
-      <h2 class="page-title" style="margin:0; font-size:18px;">Your Generated Plan</h2>
-      ${generatedAt ? `<div style="font-size:11px; color:var(--text-muted);">Updated: ${generatedAt}</div>` : ""}
+    <div class="section-header" style="margin-top:var(--space-xl)">
+      <h3 class="section-title">AI Study Plan</h3>
+      ${generatedAt ? `<span style="font-size:10px; color:var(--text-muted);">AS OF ${generatedAt}</span>` : ""}
     </div>
   `;
 
-  // Show Unscheduled if any
-  if (unscheduled && unscheduled.length > 0) {
+  if (unscheduled?.length > 0) {
     html += `
-      <div class="card mb-md" style="border-color:var(--error); background:rgba(255,80,80,0.05);">
-        <h4 style="color:#ff8888; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
-          <i data-lucide="alert-triangle" style="width:16px;height:16px;"></i> Unscheduled Tasks
-        </h4>
-        <div style="font-size:13px; color:var(--text-secondary); margin-bottom:12px;">These could not fit into your available study blocks. Consider freeing up more time or extending deadlines.</div>
+      <div class="card mb-lg" style="border:1px solid rgba(255,80,80,0.2); background:rgba(255,80,80,0.02);">
+        <div style="font-weight:700; color:#ff8888; font-size:12px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+          <i data-lucide="alert-circle" style="width:14px;height:14px;"></i> UNSCHEDULED
+        </div>
         ${unscheduled.map(t => `
-          <div style="padding:8px 12px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <div style="font-weight:600; color:var(--text-primary); font-size:14px;">${escHtml(t.title)}</div>
-            <div style="font-size:12px; color:var(--error); font-weight:600;">Missed ${t.remainingTimeUnscheduled}m</div>
+          <div style="font-size:13px; color:var(--text-secondary); padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between;">
+            <span>${escHtml(t.title)}</span>
+            <span style="color:#ff8888; font-weight:600;">+${t.remainingTimeUnscheduled}m</span>
           </div>
         `).join("")}
       </div>
     `;
   }
 
-  // Show Days
-  let orderedLabels = [];
-  try {
-    orderedLabels = JSON.parse(tabContainer.dataset.orderedLabels || "[]");
-  } catch(e) {}
-  
-  if (orderedLabels.length > 0 && !orderedLabels.includes("Today")) {
-     html += `<div style="font-size:12px; color:var(--text-muted); padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:8px; margin-bottom:16px;">
-        <i data-lucide="info" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i> No remaining study blocks for today. Plan starts from the next available time.
-     </div>`;
-  }
-
-  if (orderedLabels.length === 0) {
-    orderedLabels = Object.keys(generatedPlan).sort((a,b) => {
-      if (a === "Today") return -1;
-      if (b === "Today") return 1;
-      if (a === "Tomorrow") return -1;
-      if (b === "Tomorrow") return 1;
-      return 0;
-    });
-  }
-
-  orderedLabels.forEach(label => {
+  orderedLabels.forEach((label, idx) => {
     const dayPlan = generatedPlan[label];
-    if (dayPlan && dayPlan.length > 0) {
+    if (dayPlan?.length > 0) {
       html += `
-        <div class="card mb-md">
-          <h4 style="color:var(--text-primary); margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; display:flex; align-items:center; gap:8px;">
-            <i data-lucide="${label === 'Today' ? 'zap' : 'calendar-days'}" style="width:16px;height:16px;color:var(--accent);"></i> ${label}
-          </h4>
-          <div style="display:flex; flex-direction:column; gap:8px;">
-            ${dayPlan.map(block => `
-              <div style="display:flex; flex-direction:column; background:var(--bg-card); border:1px solid var(--border-subtle); border-left:3px solid var(--priority-${(block.priority || 'medium').toLowerCase()}); padding:12px; border-radius:12px;">
-                <div style="font-weight:600; color:var(--text-primary); font-size:14px;">${escHtml(block.taskTitle)}</div>
-                <div style="font-size:12px; color:var(--text-muted); margin-top:4px; display:flex; gap:12px; align-items:center;">
-                  <span style="display:flex; align-items:center; gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;"></i> ${block.startTime} - ${block.endTime} (${block.timeSpent}m)</span>
+        <div class="sched-section stagger-item" style="animation-delay:${idx*80}ms">
+          <div style="font-weight:700; font-size:11px; letter-spacing:1px; color:var(--accent); text-transform:uppercase; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+            <i data-lucide="${label === 'Today' ? 'zap' : 'calendar'}" style="width:14px;height:14px;"></i> ${label}
+          </div>
+          <div class="sched-card" style="padding:16px;">
+            ${dayPlan.map((block, bIdx) => `
+              <div class="timeline-item" style="${bIdx === dayPlan.length - 1 ? 'margin-bottom:0; border-left:2px solid transparent;' : ''}">
+                <div style="font-weight:600; color:var(--text-primary); font-size:14px; margin-bottom:4px;">${escHtml(block.taskTitle)}</div>
+                <div style="font-size:12px; color:var(--text-muted); display:flex; gap:12px;">
+                  <span style="display:flex; align-items:center; gap:4px;"><i data-lucide="clock" style="width:12px;height:12px;"></i> ${block.startTime} (${block.timeSpent}m)</span>
                   <span style="display:flex; align-items:center; gap:4px;"><i data-lucide="map-pin" style="width:12px;height:12px;"></i> ${escHtml(block.blockTitle)}</span>
                 </div>
               </div>
@@ -357,13 +327,6 @@ function renderPlanView() {
     }
   });
 
-  const hasAnyScheduled = Object.values(generatedPlan).some(arr => arr.length > 0);
-  if (!hasAnyScheduled && unscheduled && unscheduled.length === 0) {
-    html += `<div style="text-align:center; color:var(--text-muted); padding:32px;">Schedule is completely empty.</div>`;
-  } else if (!hasAnyScheduled && unscheduled && unscheduled.length > 0) {
-    html += `<div style="text-align:center; color:var(--text-muted); padding:16px; border:1px dashed var(--border); border-radius:12px;">No tasks could be scheduled into your available Study blocks. Please edit your Schedule tab to add Study time.</div>`;
-  }
-
   container.innerHTML = html;
   if (window.lucide) window.lucide.createIcons();
 }
@@ -372,91 +335,69 @@ function openAddTaskModal(uid, onTaskAdded) {
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop centered";
 
-  // Default deadline to today + 7 days
   const tempDate = new Date();
   tempDate.setDate(tempDate.getDate() + 7);
   const futureDateStr = tempDate.toISOString().split("T")[0];
 
   backdrop.innerHTML = `
-    <div class="modal-box" style="max-width:400px">
-      <h3 class="modal-title">Add Scheduler Task</h3>
+    <div class="drawer" style="max-width:400px; margin:0 auto;">
+      <div class="drawer-handle"></div>
+      <h3 class="modal-title">New AI Task</h3>
       
       <div class="form-group">
-        <label class="form-label">Task Title</label>
-        <input type="text" id="ai-task-title" class="form-input" placeholder="E.g., Read Chapter 4" required />
+        <label class="form-label">Title</label>
+        <input type="text" id="ai-task-title" class="form-input" placeholder="e.g. Study Chemistry Part 2" required />
       </div>
 
-      <div style="display:flex; gap:var(--space-md);">
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Est. Time (mins)</label>
-          <input type="number" id="ai-task-mins" class="form-input" value="60" min="15" step="15" required />
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Duration (m)</label>
+          <input type="number" id="ai-task-mins" class="form-input" value="60" step="15" />
         </div>
-        <div class="form-group" style="flex:1;">
+        <div class="form-group">
           <label class="form-label">Priority</label>
           <select id="ai-task-priority" class="form-select">
-            <option value="Low">Low</option>
-            <option value="Medium" selected>Medium</option>
             <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
           </select>
         </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Deadline (Optional)</label>
+        <label class="form-label">Deadline</label>
         <input type="date" id="ai-task-deadline" class="form-input" value="${futureDateStr}" />
       </div>
 
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="ai-task-cancel">Cancel</button>
-        <button class="btn btn-primary" id="ai-task-save">Add</button>
+        <button class="btn btn-secondary ripple" id="ai-task-cancel">Cancel</button>
+        <button class="btn btn-primary ripple" id="ai-task-save">Add Task</button>
       </div>
     </div>
   `;
 
-  backdrop.querySelector("#ai-task-cancel").addEventListener("click", () => backdrop.remove());
+  backdrop.querySelector("#ai-task-cancel").onclick = () => backdrop.remove();
+  backdrop.onclick = (e) => { if(e.target === backdrop) backdrop.remove(); };
 
-  backdrop.querySelector("#ai-task-save").addEventListener("click", async () => {
-    const btn = backdrop.querySelector("#ai-task-save");
-    btn.disabled = true;
-    btn.textContent = "Saving...";
-
+  backdrop.querySelector("#ai-task-save").onclick = async () => {
     const title = backdrop.querySelector("#ai-task-title").value.trim();
-    const estimatedTime = parseInt(backdrop.querySelector("#ai-task-mins").value, 10);
-    const priority = backdrop.querySelector("#ai-task-priority").value;
-    const deadline = backdrop.querySelector("#ai-task-deadline").value;
-
-    if (!title || !estimatedTime) {
-      showSnackbar("Title and estimated time are required.", "error");
-      btn.disabled = false;
-      btn.textContent = "Add";
-      return;
-    }
+    if (!title) return showSnackbar("Title required", "error");
 
     try {
       await createSchedulerTask(uid, {
         title,
-        estimatedTime,
-        priority,
-        deadline
+        estimatedTime: parseInt(backdrop.querySelector("#ai-task-mins").value, 10),
+        priority: backdrop.querySelector("#ai-task-priority").value,
+        deadline: backdrop.querySelector("#ai-task-deadline").value
       });
-      showSnackbar("Task added successfully", "success");
+      showSnackbar("Task added!", "success");
       backdrop.remove();
-      if (onTaskAdded) onTaskAdded();
-    } catch (err) {
-      showSnackbar("Error adding task", "error");
-      console.error(err);
-      btn.disabled = false;
-      btn.textContent = "Add";
-    }
-  });
+      onTaskAdded();
+    } catch (err) { showSnackbar("Failed to add", "error"); }
+  };
 
   document.body.appendChild(backdrop);
-  setTimeout(() => backdrop.querySelector("#ai-task-title").focus(), 100);
 }
-
-// ── Merged Timetable Editor ──────────────────────────────────────
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const DAY_SHORTS = ["M", "T", "W", "T", "F", "S", "S"];
 
 function openWeeklyTimetableModal(uid, currentSchedule, onUpdate) {
   let localSchedule = JSON.parse(JSON.stringify(currentSchedule || {}));
@@ -466,169 +407,118 @@ function openWeeklyTimetableModal(uid, currentSchedule, onUpdate) {
   backdrop.className = "modal-backdrop centered";
 
   backdrop.innerHTML = `
-    <div class="modal-box" style="max-width:600px; width:95%; padding:var(--space-xl); max-height:90vh; overflow-y:auto; position:relative; background:var(--bg-elevated); border:1px solid var(--border);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
-        <h3 class="modal-title" style="margin:0;">Manage Availability</h3>
-        <button class="btn btn-ghost btn-sm" id="btn-close-timetable" style="position:absolute; top:16px; right:16px; padding:8px; z-index:100; color:var(--text-secondary); transition:color 0.2s;" onmouseover="this.style.color='#ffffff'" onmouseout="this.style.color='var(--text-secondary)'"><i data-lucide="x" style="width:24px;height:24px;"></i></button>
+    <div class="drawer" style="max-width:600px; margin:0 auto; height:80vh;">
+      <div class="drawer-handle"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 class="modal-title">Availability</h3>
+        <button class="btn-circle btn-ghost ripple" id="close-tt" style="margin-top:-10px"><i data-lucide="x"></i></button>
       </div>
       
-      <p style="color:var(--text-secondary); font-size:13px; margin-bottom:var(--space-md);">
-        Define the time blocks you have available for the AI Scheduler to slot tasks into.
-      </p>
+      <div class="filter-row mb-md" id="tt-days" style="padding:4px 0;"></div>
+      <div id="tt-list" style="flex:1; overflow-y:auto; margin-bottom:16px;"></div>
 
-      <!-- Day Selector -->
-      <div class="filter-bar mb-md" id="schedule-days-bar"></div>
-
-      <!-- Block List -->
-      <div id="modal-schedule-list" class="mb-md" style="min-height:100px;"></div>
-
-      <button class="btn btn-secondary btn-full ripple" id="btn-add-block" style="margin-bottom:var(--space-md);">
-        <i data-lucide="plus" style="width:16px;height:16px;margin-right:6px;"></i> Add Block to <span id="current-day-display">Monday</span>
+      <button class="btn btn-secondary ripple mb-md" id="tt-add" style="width:100%">
+        <i data-lucide="plus" style="width:16px;height:16px;margin-right:6px"></i> Add Study Block
       </button>
 
-      <button class="btn btn-primary btn-full ripple" id="btn-save-timetable">
-        <i data-lucide="save" style="width:16px;height:16px;margin-right:6px;"></i> Save Schedule
-      </button>
+      <button class="btn btn-primary ripple" id="tt-save" style="width:100%">Save Availability</button>
     </div>
   `;
 
-  const renderBlocks = () => {
-    backdrop.querySelector("#current-day-display").textContent = selectedDay;
-    const listEl = backdrop.querySelector("#modal-schedule-list");
-    let dayTasks = localSchedule[selectedDay] || [];
-    dayTasks.sort((a, b) => a.start_time.localeCompare(b.start_time));
+  const renderTT = () => {
+    const list = backdrop.querySelector("#tt-list");
+    const blocks = localSchedule[selectedDay] || [];
+    blocks.sort((a,b) => a.start_time.localeCompare(b.start_time));
 
-    if (dayTasks.length === 0) {
-      listEl.innerHTML = `<div style="text-align:center; padding:var(--space-md); color:var(--text-muted); font-size:13px; border:1px dashed var(--border); border-radius:8px;">No blocks scheduled for ${selectedDay}.</div>`;
-    } else {
-      listEl.innerHTML = dayTasks.map(t => `
-        <div class="task-card" style="margin-bottom:12px !important; border-color:var(--border); display:flex !important; flex-direction:row !important; justify-content:space-between; align-items:center; padding:12px 16px !important; height:auto !important; min-height:0 !important; cursor:default;">
-          <div style="flex:1;">
-            <div style="font-weight:600; font-size:14px; color:var(--text-primary); margin-bottom:2px; display:flex; align-items:center; gap:8px;">
-              ${escHtml(t.title)} 
-              <span style="font-size:10px; padding:2px 6px; border-radius:4px; background:var(--bg-card-hover); color:var(--text-secondary); font-weight:500;">${t.type || 'Study'}</span>
-            </div>
-            <div style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px;">
-              <i data-lucide="clock" style="width:12px;height:12px;"></i> ${t.start_time} - ${t.end_time}
-            </div>
+    list.innerHTML = blocks.length === 0 ? `<div style="text-align:center; padding:40px; color:var(--text-muted); font-size:13px;">No blocks for ${selectedDay}</div>` :
+      blocks.map(b => `
+        <div class="list-item" style="padding:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px;">
+          <div>
+            <div style="font-weight:600; font-size:14px;">${escHtml(b.title)}</div>
+            <div style="font-size:11px; color:var(--text-muted);">${b.start_time} - ${b.end_time}</div>
           </div>
-          <button class="btn btn-sm btn-ghost btn-del-block" data-id="${t.id}" style="color:var(--error); padding:8px; margin-left:12px;"><i data-lucide="trash-2" style="width:18px;height:18px;"></i></button>
+          <button class="btn-circle btn-ghost btn-del-tt" data-id="${b.id}" style="color:var(--error);"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button>
         </div>
       `).join("");
-
-      listEl.querySelectorAll(".btn-del-block").forEach(btn => {
-        btn.addEventListener("click", () => {
-          localSchedule[selectedDay] = localSchedule[selectedDay].filter(x => x.id !== btn.dataset.id);
-          renderBlocks();
-        });
-      });
-    }
-    if (window.lucide) window.lucide.createIcons();
+    
+    list.querySelectorAll(".btn-del-tt").forEach(btn => {
+      btn.onclick = () => {
+        localSchedule[selectedDay] = localSchedule[selectedDay].filter(x => x.id !== btn.dataset.id);
+        renderTT();
+      };
+    });
+    if(window.lucide) window.lucide.createIcons();
   };
 
-  const updateDaySelector = () => {
-    const daysBar = backdrop.querySelector("#schedule-days-bar");
-    daysBar.innerHTML = DAYS.map((day, i) => `
-      <button class="filter-chip ${day === selectedDay ? "active" : "ripple"}" data-day="${day}" style="min-width:40px; justify-content:center;">
-        ${DAY_SHORTS[i]}
-      </button>
+  const updateTTDays = () => {
+    backdrop.querySelector("#tt-days").innerHTML = DAYS.map(d => `
+      <button class="filter-chip ${d === selectedDay ? 'active' : ''}" data-day="${d}">${d.slice(0,3)}</button>
     `).join("");
-
-    daysBar.querySelectorAll(".filter-chip").forEach(btn => {
-      btn.addEventListener("click", () => {
-        selectedDay = btn.dataset.day;
-        updateDaySelector();
-        renderBlocks();
-      });
+    backdrop.querySelectorAll(".filter-chip").forEach(btn => {
+      btn.onclick = () => { selectedDay = btn.dataset.day; updateTTDays(); renderTT(); };
     });
   };
 
-  backdrop.querySelector("#btn-close-timetable").addEventListener("click", () => backdrop.remove());
-  
-  backdrop.querySelector("#btn-add-block").addEventListener("click", () => {
-    openAddBlockModal(selectedDay, (newBlock) => {
-      if (!localSchedule[selectedDay]) localSchedule[selectedDay] = [];
-      localSchedule[selectedDay].push(newBlock);
-      renderBlocks();
-    });
+  backdrop.querySelector("#close-tt").onclick = () => backdrop.remove();
+  backdrop.querySelector("#tt-add").onclick = () => openAddBlockModal(selectedDay, (b) => {
+    if(!localSchedule[selectedDay]) localSchedule[selectedDay] = [];
+    localSchedule[selectedDay].push(b);
+    renderTT();
   });
 
-  backdrop.querySelector("#btn-save-timetable").addEventListener("click", async () => {
-    const btn = backdrop.querySelector("#btn-save-timetable");
-    btn.disabled = true;
-    btn.innerHTML = `Saving...`;
+  backdrop.querySelector("#tt-save").onclick = async () => {
+    const btn = backdrop.querySelector("#tt-save");
+    btn.disabled = true; btn.textContent = "Saving...";
     try {
       await saveWeeklySchedule(uid, localSchedule);
-      showSnackbar("Schedule saved successfully", "success");
-      if (onUpdate) onUpdate(localSchedule);
+      showSnackbar("Saved!", "success");
+      onUpdate(localSchedule);
       backdrop.remove();
-    } catch (err) {
-      showSnackbar("Error saving schedule", "error");
-      btn.disabled = false;
-      btn.innerHTML = `<i data-lucide="save"></i> Save Schedule`;
-      if (window.lucide) window.lucide.createIcons();
-    }
-  });
+    } catch(e) { btn.disabled = false; btn.textContent = "Save"; }
+  };
 
   document.body.appendChild(backdrop);
-  updateDaySelector();
-  renderBlocks();
+  updateTTDays(); renderTT();
 }
 
 function openAddBlockModal(day, onAdd) {
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop centered";
-  backdrop.style.zIndex = "1001"; // Above the other modal
+  backdrop.style.zIndex = "30001";
 
   backdrop.innerHTML = `
-    <div class="modal-box" style="max-width:350px">
-      <h3 class="modal-title">Add Block to ${day}</h3>
+    <div class="drawer" style="max-width:350px; margin:0 auto;">
+      <h3 class="modal-title">Block for ${day}</h3>
       <div class="form-group">
-        <label class="form-label">Block Title</label>
-        <input type="text" id="block-title" class="form-input" placeholder="e.g. Free Block" required />
+        <label class="form-label">Title</label>
+        <input type="text" id="b-title" class="form-input" placeholder="e.g. Evening Study" value="Study Session" />
       </div>
-      <div style="display:flex; gap:12px;">
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">Start Time</label>
-          <input type="time" id="block-start" class="form-input" value="09:00" required />
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label class="form-label">Start</label>
+          <input type="time" id="b-start" class="form-input" value="18:00" />
         </div>
-        <div class="form-group" style="flex:1;">
-          <label class="form-label">End Time</label>
-          <input type="time" id="block-end" class="form-input" value="11:00" required />
+        <div class="form-group">
+          <label class="form-label">End</label>
+          <input type="time" id="b-end" class="form-input" value="20:00" />
         </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Type</label>
-        <select id="block-type" class="form-select">
-          <option value="Study" selected>Study (AI available)</option>
-          <option value="Free">Free Time</option>
-          <option value="Busy">Busy</option>
-        </select>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" id="btn-cancel-block">Cancel</button>
-        <button class="btn btn-primary" id="btn-save-block">Add</button>
+        <button class="btn btn-secondary ripple" id="b-cancel">Cancel</button>
+        <button class="btn btn-primary ripple" id="b-save">Add</button>
       </div>
     </div>
   `;
-
-  backdrop.querySelector("#btn-cancel-block").addEventListener("click", () => backdrop.remove());
-  
-  backdrop.querySelector("#btn-save-block").addEventListener("click", () => {
-    const title = backdrop.querySelector("#block-title").value.trim();
-    const start_time = backdrop.querySelector("#block-start").value;
-    const end_time = backdrop.querySelector("#block-end").value;
-    const type = backdrop.querySelector("#block-type").value;
-
-    if (!title || !start_time || !end_time) return showSnackbar("Fill all fields", "error");
-    if (start_time >= end_time) return showSnackbar("Start must be before end", "error");
-
-    onAdd({
-      id: Date.now().toString(36) + Math.random().toString(36).substring(2),
-      title, start_time, end_time, type
-    });
+  backdrop.querySelector("#b-cancel").onclick = () => backdrop.remove();
+  backdrop.querySelector("#b-save").onclick = () => {
+    const title = backdrop.querySelector("#b-title").value.trim();
+    const st = backdrop.querySelector("#b-start").value;
+    const et = backdrop.querySelector("#b-end").value;
+    if(!title || !st || !et) return;
+    onAdd({ id: Math.random().toString(36).slice(2), title, start_time: st, end_time: et, type: "Study" });
     backdrop.remove();
-  });
-
+  };
   document.body.appendChild(backdrop);
 }
+
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];

@@ -102,8 +102,8 @@
       </div>
       <div class="feature-card">
         <div class="feature-icon"><i data-lucide="book-open"></i></div>
-        <div class="feature-title">Subject Tracker</div>
-        <div class="feature-desc">Manage courses, topics & completion</div>
+        <div class="feature-title">Topic Tracker</div>
+        <div class="feature-desc">Manage courses, sub-topics & completion</div>
       </div>
       <div class="feature-card">
         <div class="feature-icon"><i data-lucide="bell"></i></div>
@@ -216,9 +216,15 @@
 
     <!-- Fixed Top Header -->
     <header class="app-header">
-      <button class="menu-toggle" id="btn-menu-toggle" aria-label="Open Menu">
-        <i data-lucide="menu"></i>
-      </button>
+      <div class="header-container">
+        <button class="header-btn ripple" id="btn-analytics" aria-label="Analytics" title="Analytics">
+          <i data-lucide="pie-chart"></i>
+        </button>
+        <div class="header-title">Your Day</div>
+        <button class="header-btn ripple" id="btn-header-add-task" aria-label="Add Task" title="Add Task">
+          <i data-lucide="plus"></i>
+        </button>
+      </div>
     </header>
 
     <!-- Page Content -->
@@ -226,39 +232,31 @@
       <div id="main-content" class="page-content"></div>
     </div>
 
-    <!-- Side Drawer & Overlay -->
-    <div class="drawer-overlay hidden" id="drawer-overlay"></div>
-    <nav class="side-drawer" id="side-drawer">
-      <div class="drawer-header">
-        <div class="drawer-logo">Your Day</div>
-        <button class="drawer-close btn btn-ghost btn-sm" id="btn-close-drawer" aria-label="Close Menu"><i data-lucide="x"></i></button>
-      </div>
-      <div class="drawer-links">
-        <button class="drawer-item active ripple" data-page="dashboard">
-          <i data-lucide="layout-dashboard"></i> Dashboard
-        </button>
-        <button class="drawer-item ripple" data-page="tasks">
-          <i data-lucide="check-square"></i> Tasks
-        </button>
-        <button class="drawer-item ripple" data-page="scheduler">
-          <i data-lucide="sparkles"></i> AI Scheduler
-        </button>
-        <button class="drawer-item ripple" data-page="personalDevelopment">
-          <i data-lucide="trending-up"></i> Personal Dev
-        </button>
-        <button class="drawer-item ripple" data-page="analytics">
-          <i data-lucide="pie-chart"></i> Analytics
-        </button>
-        <button class="drawer-item ripple" data-page="settings">
-          <i data-lucide="settings"></i> Settings
-        </button>
-      </div>
-    </nav>
 
-    <!-- Floating Navigation Controls -->
-    <!-- Floating Navigation Controls -->
-    <button class="home-btn ripple" id="btn-home" aria-label="Home" title="Home"><i data-lucide="home"></i></button>
-    <button class="fab ripple" id="fab-add-task" aria-label="Add Task" title="Add Task"><i data-lucide="plus"></i></button>
+
+    <!-- Bottom Tab Navigation -->
+    <nav class="bottom-nav">
+      <button class="nav-tab ripple" data-page="dashboard" title="Dashboard">
+        <i data-lucide="layout-dashboard"></i>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-tab ripple" data-page="tasks" title="Tasks">
+        <i data-lucide="check-square"></i>
+        <span>Tasks</span>
+      </button>
+      <button class="nav-tab ripple" data-page="scheduler" title="Ai scheduler">
+        <i data-lucide="sparkles"></i>
+        <span>Scheduler</span>
+      </button>
+      <button class="nav-tab ripple" data-page="growth" title="Growth">
+        <i data-lucide="trending-up"></i>
+        <span>Growth</span>
+      </button>
+      <button class="nav-tab ripple" data-page="settings" title="settings">
+        <i data-lucide="settings"></i>
+        <span>Settings</span>
+      </button>
+    </nav>
 
     <!-- Premium PWA Install Banner -->
     <div class="install-banner-premium hidden" id="install-banner">

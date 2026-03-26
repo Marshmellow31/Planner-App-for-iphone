@@ -30,7 +30,7 @@ function inRange(ts, start, end) {
 }
 
 // ── Compute all analytics stats ───────────────────────────────────────────────
-export async function computeAnalytics(uid, weekStartDay = "monday", subjects = []) {
+export async function computeAnalytics(uid, weekStartDay = "monday", topics = []) {
   const [allTasks] = await Promise.all([getTasks(uid)]);
   const { weekStart, weekEnd } = getWeekBounds(weekStartDay);
 
@@ -65,8 +65,8 @@ export async function computeAnalytics(uid, weekStartDay = "monday", subjects = 
     }
   });
 
-  // ── Subject-wise breakdown ────────────────────────────────────────────────
-  const subjectBreakdown = subjects.map((sub) => {
+  // ── Topic-wise breakdown ────────────────────────────────────────────────
+  const topicBreakdown = topics.map((sub) => {
     const subTasks = weekTasks.filter((t) => t.subjectId === sub.id);
     const subCompleted = subTasks.filter((t) => t.isCompleted).length;
     return {
@@ -184,7 +184,7 @@ export async function computeAnalytics(uid, weekStartDay = "monday", subjects = 
     dailyLabels: days,
     dailyCompleted,
     dailyTotal,
-    subjectBreakdown,
+    topicBreakdown,
     streak,
     todayTasks,
     allTasks,

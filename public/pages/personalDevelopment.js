@@ -9,6 +9,7 @@ import {
   deleteGoal,
   deleteGoalTask,
   updateGoalTask,
+  getSubjects,
 } from "../db.js";
 import {
   createGoal,
@@ -78,9 +79,7 @@ export async function renderPersonalDevelopment(container, uid, profile) {
       .goal-card.completed-card { opacity: 0.65; }
 
       .goal-card-accent {
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 2px;
+        display: none;
       }
 
       .goal-card-header {
@@ -137,7 +136,7 @@ export async function renderPersonalDevelopment(container, uid, profile) {
         font-weight: 600;
         letter-spacing: 0.4px;
         text-transform: uppercase;
-        border: 1px solid;
+        border: 1px solid transparent;
       }
       .goal-status-badge {
         display: inline-flex;
@@ -239,17 +238,18 @@ export async function renderPersonalDevelopment(container, uid, profile) {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         border: 1px solid rgba(255,255,255,0.05);
       }
-      .toggle-circle {
+      .toggle-slider::before {
+        content: "";
         position: absolute;
         width: 18px; height: 18px;
-        left: 3px; top: 2px;
+        left: 2px; top: 2px;
         background: #F5F5F5;
         border-radius: 50%;
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow: 0 2px 4px rgba(0,0,0,0.2);
       }
       .toggle-switch input:checked + .toggle-slider { background: #10B981; border-color: #059669; }
-      .toggle-switch input:checked + .toggle-slider .toggle-circle {
+      .toggle-switch input:checked + .toggle-slider::before {
         transform: translateX(20px);
       }
 
@@ -406,26 +406,19 @@ export async function renderPersonalDevelopment(container, uid, profile) {
       .hd-input-close:hover { color: #FFF; }
     </style>
 
-    <div class="pd-page-header">
-      <div>
-        <div class="pd-page-title">Personal Dev</div>
-        <div class="pd-subtitle">Long-term goals · auto daily tasks</div>
-      </div>
-      <button class="btn btn-sm btn-primary ripple" id="btn-add-goal">
-        <i data-lucide="plus" style="width:15px;height:15px;"></i> Add Goal
+    <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+      <button class="btn btn-sm btn-ghost ripple" id="btn-add-goal-local" style="border-radius:var(--border-radius-md); color:var(--accent)">
+        <i data-lucide="plus" style="width:14px;height:14px;margin-right:4px"></i> Add Goal
       </button>
     </div>
-
     <div id="pd-goals-list"></div>
 
     <div id="pd-today-tasks-section"></div>
   `;
 
-  // Bind add goal button
-  container.querySelector("#btn-add-goal").addEventListener("click", () => {
-    openGoalForm(uid, null, async () => {
-      await reloadAll(uid);
-    });
+  /* Add goal handled globally, but keep a local secondary trigger for UX */
+  container.querySelector("#btn-add-goal-local")?.addEventListener("click", () => {
+    openGoalForm(uid, null, () => reloadAll(uid));
   });
 
   // Initial load + auto-generation
@@ -434,11 +427,20 @@ export async function renderPersonalDevelopment(container, uid, profile) {
   if (window.lucide) window.lucide.createIcons();
 }
 
+// Global topics list to avoid re-fetching for each card
+let _topics_global = [];
+
 // ─── Data reload ─────────────────────────────────────────────
 async function reloadAll(uid) {
   try {
-    _goals = await getGoals(uid);
-    _goalTasks = await getGoalTasks(uid);
+    const [goals, gtasks, topics] = await Promise.all([
+      getGoals(uid),
+      getGoalTasks(uid),
+      getSubjects(uid)
+    ]);
+    _goals = goals;
+    _goalTasks = gtasks;
+    _topics = topics;
   } catch (err) {
     console.error("PD: Failed to load data", err);
     _goals = [];
@@ -639,6 +641,11 @@ function renderGoalCardHTML(goal) {
           ${meta.label}
         </span>
         <span class="goal-status-badge ${statusBadgeClass}">${statusLabel}</span>
+        ${goal.subjectId ? `
+          <span class="goal-status-badge" style="background:rgba(255,255,255,0.05);color:var(--text-secondary);border:1px solid var(--border-subtle);">
+            <i data-lucide="tag" style="width:10px;height:10px;"></i> ${escHtml(_topics.find(t => t.id === goal.subjectId)?.name || "Topic")}
+          </span>
+        ` : ""}
         ${todayTask ? `<span class="goal-status-badge" style="background:rgba(249,115,22,0.1);color:#FB923C;border:1px solid rgba(249,115,22,0.25);">
           <i data-lucide="zap" style="width:10px;height:10px;"></i> Today set
         </span>` : ""}
@@ -690,7 +697,7 @@ function renderGoalCardHTML(goal) {
           </span>
           <label class="toggle-switch">
             <input type="checkbox" class="goal-auto-toggle" ${goal.autoAddDaily ? "checked" : ""}>
-            <span class="toggle-slider"><span class="toggle-circle"></span></span>
+            <span class="toggle-slider"></span>
           </label>
         </div>
 
@@ -898,8 +905,14 @@ function attachHybridDropdown(containerId, optionsConfig) {
   return () => currentVal;
 }
 
+// Module-level topics for reference in cards
+let _topics = [];
+
 // ─── Goal Form Modal ─────────────────────────────────────────
-function openGoalForm(uid, existingGoal, onSave) {
+export async function openGoalForm(uid, existingGoal, onSave) {
+  const [topics] = await Promise.all([getSubjects(uid)]);
+  _topics = topics;
+
   const isEdit = !!existingGoal;
   const today = new Date().toISOString().split("T")[0];
 
@@ -934,6 +947,13 @@ function openGoalForm(uid, existingGoal, onSave) {
           <label class="form-label">Task Time (mins)</label>
           <input class="form-input" type="number" id="pd-goal-task-duration" min="5" step="5"
             placeholder="30" value="${existingGoal?.defaultDuration || ""}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Linked Topic</label>
+          <select class="form-select" id="pd-goal-topic">
+            <option value="">— None —</option>
+            ${topics.map(t => `<option value="${t.id}" ${existingGoal?.subjectId === t.id ? 'selected' : ''}>${escHtml(t.name)}</option>`).join('')}
+          </select>
         </div>
       </div>
 
@@ -980,7 +1000,7 @@ function openGoalForm(uid, existingGoal, onSave) {
         </span>
         <label class="toggle-switch">
           <input type="checkbox" id="pd-goal-auto" ${(existingGoal?.autoAddDaily !== false) ? "checked" : ""}>
-          <span class="toggle-slider"><span class="toggle-circle"></span></span>
+          <span class="toggle-slider"></span>
         </label>
       </div>
 
@@ -1055,6 +1075,7 @@ function openGoalForm(uid, existingGoal, onSave) {
       autoAddDaily: backdrop.querySelector("#pd-goal-auto").checked,
       defaultDuration: backdrop.querySelector("#pd-goal-task-duration").value,
       notes: backdrop.querySelector("#pd-goal-notes").value.trim(),
+      subjectId: backdrop.querySelector("#pd-goal-topic").value || null,
     };
 
     try {
