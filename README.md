@@ -105,9 +105,12 @@ The power of **Your Day** lies in how its features work together to automate you
 Your Day is engineered for a "native-feel" experience with a focus on **0-second perceived latency** and **60FPS smoothness**.
 
 ### 🚀 Dashboard Load Strategy (LCP < 2s)
+- **Stale-While-Revalidate (SWR) Caching**: Every major tab (Tasks, Analytics, Scheduler, etc.) loads instantly from the last known data state.
 - **Synchronous Shell Rendering**: The app shell (header, greeting, layout) paints instantly during navigation, before any data is fetched.
+- **Instant Profile Restoration**: The user's identity, goal focus, and theme are restored from cache on login, eliminating auth-related delays.
+- **Silent Background Synchronization**: Fresh data is fetched in the background; the UI only re-renders if a deep comparison detects changes, preventing visual flickering.
 - **Priority Orchestration**: Using `requestAnimationFrame`, the app prioritizes the **Today's Schedule** and **Academic Banner** to ensure they appear first.
-- **Skeleton Loaders**: Integrated animated skeletons provide immediate visual structure while data is loading.
+- **Skeleton Loaders**: Integrated animated skeletons provide immediate visual structure while data is loading (if cache is empty).
 - **Lazy Data Fetching**: Non-critical components (Stats cards, Analytics charts) are deferred to idle time using `requestIdleCallback`.
 
 ### 🧵 Main-Thread Safety
@@ -154,8 +157,9 @@ public/
     ├── taskScheduler.js    # Greedy scheduling algorithm (5 AM rollover)
     ├── dailyGenerator.js   # Auto daily task generation from goals
     ├── schedulerIntegration.js # Push goal tasks → Scheduler + Tasks
-    ├── timeUtils.js        # Time string helpers (HH:MM ↔ minutes)
-    └── personalDevelopment.js  # Goal progress computation helpers
+    ├── personalDevelopment.js  # Goal progress computation helpers
+    ├── cacheManager.js      # SWR Caching Layer (Memory + LocalStorage)
+    └── timeUtils.js        # Time string helpers (HH:MM ↔ minutes)
 ```
 
 ### Data Flow
