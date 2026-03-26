@@ -11,7 +11,13 @@ window.addEventListener('beforeinstallprompt', (e) => {
 import "./styles.css";
 import { createIcons, icons } from "lucide";
 window.lucide = { 
-  createIcons: (config = {}) => createIcons({ icons, ...config }), 
+  createIcons: (config = {}) => {
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => createIcons({ icons, ...config }));
+    } else {
+      setTimeout(() => createIcons({ icons, ...config }), 0);
+    }
+  }, 
   icons 
 };
 import { onAuthStateChanged } from "./auth.js";
@@ -138,7 +144,12 @@ export async function navigate(page, params = {}) {
   initRipples();
   if (window.lucide) {
     const content = $("main-content");
-    if (content) window.lucide.createIcons({ nodes: content.querySelectorAll('[data-lucide]') });
+    if (content) {
+      // Defer icon creation to avoid blocking main thread during transitions
+      const runCreate = () => window.lucide.createIcons({ nodes: content.querySelectorAll('[data-lucide]') });
+      if (window.requestIdleCallback) window.requestIdleCallback(runCreate);
+      else setTimeout(runCreate, 0);
+    }
   }
 }
 

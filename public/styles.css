@@ -1,11 +1,3 @@
-/* ============================================================
-   styles.css - Your Day Design System
-   Mobile-first, dark mode default, iOS PWA optimised
-   ============================================================ */
-
-/* -- Google Fonts -- */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap");
-
 /* -- CSS Custom Properties (Design Tokens) -- */
 :root {
   /* Accents & Special - Flush Black & Grey Theme */
@@ -2857,6 +2849,7 @@ h4 {
   border-radius: 50%;
   filter: blur(80px);
   opacity: 0.12;
+  will-change: transform;
   animation: orb-float 20s infinite alternate ease-in-out;
 }
 
