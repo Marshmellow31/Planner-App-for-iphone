@@ -1048,6 +1048,7 @@ h4 {
 
 .modal-backdrop.centered {
   align-items: center;
+  justify-content: center;
   padding: var(--space-md);
 }
 
@@ -1094,6 +1095,46 @@ h4 {
 
 .modal-actions .btn {
   flex: 1;
+}
+
+/* ── Confirmation Dialog ────────────────────────────────────── */
+.confirm-dialog {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.confirm-dialog-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+}
+
+.confirm-dialog-title {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.confirm-dialog-message {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-xl);
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.confirm-dialog .modal-actions {
+  width: 100%;
 }
 
 /* ── Page Header ───────────────────────────────────────────── */
