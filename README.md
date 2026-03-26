@@ -2,7 +2,7 @@
 
 > **Plan smarter. Grow daily. Stay on top of everything that matters.**
 
-A feature-rich Progressive Web App (PWA) for students to manage tasks, track personal goals, plan study schedules with AI assistance, and monitor academic progress — all in one premium mobile-first experience.
+A feature-rich Progressive Web App (PWA) for students to manage tasks, track personal goals, plan study schedules with AI assistance, and monitor academic progress — all in one premium, AMOLED-optimized mobile-first experience.
 
 ---
 
@@ -24,18 +24,19 @@ Your Day is designed to feel like a native iOS app when installed to your Home S
 
 ### 🏠 Dashboard
 - **Live greeting** based on the time of day
-- **Stats overview**: tasks done this week, completion rate, streak, and overdue count
+- **Stats overview**: tasks done this week, completion rate, current streak (🔥), and overdue count
 - **Today's Schedule** widget pulling from your weekly time blocks
 - **Upcoming Tasks** list filtered to high-priority and due-soon items
-- **BTech progress banner** (optional, based on your profile settings)
+- **Long-Term Focus** banner (optional, based on your profile settings — supports B.Tech, M.Tech, courses, and more)
 - Refreshes automatically every minute to stay current
 
 ### ✅ Tasks
-- Create, edit, delete, and complete tasks
-- Rich filtering: by **priority** (High / Medium / Low), **status** (All / Active / Completed), **subject**, and **topic**
-- Full **CRUD** for subjects and topics directly from the task form
+- Create, edit, delete, and complete tasks with one tap
+- Rich filtering: by **priority** (High / Medium / Low), **status** (Pending / Active / Completed), **topic**, and custom search
+- **Default filter is Pending** — so you focus on what needs to be done
+- Full **CRUD** for topics directly from the task form
 - **Due dates** and **reminder times** with native date pickers
-- Quick-complete and quick-delete from the task card
+- Quick-complete and quick-delete from the task card with smooth animations
 - Snooze reminders directly from the task list
 
 ### 📅 AI Scheduler
@@ -53,7 +54,7 @@ A smart study planner that fits your tasks into your free time automatically.
 - The plan resets at 5 AM each day.
 - You can push tasks directly from **Personal Dev** goals into the Scheduler with one tap.
 
-### 🌱 Personal Development
+### 🌱 Personal Development (Growth)
 Track personal growth goals beyond academics.
 
 - Create goals with a **target**, **unit** (sessions, minutes, pages, etc.), **duration**, and **start date**.
@@ -63,16 +64,17 @@ Track personal growth goals beyond academics.
 - Push any pending goal task directly to the **AI Scheduler** with one tap.
 
 ### 📊 Analytics
-- Weekly progress chart (bar chart via Chart.js)
-- Subject-wise task completion breakdown
-- Completion rate, streak, overdue count
-- Goal progress overview
+- **Weekly Summary Cards**: Completion rate, completed task count, overdue items, and total focus time — at a glance.
+- **AI-powered Key Insights**: Automatically generated statements about your most productive days and system health.
+- **Consistency Heat Map**: A 24-week, LeetCode-style activity tracker with a premium green color palette and a visual activity legend.
+- **Focus Distribution**: Topic-wise task completion breakdown with progress bars.
 
 ### ⚙️ Settings
 - Change **display name** and **email**
 - Toggle **push notifications** (FCM-powered)
-- Set your **BTech course** start/end dates for the dashboard banner
+- Set your **Long-Term Focus** goal (e.g., B.Tech, M.Tech, a specific course, a certification) with start/end dates
 - **Study Goals** text field for personal notes
+- Links for **feedback and bug reports**
 - Sign out
 
 ---
@@ -103,12 +105,12 @@ The power of **Your Day** lies in how its features work together to automate you
 ```
 public/
 ├── index.html              # App shell, floating nav, splash screen
-├── styles.css              # Full design system (CSS variables, dark theme)
+├── styles.css              # Full design system (CSS variables, AMOLED dark theme)
 ├── app.js                  # Router, auth listener, navigation, FAB, state
 │
 ├── auth.js                 # Firebase Auth helpers (sign up, log in, Google)
 ├── db.js                   # Firestore CRUD for all collections
-├── analytics.js            # Analytics computations
+├── analytics.js            # Analytics computations (streak, heatmap, insights)
 ├── notifications.js        # FCM push + in-app notification layer
 ├── snackbar.js             # Toast + confirm dialog system
 ├── firebase-config.js      # Firebase app init + VAPID key
@@ -119,9 +121,8 @@ public/
 │   ├── scheduler.js        # AI Scheduler tab (schedule + plan UI)
 │   ├── schedule.js         # Weekly schedule block editor
 │   ├── personalDevelopment.js # Goals + daily task tracker
-│   ├── subjects.js         # Subjects CRUD page
 │   ├── topics.js           # Topics CRUD page (per subject)
-│   ├── analytics.js        # Analytics page
+│   ├── analytics.js        # Analytics page (heatmap, insights, distribution)
 │   └── settings.js         # Settings page
 │
 ├── js/
@@ -233,6 +234,8 @@ Push notifications are powered by **Firebase Cloud Messaging (FCM)**.
 ## 🤝 Contributing
 
 Pull requests are welcome. Please open an issue first to discuss major changes.
+
+For feedback or bug reports, find links in the **Settings** page of the app.
 
 ---
 

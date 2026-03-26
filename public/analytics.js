@@ -113,7 +113,7 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
   const todayFull = new Date();
   todayFull.setHours(23,59,59,999);
   const startHeatmap = new Date(todayFull);
-  startHeatmap.setDate(todayFull.getDate() - 83); // 12 weeks * 7 days = 84 days
+  startHeatmap.setDate(todayFull.getDate() - 167); // 24 weeks * 7 days = 168 days
   startHeatmap.setHours(0,0,0,0);
 
   const taskCountsByDate = {};
@@ -127,7 +127,7 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
     }
   });
 
-  for (let i = 0; i < 84; i++) {
+  for (let i = 0; i < 168; i++) {
     const d = new Date(startHeatmap);
     d.setDate(startHeatmap.getDate() + i);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;

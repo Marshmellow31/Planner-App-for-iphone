@@ -91,19 +91,21 @@ export async function renderAnalytics(container, uid, profile) {
           }).join("")}
         </div>
       </div>
-      <div style="display:flex; justify-content:space-between; margin-top:12px; align-items:center; font-size:11px; color:var(--text-muted);">
-        <div style="display:flex; gap:12px;">
-          <span>12 Weeks Ago</span>
+      <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted);">
+          <span>24 Weeks Ago</span>
           <span>Today</span>
         </div>
-        <div style="display:flex; align-items:center; gap:3px;">
-          <span style="margin-right:2px; font-size:10px;">Less</span>
-          <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-0);"></div>
-          <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-1);"></div>
-          <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-2);"></div>
-          <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-3);"></div>
-          <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-4);"></div>
-          <span style="margin-left:2px; font-size:10px;">More</span>
+        <div style="display:flex; justify-content:flex-end; align-items:center; gap:6px; font-size:10px; color:var(--text-muted);">
+          <span>Less</span>
+          <div style="display:flex; gap:3px;">
+            <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-0);"></div>
+            <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-1);"></div>
+            <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-2);"></div>
+            <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-3);"></div>
+            <div style="width:10px; height:10px; border-radius:2px; background:var(--heatmap-4);"></div>
+          </div>
+          <span>More</span>
         </div>
       </div>
     </div>
