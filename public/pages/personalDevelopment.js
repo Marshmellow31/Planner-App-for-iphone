@@ -40,7 +40,7 @@ let _topics = [];
 export async function renderPersonalDevelopment(container, uid, profile, initialData = null) {
   _uid = uid;
 
-  // 1. SWR: Populate from cache if available
+  // 1. SWR: Populate from cache if availablehh
   if (initialData) {
     console.log("[PD] SWR: Loading from cache");
     _goals = initialData.goals || [];
@@ -431,26 +431,26 @@ export async function renderPersonalDevelopment(container, uid, profile, initial
 
   // Initial load + auto-generation
   if (!initialData) {
-     reloadAll(uid);
+    reloadAll(uid);
   } else {
     // Initial paint from cache
     renderGoalsList(uid);
     renderTodayTasks(uid);
     // Background refresh
     requestAnimationFrame(() => {
-        reloadAll(uid, true);
+      reloadAll(uid, true);
     });
   }
 
   if (window.lucide) window.lucide.createIcons();
-  return { cleanup: () => {} };
+  return { cleanup: () => { } };
 }
 
 // ─── Data reload ─────────────────────────────────────────────
 async function reloadAll(uid, isBackground = false) {
   try {
     if (!isBackground) console.log("[PD] Fetching fresh data...");
-    
+
     const [goals, gtasks, topics] = await Promise.all([
       getGoals(uid),
       getGoalTasks(uid),
@@ -464,16 +464,16 @@ async function reloadAll(uid, isBackground = false) {
     const hasChanged = !oldCache || JSON.stringify(newData) !== JSON.stringify(oldCache);
 
     if (hasChanged || !isBackground) {
-        _goals = goals;
-        _goalTasks = gtasks;
-        _topics = topics;
-        
-        // Use stagger only if not a background refresh
-        renderGoalsList(uid, !isBackground);
-        renderTodayTasks(uid, !isBackground);
-        if (window.lucide) window.lucide.createIcons({ nodes: document.getElementById("main-content").querySelectorAll('[data-lucide]') });
-        
-        cacheManager.set(cacheKey, newData);
+      _goals = goals;
+      _goalTasks = gtasks;
+      _topics = topics;
+
+      // Use stagger only if not a background refresh
+      renderGoalsList(uid, !isBackground);
+      renderTodayTasks(uid, !isBackground);
+      if (window.lucide) window.lucide.createIcons({ nodes: document.getElementById("main-content").querySelectorAll('[data-lucide]') });
+
+      cacheManager.set(cacheKey, newData);
     }
   } catch (err) {
     console.error("PD: Failed to load data", err);
@@ -767,29 +767,29 @@ function renderTodayTasks(uid, useStagger = true) {
       Today's Generated Tasks
     </div>
     ${todayTasks.map(task => {
-      const goal = _goals.find(g => g.id === task.sourceGoalId) || {};
-      let meta = CATEGORY_META[String(goal.category).toLowerCase()];
-      if (!meta) meta = CATEGORY_META.custom;
-      const isScheduled = task.status === "scheduled" || !!task.schedulerTaskId;
-      const isCompleted = task.status === "completed";
-      return `
+    const goal = _goals.find(g => g.id === task.sourceGoalId) || {};
+    let meta = CATEGORY_META[String(goal.category).toLowerCase()];
+    if (!meta) meta = CATEGORY_META.custom;
+    const isScheduled = task.status === "scheduled" || !!task.schedulerTaskId;
+    const isCompleted = task.status === "completed";
+    return `
         <div class="goal-task-row ${useStagger ? 'stagger-item' : ''}" id="gtask-row-${task.id}">
           <div class="goal-task-dot" style="background:${meta.color};"></div>
           <div class="goal-task-title">${escHtml(task.title)}</div>
           <div class="goal-task-meta">${task.estimatedTime}m</div>
           ${isCompleted
-            ? `<span class="goal-task-push-btn scheduled">✓ Done</span>`
-            : isScheduled
-              ? `<span class="goal-task-push-btn scheduled">✓ Scheduled</span>`
-              : `<button class="goal-task-push-btn gtask-push-single" data-taskid="${task.id}">
+        ? `<span class="goal-task-push-btn scheduled">✓ Done</span>`
+        : isScheduled
+          ? `<span class="goal-task-push-btn scheduled">✓ Scheduled</span>`
+          : `<button class="goal-task-push-btn gtask-push-single" data-taskid="${task.id}">
                   Push →
                 </button>`
-          }
+      }
         </div>
       `;
-    }).join("")}
+  }).join("")}
   `;
-  
+
   if (useStagger) {
     section.querySelectorAll(".goal-task-row").forEach((el, i) => {
       el.style.animationDelay = `${i * 20}ms`;
@@ -822,13 +822,13 @@ function renderTodayTasks(uid, useStagger = true) {
 // ─── Custom Hybrid Dropdown Helper ───────────────────────────
 function attachHybridDropdown(containerId, optionsConfig) {
   const container = document.getElementById(containerId);
-  if (!container) return () => {};
+  if (!container) return () => { };
 
   const { isCategory, defaultVal, onChange, placeholder } = optionsConfig;
-  
+
   let currentVal = defaultVal;
   let isInputMode = false;
-  
+
   const getOpts = () => {
     if (isCategory) {
       const predefined = Object.entries(CATEGORY_META).filter(([k]) => k !== "custom").map(([k, v]) => ({ value: k, label: v.label, icon: v.icon }));
@@ -844,7 +844,7 @@ function attachHybridDropdown(containerId, optionsConfig) {
   const render = () => {
     const opts = getOpts();
     const activeOpt = opts.find(o => String(o.value).toLowerCase() === String(currentVal).toLowerCase()) || { value: currentVal, label: currentVal, icon: isCategory ? "star" : "" };
-    
+
     container.innerHTML = `
       <div class="hd-wrap" id="${containerId}-wrap">
         <div class="hd-trigger ${isInputMode ? 'hidden' : ''}" tabindex="0">
@@ -855,7 +855,7 @@ function attachHybridDropdown(containerId, optionsConfig) {
           <i data-lucide="chevron-down" style="width:14px;height:14px;color:#666;"></i>
         </div>
         <div class="hd-input-wrap ${isInputMode ? 'active' : ''}">
-          <input type="text" class="hd-custom-input" placeholder="${placeholder}" value="${!opts.some(o => o.value === currentVal) && currentVal !== (isCategory?'custom':'sessions') ? escHtml(currentVal) : ""}" />
+          <input type="text" class="hd-custom-input" placeholder="${placeholder}" value="${!opts.some(o => o.value === currentVal) && currentVal !== (isCategory ? 'custom' : 'sessions') ? escHtml(currentVal) : ""}" />
           <i data-lucide="x" class="hd-input-close" style="width:14px;height:14px;"></i>
         </div>
         <div class="hd-menu">
@@ -873,7 +873,7 @@ function attachHybridDropdown(containerId, optionsConfig) {
     `;
 
     if (window.lucide) window.lucide.createIcons();
-    
+
     const wrap = container.querySelector(".hd-wrap");
     const trigger = container.querySelector(".hd-trigger");
     const menu = container.querySelector(".hd-menu");
@@ -903,7 +903,7 @@ function attachHybridDropdown(containerId, optionsConfig) {
         const val = opt.getAttribute("data-val");
         wrap.classList.remove("open");
         document.removeEventListener("click", outsideClick);
-        
+
         if (val === "--trigger-custom--") {
           isInputMode = true;
           render();
@@ -1066,9 +1066,9 @@ export async function openGoalForm(uid, existingGoal, onSave) {
   // Auto-calculate daily target preview
   const updatePreview = () => {
     const total = parseInt(backdrop.querySelector("#pd-goal-total").value, 10);
-    const dur   = parseInt(backdrop.querySelector("#pd-goal-duration").value, 10);
+    const dur = parseInt(backdrop.querySelector("#pd-goal-duration").value, 10);
     const dailyInput = backdrop.querySelector("#pd-goal-daily");
-    const unit  = getUnitVal();
+    const unit = getUnitVal();
     const preview = backdrop.querySelector("#pd-daily-preview");
     const previewText = backdrop.querySelector("#pd-daily-preview-text");
 
@@ -1148,12 +1148,12 @@ export async function openGoalForm(uid, existingGoal, onSave) {
   });
 
   document.body.appendChild(backdrop);
-  
+
   getCategoryVal = attachHybridDropdown("pd-goal-category-container", {
     isCategory: true,
     defaultVal: existingGoal?.category || "custom",
     placeholder: "Enter custom category...",
-    onChange: () => {}
+    onChange: () => { }
   });
 
   getUnitVal = attachHybridDropdown("pd-goal-unit-container", {
