@@ -1,4 +1,4 @@
-# Ascend — Student Planner PWA
+# Ascend
 
 > **Plan smarter. Grow daily. Stay on top of everything that matters.**
 
