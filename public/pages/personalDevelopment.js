@@ -415,8 +415,8 @@ export async function renderPersonalDevelopment(container, uid, profile, initial
     </style>
 
     <div style="margin-top:20px; margin-bottom:20px; display:flex; justify-content:flex-end;">
-      <button class="btn btn-sm btn-ghost ripple" id="btn-add-goal-local" style="border-radius:var(--border-radius-full); color:var(--accent); border:1px solid rgba(255,255,255,0.05); padding:6px 18px; font-weight:600">
-        <i data-lucide="plus" style="width:14px;height:14px;margin-right:6px"></i> Add Goal
+      <button class="btn btn-sm ripple" id="btn-add-goal-local" style="border-radius:var(--border-radius-full); background: rgba(var(--accent-rgb), 0.1); color:var(--accent); border:1px solid rgba(var(--accent-rgb), 0.3); padding:8px 20px; font-weight:700; display:flex; align-items:center; gap:8px;">
+        <i data-lucide="plus" style="width:16px;height:16px;"></i> Add New Goal
       </button>
     </div>
     <div id="pd-goals-list" class="goals-grid"></div>
