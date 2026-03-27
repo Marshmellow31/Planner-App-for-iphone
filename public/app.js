@@ -271,16 +271,38 @@ function initNavigation() {
 
 function initFab() {
   $("btn-header-add-task")?.addEventListener("click", async () => {
-    if (state.currentPage === "growth") {
-      const { openGoalForm } = await import("./pages/personalDevelopment.js");
-      openGoalForm(state.user.uid, null, () => navigate("growth"));
+    // ── Singleton Guard: Prevent multiple overlapping modals ──
+    if (document.querySelector(".modal-backdrop")) {
+      console.log("[PWA] Modal already open, ignoring click.");
+      return;
+    }
+
+    const { user, profile, currentPage } = state;
+    if (!user) return;
+
+    // Use cached modules if available for instant response
+    const moduleCache = window._moduleCache || (window._moduleCache = new Map());
+
+    if (currentPage === "growth") {
+      try {
+        const pageModule = moduleCache.get("growth") || (await import("./pages/personalDevelopment.js"));
+        moduleCache.set("growth", pageModule);
+        pageModule.openGoalForm(user.uid, null, () => navigate("growth"));
+      } catch (err) {
+        console.error("Failed to open goal form", err);
+      }
     } else {
-      const { openTaskModal } = await import("./pages/tasks.js");
-      openTaskModal(state.user.uid, state.profile, () => {
-        if (state.currentPage === "tasks") navigate("tasks");
-        else if (state.currentPage === "dashboard") navigate("dashboard");
-        else if (state.currentPage === "scheduler") navigate("scheduler");
-      });
+      try {
+        const pageModule = moduleCache.get("tasks") || (await import("./pages/tasks.js"));
+        moduleCache.set("tasks", pageModule);
+        pageModule.openTaskModal(user.uid, profile, () => {
+          if (state.currentPage === "tasks") navigate("tasks");
+          else if (state.currentPage === "dashboard") navigate("dashboard");
+          else if (state.currentPage === "scheduler") navigate("scheduler");
+        });
+      } catch (err) {
+        console.error("Failed to open task modal", err);
+      }
     }
   });
 }

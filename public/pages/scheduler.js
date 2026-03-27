@@ -376,6 +376,7 @@ function renderPlanView() {
 }
 
 function openAddTaskModal(uid, onTaskAdded) {
+  if (document.querySelector(".modal-backdrop")) return;
   const backdrop = document.createElement("div");
   backdrop.className = "modal-backdrop centered";
 

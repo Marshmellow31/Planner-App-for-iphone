@@ -524,6 +524,7 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
 
 // ── Task Modal (exported for FAB use) ─────────────────────────
 export async function openTaskModal(uid, profile, onSave, existing = null) {
+  if (document.querySelector(".modal-backdrop")) return;
   const isEdit = !!existing;
   const [subjects, topics] = await Promise.all([getSubjects(uid), getTopics(uid)]);
 

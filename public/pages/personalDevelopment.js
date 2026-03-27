@@ -935,6 +935,7 @@ function attachHybridDropdown(containerId, optionsConfig) {
 
 // ─── Goal Form Modal ─────────────────────────────────────────
 export async function openGoalForm(uid, existingGoal, onSave) {
+  if (document.querySelector(".modal-backdrop")) return;
   const [topics] = await Promise.all([getSubjects(uid)]);
   _topics = topics;
 
