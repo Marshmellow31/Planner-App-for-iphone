@@ -430,13 +430,20 @@ async function handleUserAuth(user) {
     
   navigate(initialPage);
   
-  getUserProfile(user.uid).then(profile => {
+  getUserProfile(user.uid).then(async (profile) => {
     if (!profile) return;
     
     const oldProfile = state.profile;
     const hasChanged = JSON.stringify(profile) !== JSON.stringify(oldProfile);
     state.profile = profile;
     cacheManager.set(profileCacheKey, profile);
+
+    // Initialise notifications if enabled in profile
+    if (profile.notificationEnabled) {
+      import("./notifications.js").then(({ initNotifications }) => {
+        initNotifications(user.uid).catch(err => console.warn("[PWA] Auto-init notifications failed", err));
+      });
+    }
 
     if (hasChanged) {
       console.log("[PWA] Profile updated from server, refreshing UI");
