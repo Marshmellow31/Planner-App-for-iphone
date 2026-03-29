@@ -26,7 +26,7 @@ import {
 } from "../utils/personalDevelopment.js";
 import { autoGenerateTodaysTasks, effectiveTodayStr } from "../utils/dailyGenerator.js";
 import { pushToScheduler, pushAllPendingGoalTasks } from "../utils/schedulerIntegration.js";
-import { showSnackbar } from "../snackbar.js";
+import { showSnackbar, showConfirmDialog } from "../snackbar.js";
 import { escHtml } from "../js/utils.js";
 import { cacheManager } from "../utils/cacheManager.js";
 
@@ -560,7 +560,13 @@ function renderGoalsList(uid, useStagger = true) {
     const delBtn = card.querySelector(".goal-delete-btn");
     if (delBtn) {
       delBtn.addEventListener("click", async () => {
-        if (!confirm(`Delete "${goal.title}"? This will not remove already-pushed scheduler tasks.`)) return;
+        const confirmed = await showConfirmDialog(
+          "Delete Goal",
+          `Are you sure you want to delete "${goal.title}"? This will not remove already-pushed scheduler tasks.`,
+          "Delete",
+          true
+        );
+        if (!confirmed) return;
         try {
           // Delete all goal tasks first
           const tasks = _goalTasks.filter(t => t.sourceGoalId === goal.id);
@@ -1075,7 +1081,7 @@ export async function openGoalForm(uid, existingGoal, onSave) {
     if (total > 0 && dur > 0) {
       const auto = calculateDailyTarget(total, dur);
       if (!dailyInput.value) dailyInput.value = auto;
-      previewText.innerHTML = `Daily target: <strong>${dailyInput.value || auto} ${unit}</strong> for ${dur} days`;
+      previewText.innerHTML = `Daily target: <strong>${dailyInput.value || auto} ${escHtml(unit)}</strong> for ${dur} days`;
       preview.style.display = "flex";
     } else {
       preview.style.display = "none";
