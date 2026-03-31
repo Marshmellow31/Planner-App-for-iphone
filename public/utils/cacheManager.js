@@ -94,6 +94,33 @@ class CacheManager {
   }
 
   /**
+   * Remove all cache entries starting with a prefix
+   * @param {string} prefix 
+   */
+  invalidatePrefix(prefix) {
+    console.log(`[Cache] Invalidating prefix: ${prefix}`);
+    // Clear Memory
+    for (const key of this.memoryCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.memoryCache.delete(key);
+      }
+    }
+    // Clear LocalStorage
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(this.prefix + prefix)) {
+          keysToRemove.push(k);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn("[Cache] Prefix invalidation failed", e);
+    }
+  }
+
+  /**
    * Internal cleanup for localStorage
    * @param {boolean} force - if true, clears everything starting with prefix
    */

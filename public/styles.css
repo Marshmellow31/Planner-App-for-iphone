@@ -11,15 +11,15 @@
 
   /* Surfaces — Premium Black Theme (AMOLED Optimised) */
   --bg-base: #000000;
-  --bg-elevated: rgba(255, 255, 255, 0.04);
-  --bg-card: rgba(255, 255, 255, 0.04);
-  --bg-card-hover: rgba(255, 255, 255, 0.08);
-  --bg-card-subtle: rgba(255, 255, 255, 0.02);
-  --bg-input: #0A0A0A;
+  --bg-elevated: #111111;
+  --bg-card: #080808;
+  --bg-card-hover: #121212;
+  --bg-card-subtle: #040404;
+  --bg-input: #040404;
   --bg-overlay: rgba(0, 0, 0, 0.98);
-  --bg-tertiary: #111111;
+  --bg-tertiary: #0A0A0A;
   --bg-header: rgba(0, 0, 0, 0.9);
-  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-subtle: #1A1A1A;
 
   /* Text */
   --text-primary: #FFFFFF;
@@ -28,22 +28,22 @@
   --text-muted: rgba(255, 255, 255, 0.6);
   --text-inverse: #000000;
 
-  /* Borders */
-  --border: rgba(255, 255, 255, 0.1);
-  --border-active: rgba(255, 255, 255, 0.2);
+  /* Borders — Subtle Near-Black */
+  --border: #1F1F1F;
+  --border-active: #333333;
   --border-radius-sm: 12px;
   --border-radius: 16px;
   --border-radius-lg: 20px;
   --border-radius-xl: 24px;
   --border-radius-full: 999px;
 
-  /* Priority Opacity Styling */
-  --priority-high: rgba(200, 108, 108, 0.3);
-  --priority-high-bg: rgba(200, 108, 108, 0.05);
-  --priority-medium: rgba(255, 255, 255, 0.1);
-  --priority-medium-bg: rgba(255, 255, 255, 0.02);
-  --priority-low: rgba(139, 203, 136, 0.2);
-  --priority-low-bg: rgba(139, 203, 136, 0.03);
+  /* Priority Styling — Solid & Subtle Tint */
+  --priority-high: #C86C6C;
+  --priority-high-bg: #120A0A;
+  --priority-medium: #4D4D4D;
+  --priority-medium-bg: #0A0A0A;
+  --priority-low: #8BCB88;
+  --priority-low-bg: #0A0C0A;
 
   /* Heatmap (LeetCode Style Green) */
   --heatmap-0: #161B22;
@@ -312,9 +312,7 @@ h4 {
     .btn-manage-sidebar {
       background: none;
       border: none;
-      color: var(--text-muted);
       cursor: pointer;
-      padding: 6px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -902,34 +900,35 @@ h4 {
 }
 
 .form-label {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.1px;
+  margin-bottom: 2px;
 }
 
 .form-input,
 .form-select,
 .form-textarea {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #111111;
+  border: 1px solid var(--border);
   border-radius: var(--border-radius-sm);
   color: #ffffff;
-  font-size: var(--font-size-base);
-  padding: 13px 16px;
+  font-size: 15px;
+  padding: 12px 14px;
   width: 100%;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition: all var(--transition);
   -webkit-appearance: none;
   appearance: none;
+  outline: none;
 }
 
 .form-input:focus,
 .form-select:focus,
 .form-textarea:focus {
-  outline: none;
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.4);
+  background: #161616;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.03);
 }
 
 .form-input::placeholder {
@@ -1049,7 +1048,7 @@ h4 {
 .task-card {
   display: flex;
   flex-direction: column;
-  padding: var(--space-lg);
+  padding: 14px 18px;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--border-radius);
@@ -1080,20 +1079,14 @@ h4 {
   color: var(--text-muted);
 }
 
-.task-card.priority-high {
-  border-color: var(--priority-high);
-  background: var(--priority-high-bg);
-}
-
-.task-card.priority-medium {
-  border-color: var(--priority-medium);
-  background: var(--priority-medium-bg);
-}
-
+/* Priority branding is now handled via badges/labels for consistency */
+.task-card.priority-high,
+.task-card.priority-medium,
 .task-card.priority-low {
-  border-color: var(--priority-low);
-  background: var(--priority-low-bg);
+  border-color: var(--border-subtle);
+  background: var(--bg-card);
 }
+
 
 .task-top-section {
   display: flex;
@@ -1370,23 +1363,27 @@ h4 {
 }
 
 .drawer-handle {
-  width: 40px;
+  width: 36px;
   height: 4px;
-  background: var(--border);
+  background: rgba(255, 255, 255, 0.2);
   border-radius: var(--border-radius-full);
-  margin: 0 auto var(--space-lg);
+  margin: 0 auto var(--space-xl);
+  opacity: 0.8;
 }
 
 .modal-title {
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  margin-bottom: var(--space-lg);
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: var(--space-xl);
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
 .modal-actions {
   display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-lg);
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  padding: 8px 0 var(--space-lg) 0;
 }
 
 .modal-actions .btn {
@@ -2139,10 +2136,8 @@ h4 {
 .custom-dropdown-menu {
   position: fixed;
   min-width: 160px;
-  background: rgba(18, 18, 18, 0.9);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0C0C0C;
+  border: 1px solid var(--border-active);
   border-radius: var(--border-radius-sm);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   z-index: 9999;
@@ -3043,10 +3038,8 @@ h4 {
   transform: translateX(-50%) translateY(0);
   width: calc(100% - 40px);
   max-width: 440px;
-  background: rgba(20, 20, 20, 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0A0A0A;
+  border: 1px solid var(--border);
   border-radius: 20px;
   padding: 16px;
   display: flex;

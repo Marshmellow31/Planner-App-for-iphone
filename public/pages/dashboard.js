@@ -289,9 +289,9 @@ function renderPendingTasksHtml(tasks, isFirstLoad = false) {
     const due = task.dueDate?.toDate ? task.dueDate.toDate() : (task.dueDate ? new Date(task.dueDate) : null);
 
     return `
-          <div class="task-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" 
-               style="animation-delay:${200 + (index * 40)}ms; cursor:pointer; padding: 12px 16px; margin-bottom: 8px;"
-               data-id="${task.id}" class="dash-pending-task-card">
+          <div class="task-card dash-pending-task-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" 
+               style="animation-delay:${200 + (index * 40)}ms; cursor:pointer;"
+               data-id="${task.id}">
             <div style="display: flex; justify-content: space-between; align-items: center; pointer-events: none;">
               <div>
                 <div style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">${escHtml(task.title)}</div>
@@ -386,7 +386,8 @@ function renderScheduleHtml(todayTasks, isFirstLoad = false) {
     const priority = (task.priority || 'medium').toLowerCase();
 
     return `
-        <div class="task-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" style="animation-delay:${100 + (index * 40)}ms; cursor:default; padding: 14px 18px;">
+        <div class="task-card dash-schedule-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" 
+             style="animation-delay:${100 + (index * 40)}ms; cursor:default;">
           <div class="task-body" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
             <div class="task-content-left" style="flex: 1; min-width: 0;">
               <div class="task-title" style="word-break:break-word; font-size:15px; font-weight:600; color: var(--text-primary); margin-bottom: 6px;">${escHtml(task.title)}</div>

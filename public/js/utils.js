@@ -94,7 +94,7 @@ export function scheduleTask(fn, delay = 0) {
  */
 export async function chunkProcess(items, processor, chunkSize = 20) {
   let index = 0;
-  function doChunk() {
+  async function doChunk() {
     const startTime = performance.now();
     const end = Math.min(index + chunkSize, items.length);
     
@@ -109,7 +109,10 @@ export async function chunkProcess(items, processor, chunkSize = 20) {
     
     if (index < items.length) {
       return new Promise(resolve => {
-        scheduleTask(() => resolve(doChunk()));
+        scheduleTask(async () => {
+          await doChunk();
+          resolve();
+        });
       });
     }
   }

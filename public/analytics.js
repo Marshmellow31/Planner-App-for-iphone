@@ -30,27 +30,10 @@ function inRange(ts, start, end) {
   return d >= start && d <= end;
 }
 
-// ── Cache for analytics ───────────────────────────────────────────────────────
-const analyticsCache = {
-  uid: null,
-  taskCount: 0,
-  timestamp: 0,
-  data: null
-};
-
 // ── Compute all analytics stats ───────────────────────────────────────────────
 export async function computeAnalytics(uid, weekStartDay = "monday", topics = []) {
   const allTasks = await getTasks(uid);
-  
-  // ── Cache Check ──
   const now = new Date();
-  if (analyticsCache.uid === uid && 
-      analyticsCache.taskCount === allTasks.length && 
-      (now.getTime() - analyticsCache.timestamp) < 30000) { // 30s TTL
-    return analyticsCache.data;
-  }
-
-  console.time("computeAnalytics");
   const { weekStart, weekEnd } = getWeekBounds(weekStartDay);
 
   const today = new Date(now);
@@ -90,25 +73,32 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
     const completedAt = (t.isCompleted && t.completedAt) ? (t.completedAt.toDate ? t.completedAt.toDate() : new Date(t.completedAt)) : null;
 
     // Week tasks
+    // Week tasks logic:
+    // A task belongs to this week if it's due this week OR was completed this week.
     const inWeekDue = dueDate && dueDate >= weekStart && dueDate <= weekEnd;
     const inWeekCompleted = completedAt && completedAt >= weekStart && completedAt <= weekEnd;
+    
     if (inWeekDue || inWeekCompleted) {
       weekTasks.push(t);
-      if (t.isCompleted) weekCompleted.push(t);
+      // Strictly count as "completed this week" only if it was actually completed within the week bounds
+      if (inWeekCompleted) {
+        weekCompleted.push(t);
+      }
 
-      // Daily breakdown (by due date)
-      if (dueDate) {
-        const dayIndex = Math.floor((dueDate - weekStart) / 86400000);
+      // Daily breakdown (by due date if in week, otherwise by completion date)
+      const dayRef = dueDate || completedAt;
+      if (dayRef) {
+        const dayIndex = Math.floor((dayRef - weekStart) / 86400000);
         if (dayIndex >= 0 && dayIndex < 7) {
           dailyTotal[dayIndex]++;
-          if (t.isCompleted) dailyCompleted[dayIndex]++;
+          if (inWeekCompleted) dailyCompleted[dayIndex]++;
         }
       }
 
       // Topic counters
       if (t.subjectId && topicCounters[t.subjectId]) {
         topicCounters[t.subjectId].total++;
-        if (t.isCompleted) topicCounters[t.subjectId].completed++;
+        if (inWeekCompleted) topicCounters[t.subjectId].completed++;
       }
     }
 
@@ -216,13 +206,6 @@ export async function computeAnalytics(uid, weekStartDay = "monday", topics = []
     insights
   };
 
-  // ── Update Cache ──
-  analyticsCache.uid = uid;
-  analyticsCache.taskCount = allTasks.length;
-  analyticsCache.timestamp = Date.now();
-  analyticsCache.data = result;
-
-  console.timeEnd("computeAnalytics");
   return result;
 }
 

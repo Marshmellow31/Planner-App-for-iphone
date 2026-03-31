@@ -417,6 +417,10 @@ export async function updateTaskStatus(taskId, newStatus, refreshCallback) {
     // Persist to localStorage as requested for state backups
     localStorage.setItem(`task_status_${taskId}`, newStatus);
     
+    // Invalidate related caches
+    cacheManager.invalidatePrefix("analytics_");
+    cacheManager.invalidatePrefix("dashboard_");
+    
     if (refreshCallback) await refreshCallback();
   } catch (err) {
     console.error("Failed to update status", err);
@@ -432,7 +436,6 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
   const isOverdue = due && due < new Date() && !isDone;
 
   card.className = `task-card priority-${priority}${isDone ? " completed" : ""}`;
-  card.style.marginBottom = "10px";
   card.innerHTML = `
     <div class="task-header" style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:12px;">
       <div class="task-title" style="flex:1; font-size:15px;">${escHtml(task.title)}</div>
@@ -539,6 +542,11 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
 
         showSnackbar("Task completed! 🎉", "success");
       }
+      
+      // Invalidate related caches
+      cacheManager.invalidatePrefix("analytics_");
+      cacheManager.invalidatePrefix("dashboard_");
+      
       setTimeout(() => onUpdate(), isDone ? 0 : 400);
     } catch (err) {
       showSnackbar("Failed to update task", "error");
@@ -574,6 +582,11 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
     try {
       await deleteTask(task.id);
       showSnackbar("Task deleted", "success");
+      
+      // Invalidate related caches
+      cacheManager.invalidatePrefix("analytics_");
+      cacheManager.invalidatePrefix("dashboard_");
+      
       onUpdate();
     } catch (err) {
       showSnackbar("Failed to delete task", "error");
@@ -722,6 +735,12 @@ export async function openTaskModal(uid, profile, onSave, existing = null) {
           await createTask(uid, data);
           showSnackbar("Task created!", "success");
         }
+        
+        // Invalidate all related task/stats caches
+        cacheManager.invalidatePrefix("tasks_");
+        cacheManager.invalidatePrefix("analytics_");
+        cacheManager.invalidatePrefix("dashboard_");
+        
         closeModal();
         onSave();
       } catch (e) {
