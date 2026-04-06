@@ -75,7 +75,7 @@ function showAppPage() {
 // ── Theme Application ─────────────────────────────────────────────────────────
 export function applyTheme(theme = "dark") {
   document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("theme", theme);
+  cacheManager.set("user_theme", theme);
 }
 
 // ── Navigation Logic ──────────────────────────────────────────────────────────
@@ -413,10 +413,10 @@ async function handleUserAuth(user) {
   const profileCacheKey = `profile_${user.uid}`;
   const cachedProfile = cacheManager.get(profileCacheKey);
   
-  // High-priority: Restore from localStorage first for immediate consistency
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme) {
-    applyTheme(savedTheme);
+  // High-priority: Restore from swr_cache first for immediate consistency
+  const cachedTheme = cacheManager.get("user_theme");
+  if (cachedTheme) {
+    applyTheme(cachedTheme);
   } else if (cachedProfile) {
     applyTheme(cachedProfile.theme || "dark");
   }

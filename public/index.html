@@ -4,8 +4,13 @@
 <head>
   <script>
     (function themeRestoration() {
-      const savedTheme = localStorage.getItem("theme") || "dark";
-      document.documentElement.setAttribute("data-theme", savedTheme);
+      try {
+        const raw = localStorage.getItem("swr_cache_user_theme");
+        const theme = raw ? JSON.parse(raw).data : "dark";
+        document.documentElement.setAttribute("data-theme", theme || "dark");
+      } catch (e) {
+        document.documentElement.setAttribute("data-theme", "dark");
+      }
     })();
   </script>
   <meta charset="UTF-8" />
