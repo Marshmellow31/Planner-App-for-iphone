@@ -3772,3 +3772,502 @@ h4 {
     padding: 20px;
   }
 }
+
+/* ── Digital Obsidian 3.0 Execution Engine ──────────────────── */
+:root {
+  --hour-height: 100px;
+  --timeline-line-color: rgba(255, 255, 255, 0.05);
+}
+
+.schedule-tab-container {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.schedule-header {
+  padding: var(--space-xl) var(--space-xl) var(--space-md);
+  flex-shrink: 0;
+}
+
+.schedule-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+
+.schedule-date {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.schedule-timeline-viewport {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  padding: 0 var(--space-xl) 120px;
+}
+
+.timeline-grid {
+  position: relative;
+  margin-top: 20px;
+}
+
+.hour-marker {
+  height: var(--hour-height);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.hour-label {
+  width: 60px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-family: inherit;
+  margin-top: -6px;
+  flex-shrink: 0;
+}
+
+.hour-line {
+  flex: 1;
+  height: 1px;
+  background: var(--timeline-line-color);
+  margin-top: 0;
+}
+
+/* Schedule Blocks */
+.schedule-block-card {
+  position: absolute;
+  left: 70px;
+  right: 0;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.schedule-block-card:hover {
+  border-color: var(--border-active);
+  transform: scale(0.99);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.block-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.block-card-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.block-card-status {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.05);
+}
+
+/* Active State */
+.block-card-active {
+  border-color: var(--accent);
+  background: rgba(124, 108, 255, 0.05);
+  box-shadow: 0 0 20px rgba(124, 108, 255, 0.1);
+}
+
+.block-card-active .block-card-status {
+  background: var(--accent);
+  color: white;
+  animation: pulse-op 1.5s infinite;
+}
+
+@keyframes pulse-op {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+.block-card-completed {
+  opacity: 0.4;
+  background: rgba(255, 255, 255, 0.02);
+  border-style: dashed;
+}
+
+.block-card-missed {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+/* Focus Action in Card */
+.block-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.btn-card-focus {
+  padding: 4px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--accent);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Custom Modal UI ─────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: #0A0A0A;
+  border: 1px solid var(--border-active);
+  border-radius: 28px;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.modal-overlay.active .modal-card {
+  transform: translateY(0) scale(1);
+}
+
+.modal-header {
+  padding: 24px 28px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.modal-body {
+  padding: 0 28px 24px;
+}
+
+.modal-input-group {
+  margin-bottom: 20px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.modal-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.modal-footer {
+  padding: 12px 28px 28px;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+}
+
+.btn-modal-cancel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* ── Focus Session Overlay Overrides ────────────────────────── */
+#focus-engine-overlay {
+  z-index: 11000;
+}
+
+/* ── Focus Pipeline Dashboard Widget ────────────────────────── */
+.focus-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+}
+
+.focus-pipeline-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.focus-pipeline-card.active {
+  border-color: var(--accent);
+  background: rgba(124, 108, 255, 0.05);
+}
+
+.pipeline-card-time {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.pipeline-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.btn-pipeline-start {
+  width: 100%;
+  padding: 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--accent);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pipeline-empty {
+  padding: 32px;
+  text-align: center;
+  background: rgba(255,255,255,0.02);
+  border-radius: 20px;
+  border: 1px dashed var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.fab-btn {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 12px rgba(124, 108, 255, 0.4);
+  z-index: 1000;
+  transition: transform 0.2s;
+}
+
+.fab-btn:active {
+  transform: scale(0.9);
+}
+/* ── Mobile UI Fixes (Bottom Nav Clearing) ────────────────── */
+@media (max-width: 768px) {
+  .schedule-timeline-viewport {
+    padding-bottom: 200px; /* Extra space for FAB and Nav */
+  }
+  
+  .fab-btn {
+    bottom: 90px; /* Move above nav */
+    right: 20px;
+  }
+
+  .focus-engine-content {
+    padding-bottom: 90px !important; /* Force space for nav */
+  }
+  
+  .focus-timer-display {
+    font-size: 64px !important;
+  }
+}
+
+/* ── Missing Focus Engine Layout ────────────────────────────── */
+#focus-engine-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 11000;
+}
+
+#focus-engine-overlay.focus-engine-active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.focus-engine-content {
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.focus-task-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.focus-timer-display {
+  font-size: 120px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -4px;
+  line-height: 1;
+}
+
+.focus-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+}
+
+.focus-distraction-btn {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 20px;
+}
+
+/* ── Accessibility: Reduced Motion ──────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Ensure stagger items are visible immediately */
+  .stagger-item {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* Disable skeleton shimmer */
+  .skeleton {
+    animation: none !important;
+    background: var(--bg-elevated) !important;
+  }
+
+  /* Disable landing page orb animations */
+  .orb { animation: none !important; }
+
+  /* Disable splash dots */
+  .splash-dot { animation: none !important; }
+
+  /* Disable card hover lifts */
+  .card:hover { transform: none !important; }
+
+  /* Keep the page content visible */
+  .fadeSlideUp {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Animation reset helper ─────────────────────────────────── */
+/* Used by JS to reset animations without layout thrashing */
+.anim-reset {
+  animation: none !important;
+}
+

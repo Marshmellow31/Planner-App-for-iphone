@@ -2,11 +2,12 @@
 // pages/dashboard.js — Dashboard page renderer
 // ============================================================
 
-import { getTasks, completeTask, getSubjects } from "../db.js";
+import { getTasks, completeTask, getSubjects, getScheduleBlocks, updateScheduleBlock } from "../db.js";
 import { computeAnalytics } from "../analytics.js";
 import { navigate } from "../app.js";
 import { showSnackbar } from "../snackbar.js";
 import { escHtml, formatDate, scheduleTask, perfLog } from "../js/utils.js";
+import { startFocusSession } from "../utils/focusEngine.js";
 
 import { cacheManager } from "../utils/cacheManager.js";
 
@@ -39,9 +40,7 @@ export function renderDashboard(container, uid, profile, initialData = null) {
 
   cleanup();
 
-  dashboardInterval = setInterval(() => {
-    refreshScheduleState(uid);
-  }, 60000);
+
 
   // 1. Render FULL visible structure immediately (Sync)
   container.innerHTML = `
@@ -63,18 +62,12 @@ export function renderDashboard(container, uid, profile, initialData = null) {
          <div class="stat-card skeleton" style="height:80px"></div>
          `}
       </div>
+      
+      <!-- Focus Pipeline (New) -->
+      <div id="dash-focus-pipeline" class="mb-lg"></div>
 
       <div id="dash-main-grid">
-        <div id="dash-schedule-col">
-          <!-- Today's Schedule (Critical) -->
-          <div class="section-header mb-md">
-            <div class="section-title">Today's Schedule</div>
-            <button class="btn btn-sm btn-ghost ripple" id="btn-see-schedule">Manage</button>
-          </div>
-          <div id="today-schedule-list" class="mb-lg">
-             ${initialData ? '' : '<div class="task-card skeleton" style="height:120px"></div>'}
-          </div>
-        </div>
+
 
         <div id="dash-tasks-col">
           <!-- Tasks summary -->
@@ -84,14 +77,14 @@ export function renderDashboard(container, uid, profile, initialData = null) {
     </div>
   `;
 
-  document.getElementById("btn-see-schedule")?.addEventListener("click", () => navigate("scheduler"));
+
 
   // 2. Immediate Render if cache exists
   if (initialData) {
     console.log("[Dashboard] SWR: Rendering from cache");
     requestAnimationFrame(() => {
       if (currentProfile) renderBTechBanner(currentProfile);
-      renderScheduleHtml(initialData.todayTasks || []);
+
       renderStatsHtml(initialData.analyticsData || {});
     });
   }
@@ -181,17 +174,15 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
     const startTime = performance.now();
 
     // ── Background Data Fetching ──
-    const { getWeeklySchedule } = await import("../db.js");
-    const scheduleDataTask = getWeeklySchedule(uid);
+
     const subjectsTask = getSubjects(uid);
     const pendingTasksTask = getTasks(uid, { isCompleted: false });
+    const scheduleBlocksTask = getScheduleBlocks(uid, new Date().toLocaleDateString('en-CA'));
 
-    const [scheduleData, topics, pendingTasks] = await Promise.all([scheduleDataTask, subjectsTask, pendingTasksTask]);
+    const [topics, pendingTasks, scheduleBlocks] = await Promise.all([subjectsTask, pendingTasksTask, scheduleBlocksTask]);
     const analyticsData = await computeAnalytics(uid, profile?.weekStartDay || "monday", topics);
 
-    const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const todayStr = DAYS[new Date().getDay()];
-    const todayTasks = scheduleData[todayStr] || [];
+
 
     // ── Sorting Pending Tasks ──
     const now = new Date();
@@ -228,30 +219,26 @@ async function updateDashboardState(uid, profile, isFirstLoad = false) {
       return 0;
     });
 
-    // ── Snapshot Comparison for SWR ──
+    // ── Revision-based Change Detection (replaces JSON.stringify) ──
     const cacheKey = `dashboard_${uid}`;
-    const oldCache = cacheManager.get(cacheKey);
-    const newData = { todayTasks, analyticsData, pendingTasks: sortedPending };
+    const previousRevision = cacheManager.getRevision(cacheKey);
+    const newData = { analyticsData, pendingTasks: sortedPending };
 
-    const hasChanged = !oldCache ||
-      JSON.stringify(newData.todayTasks) !== JSON.stringify(oldCache.todayTasks) ||
-      JSON.stringify(newData.analyticsData) !== JSON.stringify(oldCache.analyticsData) ||
-      JSON.stringify(newData.pendingTasks) !== JSON.stringify(oldCache.pendingTasks);
-
-    if (hasChanged || isFirstLoad) {
+    // Always update on first load; otherwise check revision
+    if (isFirstLoad || cacheManager.hasChanged(cacheKey, previousRevision) || !previousRevision) {
       console.log("[Dashboard] Data changed or first load, updating UI");
-
-      // Update Schedule
-      renderScheduleHtml(todayTasks, isFirstLoad);
 
       // Update Stats
       renderStatsHtml(analyticsData, isFirstLoad);
 
+      // Update Focus Pipeline
+      renderFocusPipelineHtml(uid, scheduleBlocks, isFirstLoad);
+
       // Update Pending Tasks
       renderPendingTasksHtml(pendingTasks, isFirstLoad);
 
-      // Save to Cache
-      cacheManager.set(cacheKey, newData);
+      // Save to Cache (increments revision)
+      cacheManager.set(cacheKey, { ...newData, scheduleBlocks });
     } else {
       console.log("[Dashboard] Data unchanged, skipping UI update");
     }
@@ -322,98 +309,92 @@ function renderPendingTasksHtml(tasks, isFirstLoad = false) {
 }
 
 /**
- * Render Schedule HTML from data
+ * Render Focus Pipeline section
  */
-function renderScheduleHtml(todayTasks, isFirstLoad = false) {
-  const schedList = document.getElementById("today-schedule-list");
-  if (!schedList) return;
+function renderFocusPipelineHtml(uid, blocks, isFirstLoad = false) {
+  const pipelineEl = document.getElementById("dash-focus-pipeline");
+  if (!pipelineEl) return;
 
-  todayTasks.sort((a, b) => a.start_time.localeCompare(b.start_time));
+  // Filter: Not completed + (Active OR Starting soon/Current)
   const now = new Date();
-  const currentMins = now.getHours() * 60 + now.getMinutes();
-  const toMins = (t) => {
-    const [h, m] = t.split(":");
-    return parseInt(h) * 60 + parseInt(m);
-  };
+  const nowStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  
+  const relevant = blocks
+    .filter(b => b.status !== 'completed')
+    .sort((a,b) => a.startTime.localeCompare(b.startTime))
+    .slice(0, 3);
 
-  let prevTask = null, currTask = null, nextTasks = [];
-  todayTasks.forEach(t => {
-    const sMins = toMins(t.start_time);
-    const eMins = toMins(t.end_time);
-
-    if (currentMins >= sMins && currentMins < eMins) {
-      currTask = t;
-    } else if (currentMins >= eMins) {
-      prevTask = t;
-    } else if (currentMins < sMins) {
-      nextTasks.push(t);
-    }
-  });
-
-  let displayTasks = [];
-  if (currTask) {
-    if (prevTask) displayTasks.push({ ...prevTask, _state: "prev" });
-    displayTasks.push({ ...currTask, _state: "curr" });
-    if (nextTasks.length > 0) displayTasks.push({ ...nextTasks[0], _state: "next" });
-  } else {
-    displayTasks = nextTasks.slice(0, 3).map(t => ({ ...t, _state: "next" }));
+  if (relevant.length === 0) {
+    pipelineEl.innerHTML = `
+      <div class="pipeline-empty">
+        <i data-lucide="calendar" style="width:20px;height:20px;margin-bottom:8px"></i>
+        <div>No execution blocks scheduled for today</div>
+      </div>
+    `;
+    if (window.lucide) window.lucide.createIcons({ nodes: pipelineEl.querySelectorAll('[data-lucide]') });
+    return;
   }
 
-  if (displayTasks.length === 0 && todayTasks.length > 0) {
-    displayTasks.push({ ...todayTasks[todayTasks.length - 1], _state: "prev" });
-  }
-
-  const html = displayTasks.length === 0 ? `
-      <div class="empty-state" style="padding:var(--space-md); text-align:left; flex-direction:row; align-items:center; gap:var(--space-md);">
-        <div class="empty-icon" style="margin:0"><i data-lucide="coffee"></i></div>
-        <div>
-          <div class="empty-title" style="margin:0; font-size:var(--font-size-md)">Free Day!</div>
-          <div class="empty-desc">No more tasks scheduled for today.</div>
-        </div>
-      </div>` : displayTasks.map((task, index) => {
-    let badgeStyle = "background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-subtle);";
-    let stateLabel = "";
-
-    if (task._state === "curr") {
-      badgeStyle = "background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-active); animation: pulse 2s infinite;";
-      stateLabel = "HAPPENING NOW";
-    } else if (task._state === "prev") {
-      stateLabel = "COMPLETED";
-    } else if (task._state === "next") {
-      stateLabel = "UPCOMING";
-    }
-
-    const priority = (task.priority || 'medium').toLowerCase();
-
-    return `
-        <div class="task-card dash-schedule-card priority-${priority} ${isFirstLoad ? 'stagger-item' : ''}" 
-             style="animation-delay:${100 + (index * 40)}ms; cursor:default;">
-          <div class="task-body" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 12px;">
-            <div class="task-content-left" style="flex: 1; min-width: 0;">
-              <div class="task-title" style="word-break:break-word; font-size:15px; font-weight:600; color: var(--text-primary); margin-bottom: 6px;">${escHtml(task.title)}</div>
-              <div class="badge badge-${priority}" style="padding: 2px 8px; font-size: 10px; opacity: 0.8;">${task.priority || 'Medium'}</div>
-            </div>
-            <div class="task-content-right" style="text-align: right; flex-shrink: 0;">
-              <div style="font-size:10px; font-weight:700; letter-spacing:0.5px; padding:3px 8px; display:inline-block; border-radius:var(--border-radius-full); margin-bottom: 8px; ${badgeStyle}">${stateLabel}</div>
-              <div class="task-meta" style="margin-top:0;">
-                <span class="task-due" style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary); font-size: 12px; font-weight: 500;">
-                  <i data-lucide="clock" style="width:13px;height:13px; opacity: 0.7;"></i> 
-                  ${task.start_time} - ${task.end_time}
-                </span>
-              </div>
-            </div>
+  pipelineEl.innerHTML = `
+    <div class="section-header mb-md">
+      <div class="section-title">Focus Pipeline</div>
+      <button class="btn btn-sm btn-ghost ripple" id="dash-btn-see-schedule">Schedule</button>
+    </div>
+    <div class="focus-pipeline-grid">
+      ${relevant.map((block, idx) => {
+        const isActive = block.status === 'active' || (nowStr >= block.startTime && nowStr < block.endTime);
+        return `
+          <div class="focus-pipeline-card ${isActive ? 'active' : ''} ${isFirstLoad ? 'stagger-item' : ''}" 
+               style="animation-delay:${100 + (idx * 50)}ms" 
+               data-id="${block.id}">
+            <div class="pipeline-card-time">${block.startTime} — ${block.endTime}</div>
+            <div class="pipeline-card-title">${escHtml(block.title)}</div>
+            ${isActive 
+              ? `<button class="btn-pipeline-start ripple" data-id="${block.id}">
+                   <i data-lucide="zap" style="width:14px;height:14px"></i> Start Focus
+                 </button>`
+              : `<div style="font-size:11px;color:var(--text-muted);font-weight:700">UPCOMING</div>`
+            }
           </div>
-        </div>
-      `;
-  }).join("");
+        `;
+      }).join("")}
+    </div>
+  `;
 
-  requestAnimationFrame(() => {
-    schedList.innerHTML = html;
-    if (window.lucide) {
-      window.lucide.createIcons({ nodes: schedList.querySelectorAll('[data-lucide]') });
-    }
+  // Listeners
+  pipelineEl.querySelector("#dash-btn-see-schedule")?.addEventListener("click", () => navigate("schedule"));
+  pipelineEl.querySelectorAll(".btn-pipeline-start").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const blockId = btn.dataset.id;
+      const block = relevant.find(b => b.id === blockId);
+      if (!block) return;
+      
+      const [sh, sm] = block.startTime.split(":").map(Number);
+      const [eh, em] = block.endTime.split(":").map(Number);
+      const durationMs = (eh*60 + em - (sh*60 + sm)) * 60000;
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="spinner-sm"></i>`;
+      
+      try {
+        await updateScheduleBlock(blockId, { status: "active" });
+        startFocusSession(uid, block, durationMs);
+        // Refresh dashboard (optional, or just rely on global event)
+        updateDashboardState(uid, null, false);
+      } catch (err) {
+        showSnackbar("Failed to start session", "error");
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="zap" style="width:14px;height:14px"></i> Start Focus`;
+      }
+    });
   });
+
+  if (window.lucide) {
+    window.lucide.createIcons({ nodes: pipelineEl.querySelectorAll('[data-lucide]') });
+  }
 }
+
+
 
 /**
  * Render Stats HTML from data
@@ -448,44 +429,7 @@ function renderStatsHtml(analyticsData, isFirstLoad = false) {
   });
 }
 
-// ── Lightweight schedule-only refresh (no Firestore task read) ────
-async function refreshScheduleState(uid) {
-  const schedList = document.getElementById("today-schedule-list");
-  if (!schedList) return;
 
-  const { getWeeklySchedule } = await import("../db.js");
-  const scheduleData = await getWeeklySchedule(uid);
-
-  const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const todayStr = DAYS[new Date().getDay()];
-  let todayTasks = scheduleData[todayStr] || [];
-  todayTasks.sort((a, b) => a.start_time.localeCompare(b.start_time));
-
-  const now = new Date();
-  const currentMins = now.getHours() * 60 + now.getMinutes();
-  const toMins = (t) => { const [h, m] = t.split(":"); return parseInt(h) * 60 + parseInt(m); };
-
-  // Just update the state badges on existing cards
-  const cards = schedList.querySelectorAll(".task-card");
-  cards.forEach((card, i) => {
-    const badge = card.querySelector("[style*='letter-spacing']");
-    if (!badge || !todayTasks[i]) return;
-    const t = todayTasks[i];
-    const sMins = toMins(t.start_time);
-    const eMins = toMins(t.end_time);
-
-    if (currentMins >= sMins && currentMins < eMins) {
-      badge.textContent = "HAPPENING NOW";
-      badge.style.cssText = "font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:8px; padding:4px 10px; display:inline-block; border-radius:var(--border-radius-full); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); border: 1px solid var(--border-active); animation: pulse 2s infinite;";
-    } else if (currentMins >= eMins) {
-      badge.textContent = "COMPLETED";
-      badge.style.cssText = "font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:8px; padding:4px 10px; display:inline-block; border-radius:var(--border-radius-full); background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-subtle);";
-    } else {
-      badge.textContent = "UPCOMING";
-      badge.style.cssText = "font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:8px; padding:4px 10px; display:inline-block; border-radius:var(--border-radius-full); background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border-subtle);";
-    }
-  });
-}
 
 window._navTopic = (id, name) => navigate("subtopics", { topicId: id, topicName: name });
 

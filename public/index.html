@@ -18,6 +18,7 @@
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="description"
     content="Plan smarter. Grow daily. Your personal companion for productivity and growth with Ascend." />
+  <!-- v3.0.1 - Cache Eviction Release -->
   <title>Ascend</title>
 
   <!-- PWA & Favicon Meta Tags -->
@@ -142,20 +143,11 @@
                    simple, powerful task creation and sorting.</div>
               </div>
             </div>
+
             <div style="display:flex; gap:12px; align-items:flex-start">
               <div
                 style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
                 3</div>
-              <div>
-                <div style="font-weight:600; font-size:17px; margin-bottom:3px">AI Scheduler</div>
-                <div style="font-size:14px; color:var(--text-muted); line-height:1.5">Automatically fit your urgent tasks
-                  into empty calendar slots using smart AI.</div>
-              </div>
-            </div>
-            <div style="display:flex; gap:12px; align-items:flex-start">
-              <div
-                style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
-                4</div>
               <div>
                 <div style="font-weight:600; font-size:17px; margin-bottom:3px">Growth</div>
                 <div style="font-size:14px; color:var(--text-muted); line-height:1.5">Define long-term goals and let the
@@ -165,7 +157,7 @@
             <div style="display:flex; gap:12px; align-items:flex-start">
               <div
                 style="width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:12px; font-weight:700; color:var(--accent)">
-                5</div>
+                4</div>
               <div>
                 <div style="font-weight:600; font-size:17px; margin-bottom:3px">Settings</div>
                 <div style="font-size:14px; color:var(--text-muted); line-height:1.5">Customize your profile, add academic
@@ -383,9 +375,9 @@
             <i data-lucide="check-square"></i>
             <span>Tasks</span>
           </button>
-          <button class="nav-tab ripple" data-page="scheduler" title="Ai scheduler">
-            <i data-lucide="sparkles"></i>
-            <span>Scheduler</span>
+          <button class="nav-tab ripple" data-page="schedule" title="Schedule">
+            <i data-lucide="clock"></i>
+            <span>Schedule</span>
           </button>
           <button class="nav-tab ripple" data-page="growth" title="Growth">
             <i data-lucide="trending-up"></i>
@@ -446,9 +438,9 @@
           <i data-lucide="check-square"></i>
           <span>Tasks</span>
         </button>
-        <button class="nav-tab ripple" data-page="scheduler" title="Ai scheduler">
-          <i data-lucide="sparkles"></i>
-          <span>Scheduler</span>
+        <button class="nav-tab ripple" data-page="schedule" title="Schedule">
+          <i data-lucide="clock"></i>
+          <span>Schedule</span>
         </button>
         <button class="nav-tab ripple" data-page="growth" title="Growth">
           <i data-lucide="trending-up"></i>
@@ -479,6 +471,48 @@
         </div>
       </div>
 
+      <!-- SW Update Available Banner -->
+      <div id="sw-update-banner" class="hidden" style="
+        position:fixed; bottom:calc(var(--nav-height, 64px) + env(safe-area-inset-bottom, 0px) + 12px);
+        left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+        z-index:9999; width:calc(100% - 32px); max-width:420px;
+        background:linear-gradient(135deg, rgba(91,140,255,0.95), rgba(34,211,238,0.9));
+        border-radius:16px; padding:14px 18px; display:flex; align-items:center;
+        justify-content:space-between; gap:12px;
+        box-shadow:0 8px 32px rgba(91,140,255,0.3); backdrop-filter:blur(12px);
+        transition:opacity 0.3s ease, transform 0.3s ease;
+      ">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.2);
+            display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i data-lucide="download" style="width:18px;height:18px;color:#fff"></i>
+          </div>
+          <div style="min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:-0.2px">Update Available</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.8)">A newer version of Ascend is ready</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0">
+          <button id="btn-sw-update" style="
+            padding:8px 16px;border-radius:999px;border:none;background:#fff;
+            color:#2563EB;font-size:12px;font-weight:700;cursor:pointer;
+            transition:transform 0.15s ease
+          ">Update Now</button>
+          <button id="btn-sw-dismiss" aria-label="Dismiss" style="
+            width:32px;height:32px;border-radius:50%;border:none;
+            background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;
+            display:flex;align-items:center;justify-content:center;
+            font-size:16px;transition:background 0.15s ease
+          ">✕</button>
+        </div>
+      </div>
+      <style>
+        #sw-update-banner.sw-banner-visible {
+          opacity: 1 !important;
+          transform: translateX(-50%) translateY(0) !important;
+        }
+      </style>
+
     </div><!-- /#page-app -->
 
   </div><!-- /#app-root -->
@@ -492,14 +526,8 @@
   <!-- App Entry Point (ES module) -->
   <script type="module" src="/app.js"></script>
 
-  <!-- Vite PWA Auto Reload -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-      });
-    }
-  </script>
+  <!-- SW Update Manager handles service worker registration, update detection, and reload -->
+  <!-- Integrated via swUpdateManager.js import in app.js -->
 
 </body>
 

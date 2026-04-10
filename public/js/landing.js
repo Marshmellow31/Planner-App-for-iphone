@@ -26,14 +26,21 @@ export function triggerLandingEntrance() {
   const landing = $("page-landing");
   if (!landing) return;
   landing.classList.remove("landing-animate-in", "page-enter");
-  void landing.offsetWidth; // force reflow
-  landing.classList.add("landing-animate-in");
+  // Double-rAF to reset animation without layout thrashing
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      landing.classList.add("landing-animate-in");
+    });
+  });
 }
 
 export function triggerLandingReEnter() {
   const landing = $("page-landing");
   if (!landing) return;
   landing.classList.remove("page-enter", "landing-animate-in");
-  void landing.offsetWidth;
-  landing.classList.add("page-enter");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      landing.classList.add("page-enter");
+    });
+  });
 }

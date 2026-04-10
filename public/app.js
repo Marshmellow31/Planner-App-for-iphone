@@ -9,7 +9,118 @@ window.addEventListener('beforeinstallprompt', (e) => {
 });
 
 import "./styles.css";
-import { createIcons, icons } from "lucide";
+import {
+  createIcons,
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  Apple,
+  ArrowLeft,
+  BarChart2,
+  Book,
+  BookOpen,
+  Calendar,
+  CalendarCheck,
+  CalendarOff,
+  Check,
+  CheckCircle,
+  CheckCircle2,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Code2,
+  Download,
+  Edit3,
+  FileText,
+  Flame,
+  Folder,
+  GraduationCap,
+  HelpCircle,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Moon,
+  PartyPopper,
+  Pause,
+  Pencil,
+  PieChart,
+  Play,
+  Plus,
+  PlusCircle,
+  RotateCcw,
+  Settings,
+  Settings2,
+  Smartphone,
+  Star,
+  Tag,
+  Target,
+  Trash2,
+  TrendingUp,
+  UserCircle2,
+  UserPlus,
+  Wind,
+  X,
+  XCircle,
+  Zap
+} from "lucide";
+
+const icons = {
+  Activity,
+  AlertCircle,
+  AlertTriangle,
+  Apple,
+  ArrowLeft,
+  BarChart2,
+  Book,
+  BookOpen,
+  Calendar,
+  CalendarCheck,
+  CalendarOff,
+  Check,
+  CheckCircle,
+  CheckCircle2,
+  CheckSquare,
+  ChevronDown,
+  ChevronRight,
+  Clock,
+  Code2,
+  Download,
+  Edit3,
+  FileText,
+  Flame,
+  Folder,
+  GraduationCap,
+  HelpCircle,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Moon,
+  PartyPopper,
+  Pause,
+  Pencil,
+  PieChart,
+  Play,
+  Plus,
+  PlusCircle,
+  RotateCcw,
+  Settings,
+  Settings2,
+  Smartphone,
+  Star,
+  Tag,
+  Target,
+  Trash2,
+  TrendingUp,
+  UserCircle2,
+  UserPlus,
+  Wind,
+  X,
+  XCircle,
+  Zap
+};
 window.lucide = { 
   createIcons: (config = {}) => {
     if (window.requestIdleCallback) {
@@ -30,6 +141,8 @@ import { initAuthForms } from "./js/auth_ui.js";
 import { initLanding, triggerLandingEntrance, triggerLandingReEnter } from "./js/landing.js";
 
 import { cacheManager } from "./utils/cacheManager.js";
+import { initSWUpdater } from "./utils/swUpdateManager.js";
+import { connectivity } from "./utils/connectivityManager.js";
 
 
 // ── Global State ──────────────────────────────────────────────────────────────
@@ -61,8 +174,12 @@ function showAuthPage(view = "auth-login") {
     el.classList.toggle("hidden", id !== view);
     if (id === view) {
       el.classList.remove("auth-slide-in");
-      void el.offsetWidth;
-      el.classList.add("auth-slide-in");
+      // Double-rAF to reset animation without layout thrashing
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.classList.add("auth-slide-in");
+        });
+      });
     }
   });
 }
@@ -130,10 +247,13 @@ export async function navigate(page, params = {}) {
   
   const cachedData = cacheManager.get(cacheKey);
 
-  // Apply visual transition
+  // Apply visual transition using double-rAF (no layout thrashing)
   content.classList.remove("fadeSlideUp");
-  void content.offsetWidth;
-  content.classList.add("fadeSlideUp");
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      content.classList.add("fadeSlideUp");
+    });
+  });
 
   // Update header title based on page
   const headerTitle = document.querySelector(".header-title");
@@ -141,9 +261,10 @@ export async function navigate(page, params = {}) {
     const titles = {
       dashboard: "Dashboard",
       tasks: "Tasks",
+      schedule: "Schedule",
       analytics: "Analytics",
       settings: "Profile",
-      scheduler: "AI Scheduler",
+
       personalDevelopment: "Growth",
       growth: "Growth",
       subtopics: state.selectedTopicName || "Topics"
@@ -178,6 +299,12 @@ export async function navigate(page, params = {}) {
         controller = await pageModule.renderTasks(content, uid, profile, cachedData);
         break;
       }
+      case "schedule": {
+        const pageModule = moduleCache.get("schedule") || (await import("./pages/schedule.js"));
+        moduleCache.set("schedule", pageModule);
+        controller = await pageModule.renderSchedule(content, uid, profile, cachedData);
+        break;
+      }
       case "analytics": {
         const pageModule = moduleCache.get("analytics") || (await import("./pages/analytics.js"));
         moduleCache.set("analytics", pageModule);
@@ -190,12 +317,7 @@ export async function navigate(page, params = {}) {
         controller = await pageModule.renderSettings(content, uid, profile, state, cachedData);
         break;
       }
-      case "scheduler": {
-        const pageModule = moduleCache.get("scheduler") || (await import("./pages/scheduler.js"));
-        moduleCache.set("scheduler", pageModule);
-        controller = await pageModule.renderSchedulerTab(content, uid, profile, cachedData); 
-        break;
-      }
+
       case "personalDevelopment":
       case "growth": {
         const pageModule = moduleCache.get("growth") || (await import("./pages/personalDevelopment.js"));
@@ -301,7 +423,7 @@ function initFab() {
         pageModule.openTaskModal(user.uid, profile, () => {
           if (state.currentPage === "tasks") navigate("tasks");
           else if (state.currentPage === "dashboard") navigate("dashboard");
-          else if (state.currentPage === "scheduler") navigate("scheduler");
+
         });
       } catch (err) {
         console.error("Failed to open task modal", err);
@@ -435,7 +557,7 @@ async function handleUserAuth(user) {
   // 4. Background: Navigation and Fresh Profile Fetch
   // Determine initial page from hash or default to dashboard
   const hash = window.location.hash.slice(1);
-  const initialPage = (hash && ["dashboard", "tasks", "analytics", "settings", "scheduler", "growth", "personalDevelopment"].includes(hash)) 
+  const initialPage = (hash && ["dashboard", "tasks", "schedule", "analytics", "settings", "growth", "personalDevelopment"].includes(hash)) 
     ? hash 
     : "dashboard";
     
@@ -466,9 +588,10 @@ async function handleUserAuth(user) {
   setTimeout(() => {
     requestIdlePreload([
       () => import("./pages/tasks.js"),
+      () => import("./pages/schedule.js"),
       () => import("./pages/analytics.js"),
       () => import("./pages/settings.js"),
-      () => import("./pages/scheduler.js"),
+
       () => import("./pages/personalDevelopment.js")
     ]);
   }, 3000);
@@ -499,10 +622,9 @@ function main() {
   initAuthForms(handleUserAuth, showLanding);
   initInstallPrompt();
   
-  // Service worker is managed by VitePWA in the build, 
-  // but we keep a generic registration for dev/fallback if needed.
-  // Actually, Vite-plugin-PWA handles this automatically when injectRegister is 'auto'.
-  // So we remove manual registration to avoid conflicts with 'auto' mode.
+  // Service Worker update manager — handles registration, update detection,
+  // and the "Update Available" prompt (critical for iOS PWA updates)
+  initSWUpdater();
 
   onAuthStateChanged(async (user) => {
     if (user) await handleUserAuth(user);

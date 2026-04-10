@@ -25,7 +25,7 @@ import {
   saveCustomUnit
 } from "../utils/personalDevelopment.js";
 import { autoGenerateTodaysTasks, effectiveTodayStr } from "../utils/dailyGenerator.js";
-import { pushToScheduler, pushAllPendingGoalTasks } from "../utils/schedulerIntegration.js";
+
 import { showSnackbar, showConfirmDialog } from "../snackbar.js";
 import { escHtml } from "../js/utils.js";
 import { cacheManager } from "../utils/cacheManager.js";
@@ -562,7 +562,7 @@ function renderGoalsList(uid, useStagger = true) {
       delBtn.addEventListener("click", async () => {
         const confirmed = await showConfirmDialog(
           "Delete Goal",
-          `Are you sure you want to delete "${goal.title}"? This will not remove already-pushed scheduler tasks.`,
+          `Are you sure you want to delete "${goal.title}"?`,
           "Delete",
           true
         );
@@ -580,26 +580,7 @@ function renderGoalsList(uid, useStagger = true) {
       });
     }
 
-    // Push all to scheduler
-    const pushBtn = card.querySelector(".goal-push-all-btn");
-    if (pushBtn) {
-      pushBtn.addEventListener("click", async () => {
-        pushBtn.disabled = true;
-        pushBtn.innerHTML = `<i data-lucide="loader" style="width:13px;height:13px;"></i> Pushing…`;
-        if (window.lucide) window.lucide.createIcons();
-        try {
-          const myTasks = _goalTasks.filter(
-            t => t.sourceGoalId === goal.id && t.status !== "completed"
-          );
-          await pushAllPendingGoalTasks(uid, myTasks);
-          showSnackbar("Tasks pushed to Scheduler!", "success");
-          await reloadAll(uid);
-        } catch (err) {
-          showSnackbar("Failed to push tasks", "error");
-          pushBtn.disabled = false;
-        }
-      });
-    }
+
 
     // Edit
     const editBtn = card.querySelector(".goal-edit-btn");
@@ -745,10 +726,7 @@ function renderGoalCardHTML(goal) {
           </label>
         </div>
 
-        <button class="goal-push-all-btn goal-push-btn">
-          <i data-lucide="send" style="width:13px;height:13px;"></i>
-          Push to Scheduler
-        </button>
+
       ` : ""}
     </div>
   `;
@@ -776,8 +754,8 @@ function renderTodayTasks(uid, useStagger = true) {
     const goal = _goals.find(g => g.id === task.sourceGoalId) || {};
     let meta = CATEGORY_META[String(goal.category).toLowerCase()];
     if (!meta) meta = CATEGORY_META.custom;
-    const isScheduled = task.status === "scheduled" || !!task.schedulerTaskId;
     const isCompleted = task.status === "completed";
+
     return `
         <div class="goal-task-row ${useStagger ? 'stagger-item' : ''}" id="gtask-row-${task.id}">
           <div class="goal-task-dot" style="background:${meta.color};"></div>
@@ -785,11 +763,7 @@ function renderTodayTasks(uid, useStagger = true) {
           <div class="goal-task-meta">${task.estimatedTime}m</div>
           ${isCompleted
         ? `<span class="goal-task-push-btn scheduled">✓ Done</span>`
-        : isScheduled
-          ? `<span class="goal-task-push-btn scheduled">✓ Scheduled</span>`
-          : `<button class="goal-task-push-btn gtask-push-single" data-taskid="${task.id}">
-                  Push →
-                </button>`
+        : `<span class="goal-task-push-btn scheduled">✓ Generated</span>`
       }
         </div>
       `;
@@ -802,25 +776,6 @@ function renderTodayTasks(uid, useStagger = true) {
     });
   }
 
-  // Bind single-task push buttons
-  section.querySelectorAll(".gtask-push-single").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const taskId = btn.dataset.taskid;
-      const goalTask = _goalTasks.find(t => t.id === taskId);
-      if (!goalTask) return;
-      btn.disabled = true;
-      btn.textContent = "…";
-      try {
-        await pushToScheduler(uid, goalTask);
-        showSnackbar("Task pushed to Scheduler!", "success");
-        await reloadAll(uid);
-      } catch (err) {
-        showSnackbar("Failed to push task", "error");
-        btn.disabled = false;
-        btn.textContent = "Push →";
-      }
-    });
-  });
 
   if (window.lucide) window.lucide.createIcons();
 }
@@ -1043,7 +998,7 @@ export async function openGoalForm(uid, existingGoal, onSave) {
       <div class="goal-toggle-row" style="margin-bottom:16px;">
         <span class="goal-toggle-label">
           <i data-lucide="zap" style="width:13px;height:13px;color:#FBBF24;"></i>
-          Auto-add daily task to Scheduler
+          Auto-add daily task to Schedule
         </span>
         <label class="toggle-switch">
           <input type="checkbox" id="pd-goal-auto" ${(existingGoal?.autoAddDaily !== false) ? "checked" : ""}>

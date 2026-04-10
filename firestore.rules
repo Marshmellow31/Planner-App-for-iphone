@@ -52,12 +52,15 @@ service cloud.firestore {
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['title']) || (request.resource.data.title is string && request.resource.data.title.size() <= 100))
         && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['priority']) || (request.resource.data.priority in ['high', 'medium', 'low']));
     }
-
-    match /schedulerTasks/{docId} {
+    match /scheduleBlocks/{docId} {
       allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
       allow create: if request.auth != null && request.resource.data.userId == request.auth.uid
-        && request.resource.data.title is string && request.resource.data.title.size() <= 100
-        && request.resource.data.estimatedTime is int && request.resource.data.estimatedTime > 0;
+        && request.resource.data.title is string && request.resource.data.title.size() <= 100;
+    }
+
+    match /focusSessions/{docId} {
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
     }
 
     match /personalGoals/{docId} {

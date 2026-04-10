@@ -96,13 +96,12 @@ export async function renderTasks(container, uid, profile, initialData = null) {
       const [tasks, topics] = await Promise.all([getTasks(uid), getSubjects(uid)]);
       
       const cacheKey = `tasks_${uid}`;
-      const oldCache = cacheManager.get(cacheKey);
-      const newData = { tasks, topics };
+      const previousRevision = cacheManager.getRevision(cacheKey);
 
-      const hasChanged = !oldCache || 
-                       JSON.stringify(newData) !== JSON.stringify(oldCache);
+      // Always update on foreground refresh; use revision check for background
+      const shouldUpdate = !isBackground || cacheManager.hasChanged(cacheKey, previousRevision) || !previousRevision;
 
-      if (hasChanged || !isBackground) {
+      if (shouldUpdate) {
         allTasks = tasks;
         allTopics = topics;
         
@@ -180,7 +179,7 @@ export async function renderTasks(container, uid, profile, initialData = null) {
         }
         
         renderFiltered(!isBackground); // use stagger only if NOT background
-        cacheManager.set(cacheKey, newData);
+        cacheManager.set(cacheKey, { tasks, topics });
       } else {
         console.log("[Tasks] Data unchanged, skipping refresh");
       }
@@ -385,34 +384,20 @@ export async function renderTasks(container, uid, profile, initialData = null) {
   };
 }
 
-export function isTaskOverdue(task, currentTime) {
-  if (!task.scheduledEnd) return false;
-  let endDate;
-  if (task.scheduledEnd.includes("T")) {
-    endDate = new Date(task.scheduledEnd);
-  } else {
-    // HH:MM format, assume today's date for comparison
-    const [h, m] = task.scheduledEnd.split(":").map(Number);
-    endDate = new Date(currentTime);
-    endDate.setHours(h, m, 0, 0);
-  }
-  return currentTime > endDate;
+export function isTaskOverdue(task) {
+  if (!task.dueDate) return false;
+  return new Date() > new Date(task.dueDate + "T23:59:59");
 }
 
-export function shouldShowStatusActions(task, currentTime) {
+export function shouldShowStatusActions(task) {
   if (task.isCompleted || task.status === "completed") return false;
   if (task.status === "missed") return false;
-  return isTaskOverdue(task, currentTime);
+  return isTaskOverdue(task);
 }
 
 export async function updateTaskStatus(taskId, newStatus, refreshCallback) {
   try {
     const updates = { status: newStatus };
-    if (newStatus === "pending") {
-      // Keep eligible for rescheduling by dropping the old scheduled times
-      updates.scheduledEnd = null;
-      updates.scheduledStart = null;
-    }
     await updateTask(taskId, updates);
     // Persist to localStorage as requested for state backups
     localStorage.setItem(`task_status_${taskId}`, newStatus);
@@ -463,14 +448,12 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
 
           <div class="task-meta">
             ${due ? `<span class="task-due${isOverdue ? " overdue" : ""}" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar" style="width:12px;height:12px"></i> ${formatDate(due)}</span>` : `<span class="task-due" style="display:inline-flex;align-items:center;gap:4px"><i data-lucide="calendar-off" style="width:12px;height:12px"></i> No date</span>`}
-            ${task.scheduledStart && task.scheduledEnd ? `<span style="display:inline-flex;align-items:center;gap:4px;color:var(--text-secondary);"><i data-lucide="clock" style="width:12px;height:12px"></i> ${task.scheduledStart} - ${task.scheduledEnd}</span>` : ""}
+
           </div>
         </div>
 
         <div class="task-actions" style="margin-top:16px; justify-content: flex-end;">
-          <button class="btn btn-ghost btn-push-sched btn-circle ripple" title="Push to Scheduler">
-            <i data-lucide="send" style="width:14px;height:14px;color:var(--accent)"></i>
-          </button>
+
           <button class="btn btn-ghost btn-edit btn-circle ripple" aria-label="Edit" title="Edit">
             <i data-lucide="pencil" style="width:14px;height:14px"></i>
           </button>
@@ -559,16 +542,7 @@ function renderTaskCard(task, uid, onUpdate, allTopics = []) {
     openTaskModal(uid, null, onUpdate, task);
   });
 
-  card.querySelector(".btn-push-sched").addEventListener("click", async (e) => {
-    e.stopPropagation();
-    try {
-      await updateTask(task.id, { isScheduled: true });
-      showSnackbar("Task added to Scheduler!", "success");
-      onUpdate();
-    } catch (err) {
-      showSnackbar("Failed to schedule task", "error");
-    }
-  });
+
 
   card.querySelector(".btn-del").addEventListener("click", async (e) => {
     e.stopPropagation();

@@ -13,7 +13,7 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
+  onSnapshot,
   serverTimestamp,
   Timestamp,
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -21,6 +21,7 @@ import { db } from "./firebase-config.js";
 import { showSnackbar } from "./snackbar.js";
 import { logSecurityEvent } from "./js/utils/logger.js";
 import { sanitizeString, sanitizeNumber, sanitizeEnum, isValidDateStr } from "./js/utils/sanitizer.js";
+import { connectivity } from "./utils/connectivityManager.js";
 
 function handleError(err, context = "operation") {
   console.error(`DB Error (${context}):`, err);
@@ -33,6 +34,12 @@ function handleError(err, context = "operation") {
     code: err.code || "unknown",
     message: err.message
   });
+
+  // Don't show noisy error toasts when offline — Firestore will serve from cache
+  if (!connectivity.isOnline) {
+    console.log(`[DB] Offline — suppressing error toast for "${context}"`);
+    return null; // Return null instead of throwing when offline
+  }
 
   if (isPermissionError) {
     showSnackbar("Permission denied. Check database rules.", "error");
@@ -246,10 +253,7 @@ export async function updateTask(id, data) {
     if (data.isCompleted !== undefined) update.isCompleted = !!data.isCompleted;
     if (data.subjectId !== undefined) update.subjectId = sanitizeString(data.subjectId, 100);
     if (data.topicId !== undefined) update.topicId = sanitizeString(data.topicId, 100);
-    if (data.isScheduled !== undefined) update.isScheduled = !!data.isScheduled;
-    if (data.status !== undefined) update.status = sanitizeString(data.status, 20);
-    if (data.scheduledStart !== undefined) update.scheduledStart = sanitizeString(data.scheduledStart, 20);
-    if (data.scheduledEnd !== undefined) update.scheduledEnd = sanitizeString(data.scheduledEnd, 20);
+
 
     await updateDoc(doc(db, "tasks", id), update);
   } catch (err) {
@@ -289,94 +293,94 @@ export async function deleteTask(id) {
   }
 }
 
-// snoozeTask, saveFcmToken, removeFcmToken etc. REMOVED as notifications are deprecated.
-
+// snoozeTask, saveFcmToken, removeFcmToken etc. REMOVED as notifications are deprecated.// ─────────────────────────────────────────────────────────────
+//  SCHEDULE BLOCKS (DIGITAL OBSIDIAN 3.0)
 // ─────────────────────────────────────────────────────────────
-//  WEEKLY SCHEDULE
-// ─────────────────────────────────────────────────────────────
-const defaultSchedule = {
-  Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [], Saturday: [], Sunday: []
-};
-
-export async function getWeeklySchedule(uid) {
+export async function createScheduleBlock(uid, data) {
   try {
-    const snap = await getDoc(doc(db, "users", uid, "planner", "schedule"));
-    if (snap.exists()) {
-      const data = snap.data();
-      return { ...defaultSchedule, ...data.week_schedule };
-    }
-    return defaultSchedule;
-  } catch (err) {
-    return handleError(err, "load schedule");
-  }
-}
-
-export async function saveWeeklySchedule(uid, week_schedule) {
-  try {
-    await setDoc(doc(db, "users", uid, "planner", "schedule"), {
-      week_schedule,
-      updatedAt: serverTimestamp(),
-    });
-  } catch (err) {
-    handleError(err, "save schedule");
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-//  SCHEDULER TASKS & GENERATED PLAN
-// ─────────────────────────────────────────────────────────────
-export async function createSchedulerTask(uid, taskData) {
-  try {
-    return await addDoc(collection(db, "schedulerTasks"), {
+    return await addDoc(collection(db, "scheduleBlocks"), {
       userId: uid,
-      title: sanitizeString(taskData.title, 100),
-      subject: sanitizeString(taskData.subject, 100) || "",
-      estimatedTime: sanitizeNumber(taskData.estimatedTime, 1, 1440, 60),
-      deadline: isValidDateStr(taskData.deadline) ? taskData.deadline : null,
-      priority: sanitizeEnum(taskData.priority?.toLowerCase(), ["high", "medium", "low"], "medium"),
-      notes: sanitizeString(taskData.notes, 500) || "",
-      status: "pending",
+      taskId: data.taskId || null,
+      title: sanitizeString(data.title, 100),
+      date: sanitizeString(data.date, 20), // YYYY-MM-DD
+      startTime: sanitizeString(data.startTime, 10), // HH:MM
+      endTime: sanitizeString(data.endTime, 10), // HH:MM
+      status: data.status || "upcoming", // upcoming, active, completed, missed
+      isLocked: !!data.isLocked,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
   } catch (err) {
-    return handleError(err, "create scheduler task");
+    return handleError(err, "create schedule block");
   }
 }
 
-export async function getSchedulerTasks(uid) {
+export async function getScheduleBlocks(uid, dateStr = null) {
   try {
-    const q = query(collection(db, "schedulerTasks"), where("userId", "==", uid));
+    const constraints = [where("userId", "==", uid)];
+    if (dateStr) constraints.push(where("date", "==", dateStr));
+    
+    const q = query(collection(db, "scheduleBlocks"), ...constraints);
     const snap = await getDocs(q);
     const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    return data.sort((a, b) => {
-      const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : Date.now();
-      const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : Date.now();
-      return tA - tB;
-    });
+    return data;
   } catch (err) {
-    return handleError(err, "load scheduler tasks");
+    return handleError(err, "load schedule blocks");
   }
 }
 
-export async function updateSchedulerTask(id, data) {
+export async function updateScheduleBlock(id, data) {
   try {
-    await updateDoc(doc(db, "schedulerTasks", id), {
+    await updateDoc(doc(db, "scheduleBlocks", id), {
       ...data,
       updatedAt: serverTimestamp()
     });
   } catch (err) {
-    handleError(err, "update scheduler task");
+    handleError(err, "update schedule block");
   }
 }
 
-export async function deleteSchedulerTask(id) {
+export async function deleteScheduleBlock(id) {
   try {
-    await deleteDoc(doc(db, "schedulerTasks", id));
+    await deleteDoc(doc(db, "scheduleBlocks", id));
   } catch (err) {
-    handleError(err, "delete scheduler task");
+    handleError(err, "delete schedule block");
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+//  FOCUS SESSIONS (DIGITAL OBSIDIAN 3.0)
+// ─────────────────────────────────────────────────────────────
+export async function createFocusSession(uid, data) {
+  try {
+    return await addDoc(collection(db, "focusSessions"), {
+      userId: uid,
+      blockId: data.blockId || null,
+      taskId: data.taskId || null,
+      startTime: serverTimestamp(),
+      endTime: null,
+      durationMs: 0,
+      distractionCount: 0,
+      notes: "",
+      status: "active" // active, paused, completed
+    });
+  } catch (err) {
+    return handleError(err, "create focus session");
+  }
+}
+
+export async function updateFocusSession(id, data) {
+  try {
+    if (data.status === "completed" && !data.endTime) {
+      data.endTime = serverTimestamp();
+    }
+    await updateDoc(doc(db, "focusSessions", id), data);
+  } catch (err) {
+    handleError(err, "update focus session");
+  }
+}
+
+
 
 export async function getGeneratedPlan(uid) {
   const snap = await getDoc(doc(db, "users", uid, "planner", "generated_plan"));
@@ -474,7 +478,7 @@ export async function createGoalTask(uid, taskData) {
     status: "pending",
     autoGenerated: true,
     date: taskData.date,        // YYYY-MM-DD — used for deduplication
-    schedulerTaskId: null,      // set when pushed to schedulerTasks
+
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -509,3 +513,63 @@ export async function updateGoalTask(id, data) {
 export async function deleteGoalTask(id) {
   await deleteDoc(doc(db, "goalTasks", id));
 }
+
+// ─────────────────────────────────────────────────────────────
+//  REAL-TIME SUBSCRIPTIONS (onSnapshot)
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Subscribe to real-time task updates for a user.
+ * @param {string} uid - User ID
+ * @param {(tasks: Array) => void} callback - Called with latest tasks array
+ * @returns {() => void} unsubscribe function
+ */
+export function subscribeToTasks(uid, callback) {
+  const q = query(collection(db, "tasks"), where("userId", "==", uid));
+  return onSnapshot(q, (snapshot) => {
+    const tasks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(tasks);
+  }, (err) => {
+    // Silently ignore if offline — Firestore will use cache
+    if (connectivity.isOnline) {
+      console.error("[DB] Task subscription error:", err);
+    }
+  });
+}
+
+/**
+ * Subscribe to real-time subject/topic updates for a user.
+ * @param {string} uid - User ID
+ * @param {(subjects: Array) => void} callback
+ * @returns {() => void} unsubscribe function
+ */
+export function subscribeToSubjects(uid, callback) {
+  const q = query(collection(db, "subjects"), where("userId", "==", uid));
+  return onSnapshot(q, (snapshot) => {
+    const subjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(subjects);
+  }, (err) => {
+    if (connectivity.isOnline) {
+      console.error("[DB] Subject subscription error:", err);
+    }
+  });
+}
+
+/**
+ * Subscribe to real-time schedule block updates for a user.
+ * @param {string} uid - User ID
+ * @param {(blocks: Array) => void} callback
+ * @returns {() => void} unsubscribe function
+ */
+export function subscribeToSchedule(uid, callback) {
+  const q = query(collection(db, "scheduleBlocks"), where("userId", "==", uid));
+  return onSnapshot(q, (snapshot) => {
+    const blocks = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(blocks);
+  }, (err) => {
+    if (connectivity.isOnline) {
+      console.error("[DB] Schedule subscription error:", err);
+    }
+  });
+}
+

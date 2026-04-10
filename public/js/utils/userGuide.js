@@ -10,26 +10,18 @@ const GUIDE_CONTENT = {
     icon: "book-open",
     text: "Organize your work by subjects or life areas. You can access and edit these topics in the Tasks tab, making it easy to filter and focus on specific areas of your life."
   },
-  schedule: {
-    title: "Manage Schedule",
-    icon: "calendar",
-    text: "Setting up your availability is key. Tell the app when you're free to study or work on goals. You can access this in the scheduler by clicking 'Edit Schedule' to create a fully customised study plan."
-  },
+
   growth: {
     title: "Growth Tab",
     icon: "trending-up",
-    text: "This is for your long-term ambitions. Set a goal like 'Read 10 Books' or 'Commit 50hrs to Coding'. The app breaks these down into manageable daily targets and adds them automatically to your scheduler and tasks."
+    text: "This is for your long-term ambitions. Set a goal like 'Read 10 Books' or 'Commit 50hrs to Coding'. The app breaks these down into manageable daily targets and adds them automatically to your tasks."
   },
   tasks: {
     title: "Tasks Tab",
     icon: "check-square",
     text: "Your daily command center. This tab lists everything you need to do today, including manual tasks and AI goals. You can always add a task manually by clicking the add button at the top right of the screen."
   },
-  scheduler: {
-    title: "AI Scheduler",
-    icon: "sparkles",
-    text: "The bridge between your goals and your time. It pulls tasks from the Growth tab and fits them into your available schedule slots. It's the ultimate productivity weapon."
-  },
+
   analytics: {
     title: "Analytics",
     icon: "bar-chart-2",
@@ -51,18 +43,14 @@ export async function showFirstTimeGuide(uid, onComplete) {
           <button class="guide-nav-item active" data-tab="topics">
             <i data-lucide="book-open"></i> Topics
           </button>
-          <button class="guide-nav-item" data-tab="schedule">
-            <i data-lucide="calendar"></i> Schedule
-          </button>
+
           <button class="guide-nav-item" data-tab="growth">
             <i data-lucide="trending-up"></i> Growth
           </button>
           <button class="guide-nav-item" data-tab="tasks">
             <i data-lucide="check-square"></i> Tasks
           </button>
-          <button class="guide-nav-item" data-tab="scheduler">
-            <i data-lucide="sparkles"></i> AI Scheduler
-          </button>
+
           <button class="guide-nav-item" data-tab="analytics">
             <i data-lucide="bar-chart-2"></i> Analytics
           </button>
