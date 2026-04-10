@@ -66,8 +66,20 @@ export async function updateUserProfile(uid, data) {
     const cleanData = {};
     if (data.displayName !== undefined) cleanData.displayName = sanitizeString(data.displayName, 50);
     if (data.photoURL !== undefined) cleanData.photoURL = sanitizeString(data.photoURL, 2048);
+    if (data.theme !== undefined) cleanData.theme = sanitizeEnum(data.theme, ["dark", "light"]);
+    if (data.weekStartDay !== undefined) cleanData.weekStartDay = sanitizeEnum(data.weekStartDay, ["monday", "sunday"]);
+    if (data.notificationEnabled !== undefined) cleanData.notificationEnabled = !!data.notificationEnabled;
+    if (data.reminderSettings !== undefined) cleanData.reminderSettings = data.reminderSettings;
+    if (data.studyGoals !== undefined) cleanData.studyGoals = sanitizeString(data.studyGoals, 1000);
+    if (data.subjectsGrouped !== undefined) cleanData.subjectsGrouped = !!data.subjectsGrouped;
+    if (data.btechName !== undefined) cleanData.btechName = sanitizeString(data.btechName, 150);
+    if (data.btechStart !== undefined) cleanData.btechStart = isValidDateStr(data.btechStart) ? data.btechStart : null;
+    if (data.btechEnd !== undefined) cleanData.btechEnd = isValidDateStr(data.btechEnd) ? data.btechEnd : null;
     
-    await updateDoc(doc(db, "users", uid), { ...cleanData, updatedAt: serverTimestamp() });
+    // Only update if there's actually something to update
+    if (Object.keys(cleanData).length > 0) {
+      await updateDoc(doc(db, "users", uid), { ...cleanData, updatedAt: serverTimestamp() });
+    }
   } catch (err) {
     handleError(err, "update profile");
   }
