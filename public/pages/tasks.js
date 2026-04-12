@@ -47,8 +47,8 @@ export async function renderTasks(container, uid, profile, initialData = null) {
               </div>
             </div>
 
-            <button class="filter-pill-btn ripple hidden-desktop" id="btn-manage-topics" title="Manage Topics">
-              <i data-lucide="settings-2" style="width:14px;height:14px"></i>
+            <button class="filter-pill-btn ripple hidden-desktop" id="btn-manage-topics" title="Manage Topics" style="padding:0 12px; font-weight:600; font-size:12px; height:28px;">
+              Manage Topics
             </button>
           </div>
         </div>
@@ -72,8 +72,8 @@ export async function renderTasks(container, uid, profile, initialData = null) {
       <div id="tasks-topics-col" class="hidden-mobile">
         <div class="topic-sidebar-header">
           <div class="sidebar-label">Your Topics</div>
-          <button class="btn-manage-sidebar ripple" id="btn-sidebar-manage" title="Manage Topics">
-            <i data-lucide="settings-2" style="width:16px;height:16px"></i>
+          <button class="btn btn-ghost btn-xs ripple" id="btn-sidebar-manage" title="Manage Topics">
+            Manage
           </button>
         </div>
         <div id="tasks-topics-list" class="topics-sidebar-list">
