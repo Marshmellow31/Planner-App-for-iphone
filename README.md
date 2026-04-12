@@ -2,164 +2,207 @@
 
 > **Plan smarter. Grow daily. Stay on top of everything that matters.**
 
-A feature-rich Progressive Web App (PWA) for students to manage tasks, track personal goals, plan study schedules with AI assistance, and monitor academic progress — all in one premium, AMOLED-optimized mobile-first experience.
+A feature-rich **Progressive Web App (PWA)** for students to manage tasks, track personal goals, plan study schedules with AI assistance, and monitor academic progress — all in one premium, AMOLED-optimized, mobile-first experience.
 
 ---
 
-## 📱 Install on Your iPhone (Recommended)
+## 📱 Install on Your Device
 
-Ascend is designed to feel like a native iOS app when installed to your Home Screen.
+Ascend is designed to feel like a native app when added to your Home Screen.
 
-1. Open the app URL in **Safari** on your iPhone (Chrome/Firefox will not work for full PWA support on iOS).
-2. Tap the **Share** button (the square with an arrow pointing up) in the toolbar.
-3. Scroll down and tap **"Add to Home Screen"**.
-4. Tap **"Add"** in the top-right corner.
-5. The app now appears on your Home Screen with its own icon and launches full-screen, just like a native app! 🎉
+### iPhone / iPad (Recommended)
+1. Open the app URL in **Safari** (Chrome/Firefox don't support full PWA install on iOS).
+2. Tap the **Share** button → **"Add to Home Screen"** → **"Add"**.
+3. The app launches full-screen from your Home Screen — no browser chrome, no address bar.
 
-> **Tip:** The app works fully offline after the first load, including your schedule and goals.
+### Android
+1. Open the app in **Chrome**.
+2. Tap the **⋮ menu** → **"Add to Home Screen"** or look for the install prompt in the address bar.
+
+> **Works fully offline** after the first load — your schedule, tasks, and notes are always accessible.
 
 ---
 
 ## ✨ Features
 
 ### 🏠 Dashboard
-- **Live greeting** based on the time of day
-- **Stats overview**: tasks done this week, completion rate, current streak (🔥), and overdue count
-- **Today's Schedule** widget pulling from your weekly time blocks
-- **Upcoming Tasks** list filtered to high-priority and due-soon items
-- **Long-Term Focus** banner (optional, based on your profile settings — supports B.Tech, M.Tech, courses, and more)
-- Refreshes automatically every minute to stay current
+- **Live greeting** and motivational subtitle based on time of day
+- **Stats overview**: tasks done this week, completion rate, current streak 🔥, and overdue count
+- **Focus Pipeline**: your next 3 upcoming schedule blocks so you always know what's next
+- **Upcoming Tasks**: high-priority and due-soon items sorted by urgency
+- **Quick Notes**: a persistent notepad always visible on the dashboard — create colour-coded, pinnable notes in seconds
+- **Long-Term Focus** banner (optional, based on your profile — B.Tech, M.Tech, courses, certifications, and more)
+- Auto-refreshes every minute; SWR caching ensures instant loads from cache with silent background sync
+
+### 📝 Quick Notes
+- Persistent, Firestore-backed notes visible directly on the dashboard
+- **6 colour accents** (Blue, Cyan, Green, Amber, Red, Violet) for visual organisation
+- **Pin to top** any note so it always appears first
+- Centered popup modal to create or edit — works equally well on mobile and desktop
+- Notes load instantly from a dedicated cache key; skeleton cards shown while syncing
+- Full CRUD: create, edit, update, delete — all reflected in real time
 
 ### ✅ Tasks
 - Create, edit, delete, and complete tasks with one tap
-- Rich filtering: by **priority** (High / Medium / Low), **status** (Pending / Active / Completed), **topic**, and custom search
-- **Default filter is Pending** — so you focus on what needs to be done
-- Full **CRUD** for topics directly from the task form
-- **Due dates** and **reminder times** with native date pickers
+- Rich filtering: by **priority** (High / Medium / Low), **status** (Pending / Active / Completed), **topic**, and free-text search
+- Default filter shows **Pending** tasks — so you stay focused on what's undone
+- Assign tasks to **Topics** and **Subtopics** for granular organisation
+- **Due dates** and **reminder times** with native date/time pickers
 - Quick-complete and quick-delete from the task card with smooth animations
-- Snooze reminders directly from the task list
+- Topic management shortcut directly from the Schedule tab
+
+### 📚 Topics & Subtopics
+- Organise your academic subjects as **Topics** (e.g., "Physics", "DSA")
+- Break them down further into **Subtopics** for fine-grained tracking
+- Topics can be created, renamed, or deleted directly from the Tasks form or via the Topics page
 
 ### 📅 AI Scheduler
 A smart study planner that fits your tasks into your free time automatically.
 
 **How it works:**
-1. **Add your weekly schedule** by defining time blocks for each day (Study, Break, Class, etc.) in the Schedule tab.
-2. **Queue tasks** in the Scheduler — these are the tasks you want planned.
-3. **Generate a Plan** — the AI (greedy algorithm) assigns tasks to your Study blocks, respecting priority and deadlines.
-4. The generated plan respects a **5 AM rollover** — one "effective day" runs from 5 AM today to 5 AM tomorrow.
-5. View the plan in a clean timeline sorted chronologically, including late-night blocks.
+1. Define your **weekly time blocks** in the Schedule tab (Study, Break, Class, etc.).
+2. **Queue tasks** you want planned into the Scheduler.
+3. **Generate a Plan** — a greedy algorithm assigns tasks to your Study blocks, respecting priority and deadlines.
+4. Uses a **5 AM rollover** — one "effective day" runs from 5 AM today to 5 AM tomorrow.
+5. View the generated plan as a clean, chronological timeline.
 
-**Key concepts:**
-- Tasks not fitting into available Study blocks appear as "Unscheduled".
+**Key behaviour:**
+- Tasks that can't fit into available study blocks appear as "Unscheduled".
 - The plan resets at 5 AM each day.
-- You can push tasks directly from **Personal Dev** goals into the Scheduler with one tap.
+- Push tasks from **Personal Dev** goals into the Scheduler with one tap.
+- Manage topics directly from the Schedule tab without leaving the page.
+
+### 🧠 Focus Engine
+- **Focus Pipeline** on the dashboard surfaces your most relevant upcoming study block
+- One-tap **Start Focus Session** from any schedule block
+- Tracks active vs. upcoming vs. completed blocks throughout the day
+- Integrates with the schedule to give a real-time view of your study day
 
 ### 🌱 Personal Development (Growth)
 Track personal growth goals beyond academics.
 
-- Create goals with a **target**, **unit** (sessions, minutes, pages, etc.), **duration**, and **start date**.
-- Enable **Auto Add Daily** to have a daily task automatically generated each morning.
-- Goals catch up missed days — if you were away for 3 days, it generates all 3 missed tasks at once.
-- View and manage all auto-generated daily tasks with progress tracking.
-- Push any pending goal task directly to the **AI Scheduler** with one tap.
+- Create goals with a **target**, **unit** (sessions, minutes, pages, km, etc.), **duration**, and **start date**
+- Enable **Auto Add Daily** to automatically generate a daily task each morning
+- Catches up missed days — if you were away for 3 days, it generates all 3 missed tasks at once
+- View and manage all auto-generated daily tasks with progress tracking
+- Push any goal task directly to the **AI Scheduler** with one tap
 
 ### 📊 Analytics
-- **Weekly Summary Cards**: Completion rate, completed task count, overdue items, and total focus time — at a glance.
-- **AI-powered Key Insights**: Automatically generated statements about your most productive days and system health.
-- **Consistency Heat Map**: A 24-week, LeetCode-style activity tracker with a premium green color palette and a visual activity legend.
-- **Focus Distribution**: Topic-wise task completion breakdown with progress bars.
+- **Weekly Summary Cards**: Completion rate, completed count, overdue items, and total focus time
+- **AI-generated Key Insights**: Automatically written observations about your most productive days and patterns
+- **Consistency Heat Map**: 24-week, LeetCode-style activity tracker with a premium green palette and activity legend
+- **Focus Distribution**: Topic-wise task completion breakdown with progress bars
 
 ### ⚙️ Settings
 - Change **display name** and **email**
 - Toggle **push notifications** (FCM-powered)
-- Set your **Long-Term Focus** goal (e.g., B.Tech, M.Tech, a specific course, a certification) with start/end dates
+- Set your **Long-Term Focus** goal with start/end dates
 - **Study Goals** text field for personal notes
-- Links for **feedback and bug reports**
+- In-app Service Worker update management — see and apply new versions without re-installing
+- Feedback and bug report links
 - Sign out
 
 ---
 
-## 🔄 Workflow Integration
+## 🔄 Integrated Workflows
 
-The power of **Ascend** lies in how its features work together to automate your productivity:
+The real power of Ascend is how features connect to automate your day:
 
-### 1. The Growth Loop (Goals → Tasks)
-- When you define a **Personal Development Goal** with "Auto Add Daily" enabled, the `dailyGenerator.js` utility runs every morning (respecting the 5 AM start).
-- It checks for any missed days and generates **Goal Tasks** (e.g., "Study Physics — 45 minutes").
-- These tasks appear in your **Personal Dev** tab as pending items.
+### 1. Growth Loop — Goals → Tasks
+Personal Dev goals with **Auto Add Daily** automatically generate tasks each morning via `dailyGenerator.js`, even catching up missed days.
 
-### 2. The Planning Loop (Tasks → Scheduler)
-- Any task (Academic or Personal Dev) can be sent to the **AI Scheduler queue**.
-- The `schedulerIntegration.js` handles the hand-off, ensuring the task is visible in both the global Tasks list and the Scheduler queue.
+### 2. Planning Loop — Tasks → Scheduler
+Any task (Academic or Personal Dev) can be sent to the AI Scheduler queue. The greedy algorithm (`taskScheduler.js`) slots them into your Study blocks respecting priority and deadlines.
 
-### 3. The Execution Loop (Schedule → Plan)
-- The **AI Scheduler** takes your manual **Weekly Schedule** (your "fixed" time like classes or gym) and your **Task Queue**.
-- It runs a greedy algorithm (`taskScheduler.js`) to find "Study" blocks in your day.
-- It automatically creates a minute-by-minute **Generated Plan**, placing your highest-priority and most urgent tasks into those blocks.
-- This plan is then mirrored on your **Dashboard** so you always know what to do *right now*.
+### 3. Execution Loop — Schedule → Focus Pipeline → Dashboard
+Your Weekly Schedule feeds the **Focus Pipeline** on the dashboard, surfacing exactly what you should be working on right now. Tap to start a Focus Session.
+
+### 4. Notes Loop — Capture → Review → Act
+Quick Notes on the dashboard let you capture thoughts instantly. Pinned notes stay top-of-mind; colour coding groups related ideas visually.
 
 ---
 
-## ⚡ Performance & Optimization
+## ⚡ Performance & Architecture
 
-Ascend is engineered for a "native-feel" experience with a focus on **0-second perceived latency** and **60FPS smoothness**.
+Ascend is engineered for a **0-second perceived latency** experience with 60FPS smoothness.
 
-### 🚀 Dashboard Load Strategy (LCP < 2s)
-- **Stale-While-Revalidate (SWR) Caching**: Every major tab (Tasks, Analytics, Scheduler, etc.) loads instantly from the last known data state.
-- **Synchronous Shell Rendering**: The app shell (header, greeting, layout) paints instantly during navigation, before any data is fetched.
-- **Instant Profile Restoration**: The user's identity, goal focus, and theme are restored from cache on login, eliminating auth-related delays.
-- **Silent Background Synchronization**: Fresh data is fetched in the background; the UI only re-renders if a deep comparison detects changes, preventing visual flickering.
-- **Priority Orchestration**: Using `requestAnimationFrame`, the app prioritizes the **Today's Schedule** and **Academic Banner** to ensure they appear first.
-- **Skeleton Loaders**: Integrated animated skeletons provide immediate visual structure while data is loading (if cache is empty).
-- **Lazy Data Fetching**: Non-critical components (Stats cards, Analytics charts) are deferred to idle time using `requestIdleCallback`.
+### SWR Caching (Stale-While-Revalidate)
+- Every tab caches its data in `localStorage` via `cacheManager.js`
+- On re-navigation, the cached view renders **immediately** while Firestore fetches fresh data in the background
+- Notes use a **dedicated `notes_${uid}` cache key** — separate from the dashboard cache — so they're always instantly available on reload without a false empty state
+- Revision-based change detection avoids unnecessary re-renders
 
-### 🧵 Main-Thread Safety
-- **Chunked Processing**: Large lists (tasks, schedule items) are processed in small batches (~10-15ms each) to keep the main thread responsive and avoid long tasks.
-- **Deferred Preloading**: Background preloading of secondary routes is throttled to run only after the dashboard has settled for 6 seconds.
+### Shell Rendering
+- The app shell (header, nav, layout) paints **synchronously** before any async data
+- Skeleton loaders provide visual structure while remote data loads
 
-### 🧠 Analytics & Logic
-- **Memory Caching**: Expensive analytics (streaks, heatmap data) are cached in memory to avoid redundant re-computations during rapid navigation.
-- **Lifecycle Cleanup**: Robust cleanup logic cancels all pending async tasks, timers, and intervals when navigating away from a page, preventing memory leaks.
+### Connectivity Awareness
+- `connectivityManager.js` tracks online/offline state and suppresses error toasts when offline
+- Firestore offline persistence ensures the app works without a connection
+- All DB errors are handled gracefully — permission/network failures fall back to cached data rather than crashing the UI
+
+### Service Worker & Updates
+- `swUpdateManager.js` detects new app versions and prompts the user to update in-app
+- PWA precache ensures all assets load offline with no request to the network
+
+### Main-Thread Safety
+- Large lists are processed in small batches to keep the main thread responsive
+- Background preloading of secondary routes is deferred 6 seconds after dashboard settle
+- All page-level intervals and async tasks are cleaned up on navigation to prevent memory leaks
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
-public/
-├── index.html              # App shell, floating nav, splash screen
-├── styles.css              # Full design system (CSS variables, AMOLED dark theme)
-├── app.js                  # Router, auth listener, navigation, FAB, state
+Ascend App/
+├── public/
+│   ├── index.html                  # App shell, floating nav, splash screen
+│   ├── styles.css                  # Full design system — CSS variables, dark/light themes
+│   ├── app.js                      # Router, auth listener, navigation, FAB, icon setup
+│   │
+│   ├── auth.js                     # Firebase Auth helpers (sign up, log in, Google OAuth)
+│   ├── db.js                       # Firestore CRUD — tasks, goals, schedule, notes, topics
+│   ├── analytics.js                # Analytics computations (streak, heatmap, insights)
+│   ├── notifications.js            # FCM push + in-app notification layer
+│   ├── snackbar.js                 # Toast + confirm dialog system
+│   ├── firebase-config.js          # Firebase app init + VAPID key
+│   │
+│   ├── pages/
+│   │   ├── dashboard.js            # Dashboard — stats, focus pipeline, tasks, notes
+│   │   ├── tasks.js                # Tasks page with filtering, CRUD, and topic management
+│   │   ├── schedule.js             # AI Scheduler + weekly block editor
+│   │   ├── personalDevelopment.js  # Goals tracker + auto daily task system
+│   │   ├── topics.js               # Topics CRUD page
+│   │   ├── subtopics.js            # Subtopics CRUD page
+│   │   ├── analytics.js            # Analytics page (heatmap, cards, insights)
+│   │   └── settings.js             # Settings page + SW update management
+│   │
+│   ├── js/
+│   │   ├── utils.js                # Shared helpers — escHtml, formatDate, ripple effects
+│   │   ├── auth_ui.js              # Auth form event bindings
+│   │   ├── landing.js              # Landing page animations
+│   │   └── utils/
+│   │       ├── logger.js           # Structured logging utility
+│   │       └── userGuide.js        # In-app onboarding guide
+│   │
+│   └── utils/
+│       ├── cacheManager.js         # SWR Caching Layer (Memory + LocalStorage + revisions)
+│       ├── connectivityManager.js  # Online/offline detection and state broadcasting
+│       ├── focusEngine.js          # Focus session logic and pipeline rendering
+│       ├── taskScheduler.js        # Greedy scheduling algorithm (5 AM rollover)
+│       ├── dailyGenerator.js       # Auto daily task generation from personal goals
+│       ├── personalDevelopment.js  # Goal progress computation helpers
+│       ├── swUpdateManager.js      # Service Worker version detection + update prompts
+│       ├── rateLimiter.js          # Debounce/throttle for high-frequency actions
+│       └── timeUtils.js            # Time string helpers (HH:MM ↔ minutes)
 │
-├── auth.js                 # Firebase Auth helpers (sign up, log in, Google)
-├── db.js                   # Firestore CRUD for all collections
-├── analytics.js            # Analytics computations (streak, heatmap, insights)
-├── notifications.js        # FCM push + in-app notification layer
-├── snackbar.js             # Toast + confirm dialog system
-├── firebase-config.js      # Firebase app init + VAPID key
-│
-├── pages/
-│   ├── dashboard.js        # Dashboard renderer + schedule widget
-│   ├── tasks.js            # Tasks page with filtering and CRUD
-│   ├── scheduler.js        # AI Scheduler tab (schedule + plan UI)
-│   ├── schedule.js         # Weekly schedule block editor
-│   ├── personalDevelopment.js # Goals + daily task tracker
-│   ├── topics.js           # Topics CRUD page (per subject)
-│   ├── analytics.js        # Analytics page (heatmap, insights, distribution)
-│   └── settings.js         # Settings page
-│
-├── js/
-│   ├── utils.js            # Shared DOM helpers, escHtml, formatDate, ripples
-│   ├── auth_ui.js          # Auth form event bindings
-│   └── landing.js          # Landing page animations
-│
-└── utils/
-    ├── taskScheduler.js    # Greedy scheduling algorithm (5 AM rollover)
-    ├── dailyGenerator.js   # Auto daily task generation from goals
-    ├── schedulerIntegration.js # Push goal tasks → Scheduler + Tasks
-    ├── personalDevelopment.js  # Goal progress computation helpers
-    ├── cacheManager.js      # SWR Caching Layer (Memory + LocalStorage)
-    └── timeUtils.js        # Time string helpers (HH:MM ↔ minutes)
+├── functions/                      # Firebase Cloud Functions (FCM notification triggers)
+├── firestore.rules                 # Per-user Firestore security rules
+├── firestore.indexes.json          # Composite indexes for efficient queries
+├── firebase.json                   # Firebase hosting + functions config
+├── vite.config.js                  # Vite build config + PWA plugin setup
+└── vercel.json                     # Vercel deploy config (SPA routing, cache headers)
 ```
 
 ### Data Flow
@@ -168,15 +211,13 @@ public/
 User Action
     │
     ▼
-app.js (navigate / state)
-    │
-    ├─► pages/*.js       → renders UI, calls db.js
-    │
-    ├─► db.js            → Firestore (tasks, goals, schedule, plan)
-    │
-    ├─► utils/           → pure logic (scheduling, generation)
-    │
-    └─► snackbar.js      → user feedback (toasts + confirms)
+app.js  ──►  pages/*.js   ──►  db.js   ──►  Firestore
+                │                │
+                │          cacheManager.js  (SWR layer)
+                │
+                ├──►  utils/     (pure logic — scheduling, generation, focus)
+                │
+                └──►  snackbar.js  (toasts + confirm dialogs)
 ```
 
 ---
@@ -184,20 +225,20 @@ app.js (navigate / state)
 ## 🔧 Setup & Self-Hosting
 
 ### Prerequisites
-- Node.js 18+
-- A Firebase project with **Firestore**, **Firebase Auth**, and **Firebase Cloud Messaging** enabled
+- **Node.js 18+**
+- A **Firebase project** with Firestore, Firebase Auth, and Firebase Cloud Messaging enabled
 
 ### 1. Clone & Install
 
 ```bash
 git clone https://github.com/Marshmellow31/Ascend.git
-cd Ascend
+cd "Ascend App"
 npm install
 ```
 
 ### 2. Configure Firebase
 
-Copy `.env.example` to `.env` and fill in your Firebase project values:
+Copy `.env.example` to `.env` and fill in your Firebase project credentials:
 
 ```bash
 cp .env.example .env
@@ -213,45 +254,74 @@ VITE_FIREBASE_APP_ID=your_app_id
 VITE_FIREBASE_VAPID_KEY=your_vapid_key
 ```
 
-### 3. Run Locally
+### 3. Run Locally (Dev Server)
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:5173](http://localhost:5173). The dev server **does not** use the Service Worker, so you'll always see your latest changes immediately.
 
-### 4. Build for Production
+### 4. Preview Production Build
 
 ```bash
 npm run build
+npm run preview
 ```
+
+Open [http://localhost:4173](http://localhost:4173). Uses the Service Worker — hard refresh (`Ctrl+Shift+R`) to bypass its cache after a rebuild.
 
 ### 5. Deploy
 
-The app is configured for **Vercel** (via `vercel.json`). Simply run:
-
+**Deploy to Vercel (frontend):**
 ```bash
-vercel --prod
+npm run deploy
+# or: vercel --prod
 ```
 
-Or connect your GitHub repo to Vercel for automatic deployments.
+**Deploy Firestore rules (required for notes and all data security):**
+```bash
+npm run deploy:rules
+# or: firebase deploy --only firestore:rules
+```
+
+**Deploy Cloud Functions (push notifications):**
+```bash
+npm run deploy:functions
+```
+
+**Deploy everything at once:**
+```bash
+npm run deploy:all
+```
+
+Or connect your GitHub repo to **Vercel** for automatic CI/CD deployments on every push.
 
 ---
 
-## 🔒 Firestore Security Rules
+## 🔒 Security
 
-The project includes `firestore.rules` scoped per-user — every document is owned by and accessible only to the authenticated user who created it.
+All Firestore collections are protected by **ownership-based rules** in `firestore.rules`. Every document created by a user is tagged with their `uid` and is only accessible to them — no user can read or modify another user's data.
+
+Collections protected:
+- `tasks` — Academic and personal tasks
+- `goals` — Personal Development goals
+- `scheduleBlocks` — Weekly time block definitions
+- `schedulerPlan` — AI-generated study plans
+- `notes` — Quick notes (dashboard)
+- `topics` / `subtopics` — Subject organisation
+
+> **Important:** Always run `npm run deploy:rules` after modifying `firestore.rules` to apply changes to production.
 
 ---
 
 ## 🛎️ Push Notifications
 
-Push notifications are powered by **Firebase Cloud Messaging (FCM)**.
+Powered by **Firebase Cloud Messaging (FCM)**:
 
-- Enable notifications from the **Settings** page.
-- Notifications are sent via Cloud Functions when a task reminder time is reached.
-- The service worker (`firebase-messaging-sw.js`) handles background message delivery.
+- Enable from the **Settings** page
+- Cloud Functions trigger notifications when a task's reminder time is reached
+- The service worker (`firebase-messaging-sw.js`) handles background message delivery and displays native system notifications
 
 ---
 
@@ -259,7 +329,7 @@ Push notifications are powered by **Firebase Cloud Messaging (FCM)**.
 
 Pull requests are welcome. Please open an issue first to discuss major changes.
 
-For feedback or bug reports, find links in the **Settings** page of the app.
+For feedback or bug reports, use the links in the **Settings** page of the app.
 
 ---
 
